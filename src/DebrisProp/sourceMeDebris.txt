@@ -1,0 +1,21 @@
+# Remove the old binaries and library file
+rm *.o
+rm libFrisco.a
+
+# Need to compile the ode.o file for the coming Python modules
+gfortran -c ode.f90
+
+# Make the debrisPropagation module for Python
+f2py --fcompiler=gfortran -m debrisPropagation -c moduleConstants.f90 modulePlanetEarth.f90 denEstimator.f90 linearInterpolation.f90 speedOfSound.f90 ode.o debrisPropAllTime.f90
+
+# Make the orbitProp module for Python
+f2py --fcompiler=gfortran -m orbitProp -c moduleConstants.f90 modulePlanetEarth.f90 denEstimator.f90 linearInterpolation.f90 speedOfSound.f90 ode.o trajProp.f90
+
+# Compile everything
+/usr/local/bin/gfortran -c ode.f90 moduleConstants.f90 modulePlanetEarth.f90 denEstimator.f90 linearInterpolation.f90 speedOfSound.f90 debrisPropAllTime.f90
+
+# Pack up the binary .o files into a library
+ar rcv libFrisco.a *.o
+
+mv libFrisco.a ../../build/DebrisProp/
+rm *.o *.mod *.so

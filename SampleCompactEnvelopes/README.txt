@@ -6,7 +6,7 @@ Falcon9_Cape_Thresh: This is Falcon9-like launch to the ISS from Cape Canaveral.
 
 Falcon9_Cape_CondSafe: This is Falcon9-like launch to the ISS from Cape Canaveral.  DOES NOT USE a probabilistic safety threshold.  Instead, this restricts the areas of the airspace where the debris will be found within 5 minutes (the reaction time) for ANY time of failure.  In other words, if aircraft avoid this shape, their risk is effectively zero.
 
-# Each subsection has a 6-line preamble
+* Each subsection has a 6-line preamble
 NAMEX_Y                               # This is the NAME of the SUA, X is the timestep (starts at zero), and Y is the index for shapes within timestep X
                                       # Empty space
 0                                     # I'm not sure.  Make this zero.
@@ -14,4 +14,4 @@ NAMEX_Y                               # This is the NAME of the SUA, X is the ti
 0 0 0 1                               # I'm not sure.
 11                                    # Number of lat/lon points which will follow immediately
 
-Good luck!
+The preamble section looks better when you download the file.  I dunno what's wrong with github not displaying the line breaks or spaces.  Good luck!
