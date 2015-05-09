@@ -1,0 +1,36 @@
+@name,lat,lon,altkm,timezone,comment
+Cape    ,28.445455,-80.564865,0.003,EST,  #Cape Canveral
+MARS    ,37.8338,-75.4882,0,EST,   #Mid-Atlantic Regional Spaceport
+Cecil   ,30.218611,-81.876667,0,EST,   #Cecil Field Spaceport FL
+OK      ,35.343559,-99.208014,0,CST,   #Oklahoma Spaceport
+Brown   ,26.150661,-97.297082,0,CST,   #Cameron County TX (SpaceX)
+# Corn    ,31.062125,-104.78185,0,CST,   #Corn Ranch TX (in Van Horn) Surely Wrong Coords
+CornNew ,31.423333,-104.75889,0,CST,   #Corn Ranch TX (in Van Horn) Surely Wrong Coords
+Vanden  ,34.581111,-120.6275,0,PST,   #SLC6 – This is where DeltaIV launches
+Odyssey ,0,-154,0,HST,   #Hawaii Standard Time (no DST)
+Atoll   ,8.716667,167.733333,0,MST,   #Marshal Islands Time (no DST)
+Wallops ,37.940194,-75.466389,0,EST,
+Kodiak  ,57.4353, -152.3393 -0.15 ,0,AKST,
+Mojave  ,35.059444,-118.15166,0,PST,
+America ,32.990278,-106.96972,0,MST,
+McGreg  ,31.388104,-97.468994,0,CST,
+Poker   ,65.117893,-147.43328,0,AKST,
+WSands  ,32.915999,-106.3666,0,MST,#32.563056   -106.57  not actually sure where in WSands this is pointing
+WSandsN  ,33.910837,-106.637063,0,MST,#32.563056   -106.57  not actually sure where in WSands this is pointing
+# WSands  ,32.563056,-106.57,0,MST,#32.563056   -106.57  not actually sure where in WSands this is pointing
+# FrntRnge,39.793949,-104.56445,0,MST,# West end of main runway
+FrntRnge,39.785057,-104.524242,0,MST,# North end of eastern runway?
+# Midland ,32.018138,-102.23713,0,CST,#32.018138 -102.237139 SURELEY WRONG in general spot of proposed site
+Midland ,31.942941,-102.203849,0,CST,#32.018138 -102.237139 SURELEY WRONG in general spot of proposed site
+Georgia , 30.944654 - 0.03, -81.480956 - 0.12 ,0,EST,   #Georgia Spaceport - gleaned from picture of posterboard haha
+,,,,,
+# Custom ones,,,,,
+PegMARS ,38.201279,-73.353819,0,EST,   #Pegasus launching over the atlantic from MARS
+PegMARS2,37.727847,-73.65394,0,EST,   #Pegasus launching over the atlantic from MARS
+PegVAFB ,35.902172,-123.055242,0,EST,   #Pegasus launching over the atlantic from MARS
+Titus   ,28.626351,-80.701945,0,EST,   #I don't think this spaceport is going to happen so I'm placing this at the shuttle landing - runway at VERY nearby KSC.
+,,,,,
+Houston ,29.597021,-95.163903,0,CST,   # Formerly known as Ellington spaceport - just south of Houston
+Hawaii  ,19.725908,-156.046778,0,HST,  # South end of Kona Airport runway
+PacLA   ,29.924865,-119.325785,0,PST,  # Dragon reentering in the pacific by LA
+
