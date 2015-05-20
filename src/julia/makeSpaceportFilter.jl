@@ -74,7 +74,6 @@ function WriteFacetFilter(LatLonFL, lowFL, hiFL, curFilter)
   close(outFile)
 end
 
-
 function GetFilterLatLonAlt(curFilter, curDict, filterRadius::Float64)
   lat0 = float(curDict["lat"]) * pi/180.
   lon0 = float(curDict["lon"]) * pi/180.
@@ -122,6 +121,59 @@ for (curFilter, curDict) in spaceportDict
   storageDict[curFilter] = LatLonFL
 
 end
+
+LLFL = storageDict["America"]
+
+ECEF = LatLonFL2ECEF(LLFL)
+
+# //ColVec Trajectory::ECEF_To_Geodetic(ColVec Vec) {
+# //	//function [gdlat lon alt] = ECEF_To_Geodetic(x, y, z)
+# //
+# //	//Unpack the ECI vector
+# //	double x = Vec(0);
+# //	double y = Vec(1);
+# //	double z = Vec(2);
+# //
+# //	//Can pass off to other implementation from here
+# //
+# //	double rdelta = sqrt(x*x + y*y);
+# //	double gdlat = asin(z/sqrt(x*x + y*y + z*z));
+# //
+# //	// Set the tolerances
+# //	double tol = 1e-10;
+# //	double err = 50;
+# //
+# //	double lon;
+# //	// I do not remember why this statement is in here.  Something to do with polar orbits it seems
+# //	if ((abs(x) <= tol) && (abs(y) <= tol)) {
+# //        //		cout << "WOAH!  If you wound up here, then you need to check that everything is okay!" << endl;
+# //        //		cout << Vec << endl;
+# //		lon = 0; }
+# //	else {
+# //		lon = atan2(y,x); }   //[deg]
+# //
+# //
+# //	// Iterate to find coordinates
+# //	double Nlat;
+# //	while( err > tol ){
+# //		Nlat = R_equator/sqrt(1-pow(ecc_Earth*sin(gdlat),2));
+# //
+# //		double gdlat_new = atan((z+Nlat*sin(gdlat)*ecc_Earth*ecc_Earth)/rdelta);
+# //
+# //		err = abs(gdlat_new - gdlat);
+# //		gdlat = gdlat_new;
+# //	}
+# //
+# //	double alt = rdelta/cos(gdlat) - Nlat;
+# //
+# //	//Pack up the geodetic return vector
+# //	ColVec Geodetic(3,1);
+# //	Geodetic(0) = gdlat;
+# //	Geodetic(1) = lon;
+# //	Geodetic(2) = alt;
+# //
+# //	return Geodetic;
+# //}
 
 # Now plot all of the filters
 fileNameGE = "All_Filters.kml"

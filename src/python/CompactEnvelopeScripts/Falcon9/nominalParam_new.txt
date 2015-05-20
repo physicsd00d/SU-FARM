@@ -1,0 +1,51 @@
+#****************************************************************************************
+# File: nominalParam.txt
+#
+# SAMPLE INPUT FILE
+# 
+# Created by:          Francisco C.
+# Created on:          04/09/2011 
+# $Rev: 60 $ 
+# $LastChangedDate: 2012-07-06 15:34:41 -0700 (Fri, 06 Jul 2012) $ 
+# $LastChangedBy: fcapristan $     
+#		
+#****************************************************************************************
+
+
+
+
+
+#-------------------------------------------------------------------------------
+#    Vehicle Information
+#-------------------------------------------------------------------------------
+		     Vehicle stages : 2. # this parameter must be specified before any other vehicle parameter (except Vehicle name)
+	     Vehicle propellant mass: 321203.0 45760.0 #[kg] length of this depends on the number of stages
+             Vehicle structural mass: 17454.234 4626.64# [kg] length of this depends on the number of stages
+	     	Vehicle payload mass: 3500.0 #[kg]
+             	         Vehicle ISP: 279.5 342. # [s] length of this depends on the number of stages
+	   	   	  Vehicle Cd: CDelHalconALL.dat CDelHalcon2ndStage.dat
+			  #Vehicle Cl: 0 0
+
+#-------------------------------------------------------------------------------
+#   Boundary Constraints/Desired Orbital Parameters
+#-------------------------------------------------------------------------------
+#           constraints at launch
+
+               latitude initial: 28.561966667 #[m]
+              longitude initial: -80.5772 # [m]
+               altitude initial: 76.2 #[m] 	
+		  Launch date : 06/05/2002 # month/day/year
+	       	Launch time : 16 17 #  [hours] [mins]
+		Launch UT   : 5 # UT value to add to launch time
+		dt : 1.0 #[sec] time interval for propagation
+#--------------------------------------------------------------------------------
+#    Profiles
+#-------------------------------------------------------------------------------
+	thetag initial: -22025.1235819 # [radians] this defines the direction in the thrust profile
+
+	thrust File: thrust1_new.txt thrust2_new.txt
+#------------------------------------------------------------------------------
+#    AtmoFile
+#------------------------------------------------------------------------------
+	atmospheric option: 1# -1 for vacuum, 0 for exponential density, 1 for given profile
+	atmospheric File:special.txt # if NONE then use exponential density

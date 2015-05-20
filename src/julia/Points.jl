@@ -9,14 +9,17 @@ What's the convention for Lat / Lon?
 =#
 
 export projectIntoXY, projectIntoDeg
-export XYZ2LatLonFL, LatLonFL2XYZ
+export XYZ2LatLonFL, LatLonFL2XYZ, LatLonFL2ECEF
 export convertDegMinSecToDecimal
 
 refLat = 38 * (pi/180)
 refLon = 0.
 refRadius = 6378.1370 # Equator Km
 m2ft = 3.28084
+ft2m = 0.3048
 
+ecc_Earth = 0.081819221456
+R_equator = 6378.1370
 
 function projectIntoDeg(x, y)
   gdlat = (y / refRadius) * (180 / pi)
@@ -108,6 +111,25 @@ function convertDegMinSecToDecimal(DMS::Array{Float64,1})
   @assert length(DMS) == 3
   return DMS[1] + DMS[2]/60. + DMS[3]/3600.
 end
+
+
+
+function LatLonFL2ECEF(LLFL)
+  ECEF = zeros(LLFL)
+  for ix in 1:length(LLFL[1,:])
+    gdlat = LLFL[1,ix] * π/180.
+    lon = LLFL[2,ix]   * π/180.
+    alt = LLFL[3,ix] * ft2m / 10.  # Convert from FL into km
+    Nlat = R_equator/sqrt(1-((ecc_Earth*sin(gdlat))^2))
+
+    ECEF[1,ix] = (Nlat + alt)*cos(gdlat)*cos(lon);
+    ECEF[2,ix] = (Nlat + alt)*cos(gdlat)*sin(lon);
+    ECEF[3,ix] = (Nlat*(1-ecc_Earth*ecc_Earth) + alt)*sin(gdlat);
+  end
+
+  ECEF
+end
+
 
 
 
