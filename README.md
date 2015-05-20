@@ -30,6 +30,6 @@ Coming Eventually...Stanford University Framework for Aircraft Risk Management
 
 * TODO: Remove GSL dependency if possible
 * TODO: Remove libkml and just write files in plain text
-
+* TODO: Make the setup.py file actually place the object files in build.  Right now it compiles but the files dont go where i want them.
 * Please excuse any curse words in the source code.
 
