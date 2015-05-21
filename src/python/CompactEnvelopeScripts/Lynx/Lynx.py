@@ -12,6 +12,15 @@ If you want to use valgrind to debug, compile with -g for debug symbols then cal
 valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9.py
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
+
+'''These are the most-likely-to-be-changed parameters'''
+freshWind   = False
+freshDebris = False
+debug       = False
+
+doMain      = True
+addStageReentry = False
+
 # # Points to the python scripts needed from Francisco
 # friscoFiles = '../../../Prop3Dof/FriscoDebris/pythonFiles/'
 # # Points to the binaries for propagating trajectories
@@ -27,6 +36,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 
 # Build directory
 buildDir = "../../../../build/"
+outputDir = "../../../../outputs/"
+tempDir = "../../../../temp/"
 tjcFiles = '../../' # This is where the TJC.py file resides.
 
 import os
@@ -90,56 +101,57 @@ planetModel = 0                             # 0 means spherical, 1 means ellipti
 curMission = dict(propagationParamFile = propagationParamFile, precomputedParamFile = precomputedParamFile,
                 pathToMissionFiles = pathToMissionFiles, omegaE = omegaE, planetModel = planetModel)
 curMission = TJC.InitializeMission(curMission)
+TJC.SetupOutputFolders(curMission, tempDir, outputDir, vehicleName, launchLocation)
 
 
-'''
-Defines the file structure for folders / files that are specific to this vehicle.
-In theory, all vehicles will have the same file structure and this section would
-    be the same across all main files.  Also, should bring pathToMissionFiles
-    into this section
-'''
-# These hold output files, create them in a moment if they don't already exist
-curMission['GeneratedFilesFolder']    = curMission['pathToMissionFiles']    + 'GeneratedFiles/'
-curMission['debrisPickleFolder']      = curMission['GeneratedFilesFolder']  + 'debrisPickleFolder'
-curMission['footprintVectorFolder']   = curMission['GeneratedFilesFolder']  + 'footprintVectorFolder'
-curMission['footprintLibrary']        = curMission['GeneratedFilesFolder']  + 'footprintLibrary/'
-curMission['facetFolder']             = curMission['GeneratedFilesFolder']  + 'facetFolder/'
-
-# These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-curMission['debrisCatFile']           = 'LynxDebrisCatalog.txt'
-# curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
-# curMission['atmosphere']              = friscoFiles + 'AtmoProfiles/special.txt'
-# curMission['atmospherePickle'] = '../AtmoProfiles/FrontRange.pkl'
-curMission['atmospherePickle'] = '../AtmoProfiles/SpaceportAmerica.pkl'
-
-
-# Make sure that the directory for holding the general Generated files exists
-folderPath = os.path.abspath(curMission['GeneratedFilesFolder'])
-if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
-
-# Make sure that debrisPickleFolder exists
-folderPath = os.path.abspath(curMission['debrisPickleFolder'])
-if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
-
-# Make sure that footprintVectorFolder exists
-folderPath = os.path.abspath(curMission['footprintVectorFolder'])
-if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
-
-# Make sure that footprintLibrary exists
-folderPath = os.path.abspath(curMission['footprintLibrary'])
-if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
-
-# Make sure that facetFolder exists
-folderPath = os.path.abspath(curMission['facetFolder'])
-if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
-
-del folderPath      # Just to be safe!
+# '''
+# Defines the file structure for folders / files that are specific to this vehicle.
+# In theory, all vehicles will have the same file structure and this section would
+#     be the same across all main files.  Also, should bring pathToMissionFiles
+#     into this section
+# '''
+# # These hold output files, create them in a moment if they don't already exist
+# curMission['GeneratedFilesFolder']    = curMission['pathToMissionFiles']    + 'GeneratedFiles/'
+# curMission['debrisPickleFolder']      = curMission['GeneratedFilesFolder']  + 'debrisPickleFolder'
+# curMission['footprintVectorFolder']   = curMission['GeneratedFilesFolder']  + 'footprintVectorFolder'
+# curMission['footprintLibrary']        = curMission['GeneratedFilesFolder']  + 'footprintLibrary/'
+# curMission['facetFolder']             = curMission['GeneratedFilesFolder']  + 'facetFolder/'
+#
+# # These hold files that need to be read in
+# curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+# curMission['debrisCatFile']           = 'LynxDebrisCatalog.txt'
+# # curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
+# # curMission['atmosphere']              = friscoFiles + 'AtmoProfiles/special.txt'
+# # curMission['atmospherePickle'] = '../AtmoProfiles/FrontRange.pkl'
+# curMission['atmospherePickle'] = '../AtmoProfiles/SpaceportAmerica.pkl'
+#
+#
+# # Make sure that the directory for holding the general Generated files exists
+# folderPath = os.path.abspath(curMission['GeneratedFilesFolder'])
+# if not os.path.exists(folderPath):
+#     os.makedirs(folderPath)
+#
+# # Make sure that debrisPickleFolder exists
+# folderPath = os.path.abspath(curMission['debrisPickleFolder'])
+# if not os.path.exists(folderPath):
+#     os.makedirs(folderPath)
+#
+# # Make sure that footprintVectorFolder exists
+# folderPath = os.path.abspath(curMission['footprintVectorFolder'])
+# if not os.path.exists(folderPath):
+#     os.makedirs(folderPath)
+#
+# # Make sure that footprintLibrary exists
+# folderPath = os.path.abspath(curMission['footprintLibrary'])
+# if not os.path.exists(folderPath):
+#     os.makedirs(folderPath)
+#
+# # Make sure that facetFolder exists
+# folderPath = os.path.abspath(curMission['facetFolder'])
+# if not os.path.exists(folderPath):
+#     os.makedirs(folderPath)
+#
+# del folderPath      # Just to be safe!
 
 
 
@@ -245,10 +257,10 @@ curMission['ExportDateDT'] = ExportDate
 
 ########### Fold that into existing infrastructure
 
-# Precompute some Atmosphere and Trajectory profiles
-freshWind   = False
-freshDebris = False
-debug       = False
+# # Precompute some Atmosphere and Trajectory profiles
+# freshWind   = False
+# freshDebris = False
+# debug       = False
 
 profiles = []
 if (freshWind):
