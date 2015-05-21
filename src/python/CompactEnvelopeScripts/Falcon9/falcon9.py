@@ -246,7 +246,7 @@ freshWind   = False
 freshDebris = False
 debug       = False
 
-doMain      = False
+doMain      = True
 addStageReentry = True
 
 profiles = []

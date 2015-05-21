@@ -16,3 +16,8 @@ ifort -c -fPIC ode.f90 moduleConstants.f90 modulePlanetEarth.f90 denEstimator.f9
 
 # Pack up the binary .o files into a library
 ar rcv libFrisco.a *.o
+
+mv libFrisco.a ../../build/
+mv debrisPropagation.so ../../build/
+ 
+rm *.o *.mod *.so

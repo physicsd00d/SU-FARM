@@ -7,7 +7,7 @@ curPath = os.path.dirname(__file__) + "/"
 friscoFiles = 'FriscoLegacy/'
 sys.path.append(curPath + friscoFiles)
 
-friscoDebris = os.path.abspath(curPath + "../../build/DebrisProp/")
+friscoDebris = os.path.abspath(curPath + "../../build/")
 sys.path.append(friscoDebris)
 
 
