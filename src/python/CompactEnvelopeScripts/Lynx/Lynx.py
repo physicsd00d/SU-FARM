@@ -118,12 +118,12 @@ TJC.SetupOutputFolders(curMission, tempDir, outputDir, vehicleName, launchLocati
 # curMission['facetFolder']             = curMission['GeneratedFilesFolder']  + 'facetFolder/'
 #
 # # These hold files that need to be read in
-# curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-# curMission['debrisCatFile']           = 'LynxDebrisCatalog.txt'
+curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatFile']           = 'LynxDebrisCatalog.txt'
 # # curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
 # # curMission['atmosphere']              = friscoFiles + 'AtmoProfiles/special.txt'
 # # curMission['atmospherePickle'] = '../AtmoProfiles/FrontRange.pkl'
-# curMission['atmospherePickle'] = '../AtmoProfiles/SpaceportAmerica.pkl'
+curMission['atmospherePickle'] = '../AtmoProfiles/SpaceportAmerica.pkl'
 #
 #
 # # Make sure that the directory for holding the general Generated files exists
@@ -177,7 +177,8 @@ curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
 curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
-curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
+#curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
+curMission['thresh']                    = 0.  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
 curMission['cumulative']                = 'FAA' # The definition for 'cumulative' that we wish to use.
@@ -191,7 +192,7 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 # The different time steps within the mission
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
 curMission['deltaTFail']              = 5.0     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
@@ -208,7 +209,8 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-curMission['pFail'] = 0.02/curMission['all_points_delta_t']     # Probability that vehicle will fail somewhere
+#curMission['pFail'] = 0.02/curMission['all_points_delta_t']     # Probability that vehicle will fail somewhere
+curMission['pFail'] = 1.     # Probability that vehicle will fail somewhere
 
 
 
@@ -316,7 +318,7 @@ if doMain:
     # print "tProactive = {0}\n".format(tProactive)
 
     footprintStart = 0.
-    footprintUntil = 180.
+    footprintUntil = 520.
 
     footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
 
