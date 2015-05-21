@@ -12,18 +12,24 @@ If you want to use valgrind to debug, compile with -g for debug symbols then cal
 valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9.py
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
-# Points to the python scripts needed from Francisco
-friscoFiles = '../../../Prop3Dof/FriscoDebris/pythonFiles/'
+
+
 # Points to the binaries for propagating trajectories
 debrisPropPATH = '../../../Prop3Dof/FriscoDebris/'
 # Points to the files that I've written
-tjcFiles = '../../'
+
+# Build directory
+buildDir = "../../../../build/"
+tjcFiles = '../../' # This is where the TJC.py file resides.
 
 import os
 import sys
-sys.path.append(friscoFiles)
-sys.path.append(debrisPropPATH)
-sys.path.append(tjcFiles)
+# sys.path.append(friscoFiles)
+# sys.path.append(debrisPropPATH)
+sys.path.append(os.path.abspath(buildDir))
+sys.path.append(os.path.abspath(tjcFiles))
+
+
 
 
 '''
@@ -31,11 +37,11 @@ Import the modules necessary for the script.
 Note: Must Come After sys.path update
 Note: This block is probably the same across all main scripts
 '''
-import debrisPythonWrapper as dpw
-import getPropTraj as traj
-import AtmosProfile as AP
+# import debrisPythonWrapper as dpw
+# import getPropTraj as traj
+# import AtmosProfile as AP
 import CompactEnvelopeBuilder as ceb
-import numpy as np
+# import numpy as np
 import TJC
 import datetime as dt
 
