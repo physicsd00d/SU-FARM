@@ -52,6 +52,50 @@ import math
 #   me from hitting those weird memory errors on Zion.
 
 
+
+
+'''
+Defines the file structure for folders / files that are specific to this vehicle.
+In theory, all vehicles will have the same file structure and this section would
+    be the same across all main files.  Also, should bring pathToMissionFiles
+    into this section
+'''
+def SetupOutputFolders(curMission, tempDir, outputDir, vehicleName, launchLocation):
+
+    # These hold output files, create them in a moment if they don't already exist
+    curMission['GeneratedFilesFolder']    = tempDir + "{0}_{1}/".format(vehicleName, launchLocation)
+    curMission['debrisPickleFolder']      = curMission['GeneratedFilesFolder']  + 'debrisPickleFolder'
+    curMission['footprintVectorFolder']   = curMission['GeneratedFilesFolder']  + 'footprintVectorFolder'
+    curMission['facetFolder']             = curMission['GeneratedFilesFolder']  + 'facetFolder/'
+    curMission['footprintLibrary']        = outputDir  + 'footprintLibrary/'
+
+    # Make sure that the directory for holding the general Generated files exists
+    folderPath = os.path.abspath(curMission['GeneratedFilesFolder'])
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    # Make sure that debrisPickleFolder exists
+    folderPath = os.path.abspath(curMission['debrisPickleFolder'])
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    # Make sure that footprintVectorFolder exists
+    folderPath = os.path.abspath(curMission['footprintVectorFolder'])
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    # Make sure that footprintLibrary exists
+    folderPath = os.path.abspath(curMission['footprintLibrary'])
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    # Make sure that facetFolder exists
+    folderPath = os.path.abspath(curMission['facetFolder'])
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    # del folderPath      # Just to be safe!
+
 # Values taken from frisco's orbitTools.py
 def geodetic2spherical(gdlat,lon,hs):
     ECEF = orbitTools.latlonalt2ECEF(gdlat,lon,hs,1)
