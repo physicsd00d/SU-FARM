@@ -15,11 +15,18 @@ push!(LOAD_PATH, abspath("./src/julia/"))
 
 # Get the location of the input file
 # suaFileName = abspath("./papers/Space2015/SpaceportFilters/SUA_AmericaFilter")
-suaFolder = "/Volumes/Main Mac/Users/marian/Documents/Research/Prop3Dof/CythonFiles/OtherPythonFiles/ProcessAirTOpHazardAreas/Airtop_2018_Feb2/"
-suaFileName = "SUA_OpeningScheme2025H"
+# suaFolder = "/Volumes/Main Mac/Users/marian/Documents/Research/Prop3Dof/CythonFiles/OtherPythonFiles/ProcessAirTOpHazardAreas/Airtop_2018_Feb2/"
+# suaFileName = "SUA_OpeningScheme2025H_CE"
+
+# suaFolder = basePath * "papers/TechCenterReport/HazardAreasSimulated/"
+# outputFolder = suaFolder * "KMLs/"
+
+suaFolder = basePath * "temp/SpaceportFilters/Space2015/"
+outputFolder = suaFolder * "KMLs/"
+
 
 # Now move the pwd to where the outputs should go
-cd(abspath("./outputs/SpaceportFilters/"))
+# cd(abspath("./temp/SpaceportFilters/"))
 
 using Points
 include("googleEarth.jl")
@@ -33,6 +40,25 @@ function GetSUALatLonAlt(curName, curDict)
 #   LLFL[2,:] = lon * pi/180. - π
   LLFL[1,:] = lat
   LLFL[2,:] = lon
+  LLFL[3,:] = int(float(curDict[:hiAlt])/100.)
+
+  # Return
+  LLFL
+end
+
+function GetSUALatLonHiLo(curName, curDict)
+  lat = curDict[:lat]
+  lon = curDict[:lon]
+  numPts = length(lat)
+  LLFL      = zeros(Float64, 4, numPts)
+#   LLFL[1,:] = lat * pi/180.
+#   LLFL[2,:] = lon * pi/180. - π
+  LLFL[1,:] = lat
+  LLFL[2,:] = lon
+  LLFL[3,:] = int(float(curDict[:lowAlt])/100.)
+  LLFL[4,:] = int(float(curDict[:hiAlt])/100.)
+
+  # Return
   LLFL
 end
 
@@ -108,40 +134,55 @@ function ReadIndividualSUA(inFile, suaDict)
   suaDict[curName] = {:lowAlt=>lowAlt, :hiAlt=>hiAlt, :startTime=>startTime, :endTime=>endTime, :lat=>latArray, :lon=>lonArray}
 end
 
-
-inFile = open(suaFolder*suaFileName, "r")
-suaDict = Dict()
-while !eof(inFile)
-  ReadIndividualSUA(inFile, suaDict)
-end
-close(inFile)
-
-suaDict
-
-#=
-Now we can use the above functions to create filters for everything
-=#
-
-# spaceportDict = ReadSpaceportDict(spaceportLocationFile)
-storageDict = Dict()
-
-filterRadius       = 450.
-lowFL              = 0
-hiFL               = 999
-
-for (curName, curDict) in suaDict
-  println(curName)
-  LatLonFL = GetSUALatLonAlt(curName, curDict)
-#   WriteFacetFilter(LatLonFL, lowFL, hiFL, curFilter)
-  storageDict[curName] = LatLonFL
+readdir(suaFolder)
+suaFileNameVec = Array(String,0)
+for curFile in readdir(suaFolder)
+  if curFile[1:4] == "SUA_"
+    push!(suaFileNameVec, curFile)
+  end
 end
 
-storageDict
+suaFileNameVec
 
+for suaFileName in suaFileNameVec
+  inFile = open(suaFolder*suaFileName, "r")
+  suaDict = Dict()
+  while !eof(inFile)
+    ReadIndividualSUA(inFile, suaDict)
+  end
+  close(inFile)
 
-# Now plot all of the filters
-fileNameGE = suaFileName*".kml"
-staticBoxes(fileNameGE, storageDict, 10.)
+  suaDict
 
-LLFL = storageDict["America"]
+  #=
+  Now we can use the above functions to create filters for everything
+  =#
+
+  # spaceportDict = ReadSpaceportDict(spaceportLocationFile)
+  storageDict = Dict()
+
+  filterRadius       = 450.
+  lowFL              = 0
+  hiFL               = 999
+
+  for (curName, curDict) in suaDict
+    println(curName)
+    LatLonHiLo = GetSUALatLonHiLo(curName, curDict)
+    storageDict[curName] = LatLonHiLo
+
+  #   WriteFacetFilter(LatLonFL, lowFL, hiFL, curFilter)
+  #   LatLonFL = GetSUALatLonAlt(curName, curDict)
+  #   storageDict[curName] = LatLonFL
+  end
+
+  # curKeys = collect(keys(storageDict))
+  # storageDict[curKeys[1]][1:3,:]
+
+  # makeLineString(storageDict[curKeys[1]][1:3,:], 10.)
+
+  # Now plot all of the filters
+  fileNameGE = outputFolder * suaFileName[5:end] * ".kml"
+  staticBoxesV2(fileNameGE, storageDict, 1.)
+end
+
 
