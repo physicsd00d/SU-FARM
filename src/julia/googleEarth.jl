@@ -44,6 +44,20 @@ function makePlacemarkString(pointStringVec, timeString = "", placemarkName = ""
   "       </Placemark>\n"
 end
 
+function makePlacemarkPointString(pointStringVec, timeString = "", placemarkName = "")
+  #collapsedPointString = join(pointStringVec)
+
+  # If a name is provided, use it
+  if length(placemarkName) > 0
+    placemarkName = "<name>"*placemarkName*"</name>\n"
+  end
+  styleName = "redPoly"
+
+  """       <Placemark>\n $placemarkName $timeString
+         <styleUrl>#$styleName</styleUrl>
+  $(pointStringVec[1]) </Placemark>\n"""
+end
+
 function googleEarthAircraftAnimation(fileNameGE, acDict, deltaTsec)
   outFileGE = open(fileNameGE, "w")
 
@@ -129,7 +143,7 @@ function makeLineString(llfl, k::Float64 = 1.)
   # llfl is lat lon fl matrix
   # k is plot factor, scales altitude
   lineString = ["""    <LineString>\n""",
-                """      <altitudeMode>relativeToGround</altitudeMode>\n""",
+                """      <altitudeMode>relativeToGround</altitudeMode><tessellate>1</tessellate>\n""",
                 """      <coordinates>\n""",
                 "", # THIS LINE MUST CONTAIN THE DATA!!!
                 """      </coordinates>\n""",
@@ -144,6 +158,31 @@ function makeLineString(llfl, k::Float64 = 1.)
   lineString
 end
 
+
+function MakePolygonString(llfl, k::Float64 = 1.)
+  # TODO: Eventually this should take a general LatLonFlightLevel input, but for now just four points
+#   (upLeft, downLeft, downRight, upRight) = llfl
+  # Polygons MUST be in counterclockwise order or fills won't work.  I didn't know that.
+  # Coordinates are comma-separated within and space-separated between: lon1,lat1,alt1 lon2,lat2,alt2 etc.
+  # Each coordinate is a column in llfl
+  # Assumes incoming LLFL is closed shape
+
+  lineString = ""
+  for (curLat, curLon, curAlt) in zip(llfl[1,:], ((llfl[2,:]+360.) % 360.), llfl[3,:] * 100 * ft2m * k)
+    lineString *= "$curLon,$curLat,$curAlt "
+  end
+
+
+  """
+            <Polygon>
+                  <tessellate>1</tessellate>
+                  <altitudeMode>relativeToGround</altitudeMode>
+                  <outerBoundaryIs><LinearRing>
+                  <coordinates>$lineString</coordinates>             <!-- lon,lat[,alt] tuples -->
+                  </LinearRing>
+                </outerBoundaryIs>
+            </Polygon>"""
+end
 
 
 function staticBoxes(fileNameGE, storageDict::Dict, plotFactor)
@@ -164,7 +203,7 @@ function staticBoxes(fileNameGE, storageDict::Dict, plotFactor)
               """    <width>4</width>\n""",
               """   </LineStyle>\n""",
               """  </Style>\n""",
-              """ <name>""" * fileNameGE * """</name>\n\n"""]
+              """ <name>""" * basename(fileNameGE) * """</name>\n\n"""]
 
   for line in preamble
     write(outFileGE, line)
@@ -208,7 +247,7 @@ function staticBoxesV2(fileNameGE, storageDict::Dict, plotFactor)
               """    <width>4</width>\n""",
               """   </LineStyle>\n""",
               """  </Style>\n""",
-              """ <name>""" * fileNameGE * """</name>\n\n"""]
+              """ <name>""" * basename(fileNameGE) * """</name>\n\n"""]
 
   for line in preamble
     write(outFileGE, line)
@@ -247,119 +286,77 @@ function staticBoxesV2(fileNameGE, storageDict::Dict, plotFactor)
   close(outFileGE)
 end
 
+function staticPolygons(fileNameGE, storageDict::Dict, plotFactor)
+  # I expect the Lat/Lon/Alt in listOfLists to be in Deg / Deg / FL low, FL hi
+  outFileGE = open(fileNameGE,"w")
 
-# def staticBoxes(fileNameGE, storageDict, plotFactor):
-#     ft2m = 0.3048
+  preamble = ["""<?xml version="1.0" encoding="UTF-8"?>\n""",
+              """<kml xmlns="http://www.opengis.net/kml/2.2">\n""",
+              """ <Document>\n""",
+              """  <Style id="rocketStyleID">\n""",
+              """   <LineStyle>\n""",
+              """    <color>ff0000ff</color>\n""",
+              """    <colorMode>normal</colorMode>\n""",
+              """    <width>4</width>\n""",
+              """   </LineStyle>\n""",
+              """  </Style>\n""",
+              """  <Style id="redPoly">\n""",
+              """   <PolyStyle>\n""",
+              """    <color>ff0000ff</color>\n""",
+              """    <outline>0</outline>\n""",
+              """   </PolyStyle>\n""",
+              """  </Style>\n""",
+              """ <name>""" * basename(fileNameGE) * """</name>\n\n"""]
 
-#     #    # Make this an input!!!!
-#     #    numElementsPerLine = 6
-
-#     #fileNameGE = 'GE.kml'
-#     outFileGE = open(fileNameGE,'w')
-
-#     line1GE  = '<?xml version="1.0" encoding="UTF-8"?>\n'
-#     line2GE  = '<kml xmlns="http://www.opengis.net/kml/2.2">\n'
-#     line3GE  = ' <Document>\n'
-#     line4GE  = '  <Style id="style1">\n'
-#     line5GE  = '   <LineStyle>\n'
-#     line6GE  = '    <colorMode>random</colorMode>\n'
-#     line7GE  = '    <width>4</width>\n'
-#     line8GE  = '   </LineStyle>\n'
-#     line9GE  = '  </Style>\n'
-#     line10GE = ' <name>' + fileNameGE + '</name>\n\n'
-#     outFileGE.write(line1GE)
-#     outFileGE.write(line2GE)
-#     outFileGE.write(line3GE)
-#     outFileGE.write(line4GE)
-#     outFileGE.write(line5GE)
-#     outFileGE.write(line6GE)
-#     outFileGE.write(line7GE)
-#     outFileGE.write(line8GE)
-#     outFileGE.write(line9GE)
-#     outFileGE.write(line10GE)
+  for line in preamble
+    write(outFileGE, line)
+  end
 
 
-#     #    lineCounter = 0
-#     #    numRuns = len(listOfListsOfLists)
-#     #    for curRun in range(0,numRuns):
-#     for curItem in sorted(storageDict.keys()):
-#         listOfLists = storageDict[curItem]
-#         line1GE = '  <Placemark>\n'
-#         line2GE = '   <name>'+str(curItem)+'</name>\n'
-#         line3GE = '   <styleUrl>#style1</styleUrl>\n'
-#         line4GE = '   <MultiGeometry>\n'
-#         line5GE = '    <LineString>\n'
-#         line6GE = '      <altitudeMode>relativeToGround</altitudeMode>\n'
-#         line7GE = '      <coordinates>\n'
+  for (curName, curLatLonHiLo) in storageDict
+    numFaces = length(curLatLonHiLo[1,:]) - 1  # One less face than number of points for closed shape
+    tempLLFL = zeros(Float64, 3, 5)   # There are five points per face (last one closes)
 
-#         outFileGE.write(line1GE)
-#         outFileGE.write(line2GE)
-#         outFileGE.write(line3GE)
-#         outFileGE.write(line4GE)
-#         outFileGE.write(line5GE)
-#         outFileGE.write(line6GE)
-#         outFileGE.write(line7GE)
+    curPt = 1
+    lineStrVec = Array(String,0)
+    for curFace in 1:numFaces
 
-#         numFaces = len(listOfLists) - 1     # One less face than number of points for closed shape
+      lat1, lon1, minFL, maxFL = curLatLonHiLo[:,curFace]
+      lat2, lon2, minFL, maxFL = curLatLonHiLo[:,curFace+1]  #assuming same min/max alts
+#       print("$lat1 -> $lat2 \n")
+      curPt = 1
+      tempLLFL[:,curPt] = [lat1, lon1, minFL]
+      tempLLFL[:,curPt+1] = [lat1, lon1, maxFL]
+      tempLLFL[:,curPt+2] = [lat2, lon2, maxFL]
+      tempLLFL[:,curPt+3] = [lat2, lon2, minFL]
+      tempLLFL[:,curPt+4] = [lat1, lon1, minFL]
 
-# #        for elem in listOfLists:
-#         for curPt in range(numFaces):
+#       push!(lineStrVec, MakePolygonString(tempLLFL, plotFactor))
+      lineStrVec = [MakePolygonString(tempLLFL, plotFactor)]
+      placemarkStr = makePlacemarkPointString(lineStrVec,"", curName)
+      write(outFileGE, placemarkStr)
 
-#             [lat1, lon1, minAlt, maxAlt] =listOfLists[curPt]
-#             [lat2, lon2, minAlt, maxAlt] =listOfLists[curPt+1]  #assuming same min/max alts
+    end
 
-#             # Cutoff maxAlt at NAS
-# #            maxAlt = min(maxAlt, 60000) * ft2m
-#             maxAlt = maxAlt * ft2m
-#             minAlt = minAlt * ft2m
+    # make the top face
+#     println("This")
+#     println(curLatLonHiLo[[1,2,4],:])
+    lineStrVec = [MakePolygonString(curLatLonHiLo[[1,2,4],:], plotFactor)]
+    placemarkStr = makePlacemarkPointString(lineStrVec,"", curName)
+    write(outFileGE, placemarkStr)
 
-#             newLine1 = str(lon1)+','+str(lat1)+','+str(minAlt * plotFactor)+'\n'
-#             newLine2 = str(lon1)+','+str(lat1)+','+str(maxAlt * plotFactor)+'\n'
-#             newLine3 = str(lon2)+','+str(lat2)+','+str(maxAlt * plotFactor)+'\n'
-#             newLine4 = str(lon2)+','+str(lat2)+','+str(minAlt * plotFactor)+'\n'
-#             newLine5 = str(lon1)+','+str(lat1)+','+str(minAlt * plotFactor)+'\n'     # close the shape
+#     lineStrVec = MakePolygonString(tempLLFL, plotFactor)
+#     print(lineStrVec)
+#     placemarkStr = makePlacemarkPointString(lineStrVec,"", curName)
+#     placemarkStr = makePlacemarkString(lineStrVec, "", curName)
 
-#             outFileGE.write(newLine1)
-#             outFileGE.write(newLine2)
-#             outFileGE.write(newLine3)
-#             outFileGE.write(newLine4)
-#             outFileGE.write(newLine5)
+  end
 
+  finale = "  </Document>\n" * "</kml>"
+  write(outFileGE, finale)
 
-# #            [lat, lon, alt] = elem
-#             #        lat = flatArray[lineCounter]
-#             #        lon = flatArray[lineCounter+1]
-#             #        alt = flatArray[lineCounter+2]
-#             #        lineCounter += numElementsPerLine
-
-#             #        if tx > maxTimeSteps:
-#             #            continue
-#             #        if (alt > 18288) and cutoffNAS:
-#             #            continue
-
-# #            newLine = str(lon)+','+str(lat)+','+str(alt)+'\n'
-# #            outFileGE.write(newLine)
-
-#         line1GE = '    </coordinates>\n'
-#         line2GE = '   </LineString>\n'
-#         line3GE = '  </MultiGeometry>\n'
-#         line4GE = ' </Placemark>\n\n'
-
-#         outFileGE.write(line1GE)
-#         outFileGE.write(line2GE)
-#         outFileGE.write(line3GE)
-#         outFileGE.write(line4GE)
-
-
-#     line1GE = '  </Document>\n'
-#     line2GE = '</kml>'
-
-
-#     outFileGE.write(line1GE)
-#     outFileGE.write(line2GE)
-
-#     outFileGE.close()
-
+  close(outFileGE)
+end
 
 
 

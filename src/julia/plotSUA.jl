@@ -21,10 +21,17 @@ push!(LOAD_PATH, abspath("./src/julia/"))
 # suaFolder = basePath * "papers/TechCenterReport/HazardAreasSimulated/"
 # outputFolder = suaFolder * "KMLs/"
 
-suaFolder = basePath * "temp/SpaceportFilters/Space2015/"
+# suaFolder = basePath * "temp/SpaceportFilters/Space2015/"
+# suaFolder = "/Volumes/Main Mac/Users/marian/Documents/Research/Prop3Dof/CythonFiles/OtherPythonFiles/FixAirtopToSua/SUA_Plus1/"
+# suaFolder = "/Volumes/Storage/Research/papers/Space2015/FacetEnvelopes/Combined/"
+# suaFolder = "/Users/marian/Downloads/SuaFilesBrokenOut/FacetEnvelopes/"
+# suaFolder = "/Users/marian/Downloads/SuaFilesBrokenOut/TraditionalSUAs/"
+suaFolder = "/Users/marian/Downloads/SuaFilesBrokenOut/FacetEnvelopes/touched/"
+
 outputFolder = suaFolder * "KMLs/"
 
-
+touchLat = 0.12 + 0.03
+touchLon = -0.05
 # Now move the pwd to where the outputs should go
 # cd(abspath("./temp/SpaceportFilters/"))
 
@@ -123,6 +130,10 @@ function ReadIndividualSUA(inFile, suaDict)
     latArray[ix], lonArray[ix] = [float(obj) for obj in split(readline(inFile))]
   end
 
+  # If you need to do some fine-tuning to the location, can touch the lat, lons now.
+  latArray += touchLat
+  lonArray += touchLon
+
   #Finally parse out the altitudes and times
   (lowAlt, hiAlt) = altTimeLine[1:2]
   startTime, endTime = null, null
@@ -182,7 +193,14 @@ for suaFileName in suaFileNameVec
 
   # Now plot all of the filters
   fileNameGE = outputFolder * suaFileName[5:end] * ".kml"
+#   println(basename(fileNameGE))
   staticBoxesV2(fileNameGE, storageDict, 1.)
+
+  fileNameGE = outputFolder * suaFileName[5:end] * "_poly.kml"
+  staticPolygons(fileNameGE, storageDict, 1.)
 end
 
+testList = Array(String, 0)
+push!(testList, "Hello")
+push!(testList, "World")
 
