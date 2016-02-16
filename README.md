@@ -3,6 +3,12 @@ SU_FARM
 
 Coming Eventually...Stanford University Framework for Aircraft Risk Management
 
+## To 'install' SU-FARM
+* Somehow take care of all the compile instructions
+* Source the DebrisProp files to get build/DebrisProp/[libfrisco.a, debrisPropagation.so]
+* The do ```python setup.py develop``` to 'install' the package CompactEnvelopeBuilder in developer mode
+
+## Notes on what needs to be done to compile
 * I use a custom directory for system-wide packages that I install (/sw)
 ** Make sure that .profile / .bash_rc has /sw/bin prepended to the path and /sw/lib prepended to LD_LIBRARY_PATH
 ** Don't forget to actually export the variables after setting them, haha

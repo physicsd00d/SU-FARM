@@ -88,7 +88,7 @@ compactEnvelopeModule = Extension(
 
 
 config = {
-    'name': 'CompactEnvelopeBuilder_v2',
+    'name': 'CompactEnvelopeBuilder',
     # 'version': '0.1.0',
     # 'description': 'Air Pressure Packages',
     'author': 'Tom Colvin',
