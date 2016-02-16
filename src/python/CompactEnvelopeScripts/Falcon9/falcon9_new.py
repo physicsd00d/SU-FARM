@@ -52,11 +52,11 @@ Note: Must Come After sys.path update
 Note: This block is probably the same across all main scripts
 '''
 import CompactEnvelopeBuilder as ceb
-import TJC
+from Simulation import TJC
 import datetime as dt
 
-import LaunchSites
-import LaunchProviders
+from Simulation import LaunchSites
+from Simulation import LaunchProviders
 
 from copy import deepcopy
 

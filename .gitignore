@@ -3,5 +3,7 @@
 build/**
 outputs/**
 temp/**
-*.pyc
 **/CompactEnvelopeBuilder.cpp
+*.pyc
+*.so
+*.egg-info

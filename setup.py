@@ -36,6 +36,7 @@ srcNames = ["SkyGrid", "Debris", "Footprint3D", "Point", "Random_Number",  "time
 
 pyxDir = os.path.realpath('src/') # Location of the Cython file (pyx)
 cppDir = os.path.realpath('src/cpp') # Location of the C++ source files
+pythonDir = os.path.realpath('src/python') # Location of the C++ source files
 objDir = os.path.realpath('build/') # Anticipated location of object files (I'll put them here)
 
 
@@ -68,7 +69,7 @@ compileThese.insert(0,pyxDir + '/' + pyxFile);
 
 # Everything has been defined in terms of absolute paths, so I can change directories with no repurcussions
 # Changing dir so that my .so and .egg will wind up here and the develop links will work
-os.chdir('build')
+# os.chdir('build')
 
 # List of Extension kwargs
 # https://docs.python.org/2/distutils/apiref.html#distutils.core.Extension
@@ -86,19 +87,34 @@ compactEnvelopeModule = Extension(
      language="c++")
 
 
+# Explains (kinda) how to call f2py from setuptools
+# debrisPropModule = Extension(
+#     "debrisPropagationTest",
+#     ['moduleConstants.f90','modulePlanetEarth.f90','denEstimator.f90','linearInterpolation.f90','speedOfSound.f90','ode.o','debrisPropAllTime.f90'],
+#     language="fortran")
+
+# print "pythonDir = {0}".format(pythonDir)
+
+# In the meanwhile, let's just say that you've gotta put the .so file into the python modules
+import shutil
+shutil.copy('build/DebrisProp/debrisPropagation.so', 'src/python/packages/FriscoLegacy/')
+shutil.copy('build/DebrisProp/orbitProp.so', 'src/python/packages/FriscoLegacy/')
 
 config = {
-    'name': 'CompactEnvelopeBuilder',
+    'name': 'SU-FARM',
     # 'version': '0.1.0',
     # 'description': 'Air Pressure Packages',
     'author': 'Tom Colvin',
     'author_email' : 'tcolvin',
     # 'install_requires': ['MeshPy', 'xlrd', 'pulp', 'matplotlib', 'scipy', 'numpy'],
-    # 'packages': ['air_pressure'],
+    # 'packages': [pythonDir + '/Simulation'],
+    'packages': ['Simulation','FriscoLegacy'],
+    'package_dir': {'': 'src/python/packages'}, # Telling where to expect python packages
     # 'scripts': [],
     'ext_modules' : cythonize([compactEnvelopeModule])
     # 'long_description': readme()
 }
+# Try using dot notation on the packages?
 
 catchArgs()  
 setup(**config)

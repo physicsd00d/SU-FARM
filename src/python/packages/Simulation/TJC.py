@@ -3,32 +3,33 @@ import sys
 
 # Points to the python scripts needed from Francisco
 # friscoFiles = '../../../Prop3Dof/FriscoDebris/pythonFiles/'
-curPath = os.path.dirname(__file__) + "/"
-friscoFiles = 'FriscoLegacy/'
-sys.path.append(curPath + friscoFiles)
 
-friscoDebris = os.path.abspath(curPath + "../../build/")
-sys.path.append(friscoDebris)
+# curPath = os.path.dirname(__file__) + "/"
+# friscoFiles = 'FriscoLegacy/'
+# sys.path.append(curPath + friscoFiles)
+
+# friscoDebris = os.path.abspath(curPath + "../../build/")
+# sys.path.append(friscoDebris)
 
 
-print sys.path
+# print sys.path
 
 
 
 import numpy as np
 import CompactEnvelopeBuilder as ceb
 # import getPropTraj as traj
-import AtmosProfile as AP
-import debrisReader as DR
-import debrisPropagation as dp
+from FriscoLegacy import AtmosProfile as AP
+from FriscoLegacy import debrisReader as DR
+from FriscoLegacy import debrisPropagation as dp
 
 
 
-from scipy.io import loadmat
-import orbitTools
+# from scipy.io import loadmat
+from FriscoLegacy import orbitTools
 import pickle
 
-import pdb
+# import pdb
 
 import math
 
@@ -1175,6 +1176,10 @@ def MonteCarlo_until_tfail(curMission, profiles, tlow, thigh):
                               modules=('numpy as np','debrisReader as DR', 'orbitTools', 'debrisPropagation as dp'), \
                               callback=finished001) for curTime in timeVec]
 
+    print "This will fail because the modules like debrisReader are now inside a package.  \
+            Must include package info or put all of these modules in the root package. "
+    sys.exit()
+
     job_server.wait()
     job_server.print_stats()
     for job in jobs:
@@ -1466,6 +1471,9 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
                               modules=('numpy as np','debrisReader as DR', 'orbitTools', 'debrisPropagation as dp'), \
                               callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
 
+    print "This will fail because the modules like debrisReader are now inside a package.  \
+            Must include package info or put all of these modules in the root package. "
+    sys.exit()
 
     job_server.wait()
     job_server.print_stats()
@@ -2483,11 +2491,11 @@ def LoadPrecomputed(mission):
 def getStateVector(curMission, atmProfile, Toffset, ThrustOffsetAngDeg):
     import orbitTools
     from scipy.interpolate import UnivariateSpline
-    from scipy import interpolate
-    import orbitProp as op
+    # from scipy import interpolate
+    from FriscoLegacy import orbitProp as op
     import sys
     sys.path.append('../PythonScripts')
-    import AtmosProfile as AP
+    # import AtmosProfile as AP
     #import matplotlib.pyplot as plt
     planetModel = 0
     
