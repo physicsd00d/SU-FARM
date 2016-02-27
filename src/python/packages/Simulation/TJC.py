@@ -422,8 +422,10 @@ def finished002(val):
     print "done with " + val[1]
 
 
-# def genFootprint(ExportDate, tfailSec, reactionTimeMinutes, deltaXY, deltaZ, h1, h2, debrisPickleFolder, footprintVectorFolder, thresh, curPFail):
 def genFootprint(curMission, tfailSec, curPFail):
+    """For a non-reentry.  This takes a time of failure and its associated probability and generates a 
+        a footprint around the debris that would be created from this failure.  Writes footprint to
+        file and returns the danger metric and the name of the file."""
 
     ExportDateDT            = curMission['ExportDateDT']
     # reactionTimeMinutes     = curMission['reactionTimeMinutes']       # Where did this go?

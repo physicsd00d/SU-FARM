@@ -1383,7 +1383,7 @@ void SkyGrid::generateSpatialProbability(int whichProb){
     return;
 }
 
-
+ 
 
 map<int, map<int, map<int,double> > >SkyGrid::getSpatialProbabilty(){
     return SpatialProbabilty;
