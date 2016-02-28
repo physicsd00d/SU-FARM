@@ -384,12 +384,22 @@ def makeFootprintFromTimes(mission1, timelo, timehi):
         job_server.print_stats()
         job_server.destroy()    #Hopefully, this will close the server and we won't get errors about too many open files
 
+
     vals        = []    # Holds the EV_Strike values
     fileNames   = []    # Holds the filenames of the footprint vector .dat files
-    for job in jobs:
-        print job()
-        vals.append(job()[0])
-        fileNames.append(job()[1])
+    if numNodesEnvelopes == 1:
+        # This is a list of tuples
+        for job in jobs:
+            print job
+            vals.append(job[0])
+            fileNames.append(job[1])
+    else:
+        # This is a function returned from pp
+        for job in jobs:
+            print job()
+            vals.append(job()[0])
+            fileNames.append(job()[1])
+
 
     try:
         # Need to open up all the footprints and merge them

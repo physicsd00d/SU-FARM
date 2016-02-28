@@ -19,7 +19,7 @@ freshWind   = True
 freshDebris = True
 debug       = False
 
-doMain      = False
+doMain      = True
 addStageReentry = False
 
 
@@ -146,13 +146,13 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 # The different time steps within the mission
 curMission['deltaT']                  = 5.      # Seconds, this is the time resolution of a propagated trajectory
 curMission['deltaTFail']              = 5.0     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 
-curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodes']                  = 2 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 2
 curMission['NASkm']                     = NASkm
 
 
@@ -252,7 +252,7 @@ else:
 if freshDebris:
     # t_lo = .0
     t_lo = 0.
-    t_hi = 10.
+    t_hi = 180.
     # t_hi = 180.
 
     TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
