@@ -95,7 +95,7 @@ def readInput(fileName, basePATH):
                     print '\n!!! ERROR in readInputTrajectory.py. Incorrect number of CD files'
                     exit(1)
                 for index in range(len(value)):
-                    #print value[index]
+                    # print value[index]
                     Minf,CD,Aref = readInputCD(basePATH + value[index])
                     MinfCDlist.append(Minf)
                     CDList.append(CD)
@@ -271,8 +271,12 @@ def readInputCD(fileName):
                 Aref = float(value[0])
         elif len(line.split())==2:
             key = line.split()
-            Minf = np.concatenate((Minf,[float(key[0])]),1)
-            CD = np.concatenate((CD,[float(key[1])]),1)
+            # print "Minf = {0}".format(Minf)
+            # print "key = {0}".format(key)
+            # Minf = np.concatenate((Minf,[float(key[0])]),1)
+            # CD = np.concatenate((CD,[float(key[1])]),1)
+            Minf = np.concatenate((Minf,[float(key[0])]))  # Feb2016 I'm nervous about this, why is this suddenly not working?
+            CD = np.concatenate((CD,[float(key[1])]))
     return (Minf,CD,Aref)
 
 # From readThrust.py
@@ -303,9 +307,9 @@ def readInputThrust(fileName):
                 stage = float(value[0])
         elif len(line.split())==4:
             key = line.split()
-            time = np.concatenate((time,[float(key[0])]),1)
-            Tx = np.concatenate((Tx,[float(key[1])]),1)
-            Ty = np.concatenate((Ty,[float(key[2])]),1)
-            Tz = np.concatenate((Tz,[float(key[3])]),1)
+            time = np.concatenate((time,[float(key[0])]))
+            Tx = np.concatenate((Tx,[float(key[1])]))
+            Ty = np.concatenate((Ty,[float(key[2])]))
+            Tz = np.concatenate((Tz,[float(key[3])]))
     time = time - time[0]
     return (stage,time,Tx,Ty,Tz)

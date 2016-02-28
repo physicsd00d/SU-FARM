@@ -1175,12 +1175,12 @@ def MonteCarlo_until_tfail(curMission, profiles, tlow, thigh):
     jobs = [job_server.submit(MonteCarlo_at_tfail_and_record, \
                               args=(curMission, coeffIX, curTime, numPiecesPerSample, profiles), \
                               depfuncs=(MonteCarlo_at_tfail,), \
-                              modules=('numpy as np','debrisReader as DR', 'orbitTools', 'debrisPropagation as dp'), \
+                              modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
                               callback=finished001) for curTime in timeVec]
 
     print "This will fail because the modules like debrisReader are now inside a package.  \
-            Must include package info or put all of these modules in the root package. "
-    sys.exit()
+            Must include package info or put all of these modules in the root package. 1182 "
+    # sys.exit()
 
     job_server.wait()
     job_server.print_stats()
@@ -1474,8 +1474,8 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
                               callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
 
     print "This will fail because the modules like debrisReader are now inside a package.  \
-            Must include package info or put all of these modules in the root package. "
-    sys.exit()
+            Must include package info or put all of these modules in the root package. 1447"
+    # sys.exit()
 
     job_server.wait()
     job_server.print_stats()
@@ -2491,7 +2491,7 @@ def LoadPrecomputed(mission):
 
 # Initial velocity of zero is hardcoded; should read in initial velocity
 def getStateVector(curMission, atmProfile, Toffset, ThrustOffsetAngDeg):
-    import orbitTools
+    # import orbitTools
     from scipy.interpolate import UnivariateSpline
     # from scipy import interpolate
     from FriscoLegacy import orbitProp as op
@@ -2562,7 +2562,7 @@ def getStateVector(curMission, atmProfile, Toffset, ThrustOffsetAngDeg):
     # loverd = 0
     minfcl = [1]
     geoptions = 1
-    fileGE = 'trajProp'
+    fileGE = curMission['GeneratedFilesFolder'] + 'trajProp'
 #    thrustOffsetAngDeg =[0,0]
     mass_time_alt_opt = 1
 #    dtinterval = 0.01

@@ -83,7 +83,8 @@ subroutine propagate(finalConditions,finalDerivs,initialState,&
   !##############################################
   double precision , dimension(6) , intent(in) :: initialState
   double precision , intent(in) :: mass,Sref, dtInterval,thetag,mass_time_alt_final
-  character*16 ,intent(in) :: filename
+!  character*16 ,intent(in) :: filename
+  character(len=*) ,intent(in) :: filename
   double precision , dimension(2) , intent(in) :: thrustOffAngleDeg
   ! Aerodynamic inputs
   integer , intent(in) :: nCd,nCL,ntime,mass_time_alt_opt

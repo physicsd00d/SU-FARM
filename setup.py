@@ -106,7 +106,8 @@ config = {
     # 'description': 'Air Pressure Packages',
     'author': 'Tom Colvin',
     'author_email' : 'tcolvin',
-    # 'install_requires': ['MeshPy', 'xlrd', 'pulp', 'matplotlib', 'scipy', 'numpy'],
+    'install_requires': ['scipy', 'numpy', 'pp'],
+    'dependency_links': ['http://www.parallelpython.com/downloads/pp/pp-1.6.4.zip'],
     # 'packages': [pythonDir + '/Simulation'],
     'packages': ['Simulation','FriscoLegacy'],
     'package_dir': {'': 'src/python/packages'}, # Telling where to expect python packages

@@ -71,8 +71,6 @@ using kmldom::FeaturePtr;
 
 using kmlbase::Attributes;
 
-//#include "Architecture.h"
-
 string convert_min_to_time(int total_min);
 
 class Footprint3D{

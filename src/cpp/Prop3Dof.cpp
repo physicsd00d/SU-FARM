@@ -16,7 +16,7 @@ using std::map;
 
 #include "Trajectory.h"
 #include "Debris.h"
-#include "Architecture.h"
+// #include "Architecture.h"
 #include "Footprint3D.h"
 #include "SkyGrid.h"
 #include "PointCloud.h"
