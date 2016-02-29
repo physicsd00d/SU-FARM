@@ -670,7 +670,7 @@ def PlotNominalTrajectories(profiles, curMission, limitSec):
 
 
 ### CURRENTLY IN USE (Called by falcon9.py)
-def PlotDebrisFromExplodeTime(mission, profiles, tfail):
+def PlotDebrisFromExplodeTime(mission, profiles, tfail, cutoffNAS = True):
     # Plot some debris trajectories that have already been generated
 
     # Figure out the appropriate timestep (nearestIX)
@@ -687,13 +687,12 @@ def PlotDebrisFromExplodeTime(mission, profiles, tfail):
     input.close()
 
     # Now ship this off to a google earth routine
-    import data2GE
+    from FriscoLegacy import data2GE
     GEfile = GeneratedFilesFolder + '/GE_Debris_' + str(tfail) + '.kml'
     
     deltaT = mission['deltaT']
     reactionTime = mission['reactionTimeMinutes']*60
 
-    cutoffNAS = True
     maxTimeSteps = np.ceil(reactionTime/deltaT)
     data2GE.convertTJC(GEfile, cur_mpc['flatPointArray'], cur_mpc['numTimeSteps'], len(cur_mpc['numTimeSteps']), cutoffNAS, maxTimeSteps)
     # data2GE.convertTJC(GEfile, cur_mpc['flatPointArray'], cur_mpc['numTimeSteps'], len(cur_mpc['numTimeSteps']), cutoffNAS)
