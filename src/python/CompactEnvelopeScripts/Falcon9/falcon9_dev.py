@@ -15,11 +15,11 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
-doMain      = True
+doMain      = False
 addStageReentry = False
 
 
@@ -151,8 +151,8 @@ curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time 
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 
-curMission['numNodes']                  = 2 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 2
+curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
 
@@ -270,6 +270,76 @@ vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
 vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, vehicleNotes)
 mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
+
+
+# ============ DEBUGGING STUFF ==================
+import numpy as np
+makeFootprintFromTimes = TJC.makeFootprintFromTimes
+
+# footprintStart, footprintUntil = 100., 105. 
+# footprintTotal = []
+
+# for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
+#     timelo = footprintStart + ix*footprintIntervals
+#     timehi = np.min( (footprintStart + (ix+1)*footprintIntervals, footprintUntil) )
+
+#     print 'TIMES: From {0} to {1}'.format(timelo, timehi)
+#     EVstrike, curFootPrint = makeFootprintFromTimes(curMission, timelo, timehi)
+#     print 'EV =  ' + str(EVstrike)
+
+
+# genFootprint = TJC.genFootprint
+# timeRange = [100.0, 105.0]
+# pFailThisTimestepVec = [0.0001681301366752, 0.00021334138336011999]
+# ix = 0
+# curVal, curFootPrintFile = genFootprint(curMission, timeRange[ix], pFailThisTimestepVec[ix])
+# footprintTotal = ceb.PyFootprint(curFootPrintFile, True)
+# footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
+
+
+
+debrisPickleFolder      = curMission['debrisPickleFolder']
+tfailSec = 100.
+inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+input = open(inFileName, 'rb')
+cur_mpc = pickle.load(input)
+input.close()
+
+TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail=100., cutoffNAS = False)
+sys.exit()
+
+arefMeanList = cur_mpc['arefMeanList']
+numberOfPiecesMeanList = cur_mpc['numberOfPiecesMeanList']
+
+# This is [total number of pieces simulated within this mpc] / [number of debris categories in this mpc]
+# TODO: If all_points_delta_t != debrisDeltaT, then we'll be double-counting here.
+# numDebrisPerIXSimulated = cur_mpc['numPieces']/len(numberOfPiecesMeanList)
+
+# Package them up into a PointCLoud
+# NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
+curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+# Place the cloud into a Grid
+curSkyGrid    = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
+
+
+
+
+
+
+
+sys.exit()
+# ============ DEBUGGING STUFF ==================
+
+
+
+
+
+
+
+
+
+
 
 if doMain:
 
