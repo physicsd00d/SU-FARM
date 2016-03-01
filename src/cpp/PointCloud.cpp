@@ -514,7 +514,10 @@ void PointCloud::PrintAllPoints(){
 
 
 
-
+// Takes in an array, flatPointArray, that linearly contains all the debris trajectories in a row.  The vector is unpacked 
+//  by knowing how many timesteps (numTimeSteps) are associated with each piece of debris.  If there's a reactionTime passed
+//  in, then this will throw out all points that appear after the reactionTime has elapsed.  Puts all of the points into a 
+//  large vector array of Point objects.  Loads everything into all_points_total which will get passed to SkyGrid for histogramming.
 void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vector<int> pointIdArray, vector<double> massArray,
                                             vector<double> areaArray, int numPieces, vector<int> numTimeSteps, int maxTime,
                                             double deltaTsec, double timeOffsetSec, double reactionTimeMinutes) {
