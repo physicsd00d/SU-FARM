@@ -81,7 +81,7 @@ void SkyGrid::GridTheSky(){
 //    int numGoodPts = 0;
     
     // Bin the points
-    int numTimeSteps = all_points_total.size();
+    unsigned long numTimeSteps = all_points_total.size();
 //    cout << "numTimeSteps = " << numTimeSteps << endl;
 
     for (int tx = 0; tx < numTimeSteps; tx++){
@@ -107,11 +107,39 @@ void SkyGrid::GridTheSky(){
             // If z is negative, place it on the ground, if z is too high, ignore it
             bool zgood = true;
             if (curPoint.get_z() > NASkm) {
-                zindex = -1;
-                zgood = false;
+                zindex = -2;
+                xindex = 0;
+                yindex = 0;
+                Vx = 0.;
+                Vy = 0.;
+                Vy = 0.;
+                thisMass = 0.;
+                thisArea = 0.;
             } else if (curPoint.get_z() < 0) {
-                zindex = 0;
+                zindex = -1;
+                xindex = 0;
+                yindex = 0;
+                Vx = 0.;
+                Vy = 0.;
+                Vy = 0.;
+                thisMass = 0.;
+                thisArea = 0.;
             }
+
+//            // If z is ever out of bounds, either too high or already landed, save it anyways.
+//            bool zgood = true; // Will always be good now.
+//            if ((curPoint.get_z() > NASkm) || (curPoint.get_z() < 0)) {
+//                zindex = -1;
+//                xindex = 0;
+//                yindex = 0;
+//                Vx = 0.;
+//                Vy = 0.;
+//                Vy = 0.;
+//                thisMass = 0.;
+//                thisArea = 0.;
+//            }
+            
+//            printf("[%d][%d][%d]\n", tx, curID, zindex);
             
             // Might also get passed in spurious points (too high to care about), skip them
             //   only add the points that are currently within the NAS
@@ -1945,7 +1973,6 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
             for (it_ID = GridMapDebIX[tx].begin(); it_ID != GridMapDebIX[tx].end(); ++it_ID){
                 int curID = it_ID->first;
                 
-//                double normFactor = ((double) numDebrisPerIXSimulated) * h1 * h2;
                 double normFactor = ((double) totalNumPointsPassedInPerID[curID]) * h1 * h2;
                 
                 for (it_z = GridMapDebIX[tx][curID].begin(); it_z != GridMapDebIX[tx][curID].end(); ++it_z){
@@ -1999,10 +2026,8 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
                         }}
                 }}}
     }
-//    cout << "DONE\n";
 
     // Check the probabilities (Be safe and keep this in.  Don't be an asshole and delete such an important check)
-    
     map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
     map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
     map<int, map<int, map<int,binData> > >::iterator it_x;
@@ -2011,18 +2036,8 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
     
     for (it_time=ProbabilityMapDebIX.begin(); it_time!=ProbabilityMapDebIX.end(); it_time++) {
         int tx = it_time->first;
-//        double checkSum = 0.;
-//        int numHere = 0;
         
-//        // As time progresses, some classes of debris land and no longer generate probabilities
-//        // Making assumption that within a given debris class, all pieces land at the same time
-//        // Actually, if you knew how many runs you ran, you could get the average number of pieces left?
-//        int numDebIXsHere = 0;
-//        map<int, int>::iterator it_IDint;
-//        for (it_IDint = totalNumPtsAtStepMapDebIX[tx].begin(); it_IDint != totalNumPtsAtStepMapDebIX[tx].end(); ++it_IDint){
-//            numDebIXsHere += 1; }
-        
-        // At every timestep, the probabilities should sum to totalNumPtsAtStepMapDebIX/totalNumPointsPassedInPerID
+        // At every timestep, the probabilities should sum to 1
         map<int, double> checkSum;
         
         for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
@@ -2038,91 +2053,19 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
                         int curID = it_ID->first;
                         
                         checkSum[curID] += ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris;
-//                        // Not the best check in the world, but it at least makes sure that the ASH went through okay
-//                        double checkCoeff = ((double) numDebrisPerIXSimulated)/( (double) totalNumPtsAtStepMapDebIX[tx][curID]);
-//                        checkSum += (ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris) * checkCoeff;
                     } } } }
         
         map<int, double>::iterator it_CS;
         for (it_CS = checkSum.begin(); it_CS != checkSum.end(); ++it_CS){
             int curID = it_CS->first;
-            double val = fabs(checkSum[curID] - (1.*totalNumPtsAtStepMapDebIX[tx][curID])/(1.*totalNumPointsPassedInPerID[curID]));
-            if (val > 1e-13){
-                cout << "checkSum[" << tx << "][" << curID << "] failed = " << checkSum[curID] << endl;
-                cout << "totalNumPtsAtStepMapDebIX[curID] = "   << totalNumPtsAtStepMapDebIX[tx][curID] << endl;
-                cout << "totalNumPointsPassedInPerID[curID] = " << totalNumPointsPassedInPerID[curID] << endl;
-                cout << "val = " << val << endl;
-                exit(-15);
-                
-            }
+            
+            if (fabs(checkSum[curID]-1.) > 1e-13){
+                printf("CheckSum[%d][%d] = %E \n", tx, curID, checkSum[curID]-1.);
+                exit(-15);}
+
         }
         
-        
-//        if (fabs(checkSum - 1.*numDebIXsHere) > 1e-10) {
-//            cout << "checkSum[" << tx << "] - numDebIXsHere = " << checkSum - 1.*numDebIXsHere << "    " << checkSum << endl;
-//            exit(-15);
-//        }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-//    // Check the probabilities (Be safe and keep this in.  Don't be an asshole and delete such an important check)
-//    
-//    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
-//    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
-//    map<int, map<int, map<int,binData> > >::iterator it_x;
-//    map<int, map<int, binData> >::iterator it_y;
-//    map<int, binData>::iterator it_ID;
-//    
-//    for (it_time=ProbabilityMapDebIX.begin(); it_time!=ProbabilityMapDebIX.end(); it_time++) {
-//        int tx = it_time->first;
-//        double checkSum = 0.;
-//        int numHere = 0;
-//        
-//        // As time progresses, some classes of debris land and no longer generate probabilities
-//        // Making assumption that within a given debris class, all pieces land at the same time
-//        // Actually, if you knew how many runs you ran, you could get the average number of pieces left?
-//        int numDebIXsHere = 0;
-//        map<int, int>::iterator it_IDint;
-//        for (it_IDint = totalNumPtsAtStepMapDebIX[tx].begin(); it_IDint != totalNumPtsAtStepMapDebIX[tx].end(); ++it_IDint){
-//            numDebIXsHere += 1; }
-//        
-//        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
-//            int zindex = it_z->first;
-//            
-//            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
-//                int xindex = it_x->first;
-//                
-//                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
-//                    int yindex = it_y->first;
-//                    
-//                    for (it_ID = ProbabilityMapDebIX[tx][zindex][xindex][yindex].begin(); it_ID != ProbabilityMapDebIX[tx][zindex][xindex][yindex].end(); ++it_ID){
-//                        int curID = it_ID->first;
-//                        
-//                        // Not the best check in the world, but it at least makes sure that the ASH went through okay
-//                        double checkCoeff = ((double) numDebrisPerIXSimulated)/( (double) totalNumPtsAtStepMapDebIX[tx][curID]);
-//                        checkSum += (ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris) * checkCoeff              ; } } } }
-//        
-//        if (fabs(checkSum - 1.*numDebIXsHere) > 1e-10) {
-//            cout << "checkSum[" << tx << "] - numDebIXsHere = " << checkSum - 1.*numDebIXsHere << "    " << checkSum << endl;
-//            exit(-15);
-//        }
-//    }
-    //    cout << "DONE\n";
-    
-    
     
     return;
 }

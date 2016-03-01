@@ -17,7 +17,7 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''These are the most-likely-to-be-changed parameters'''
 freshWind   = False
 freshDebris = False
-debug       = False
+debug       = True
 
 doMain      = False
 addStageReentry = False
@@ -109,8 +109,13 @@ curMission['loverd']    = 0.
 
 # These hold files that need to be read in
 curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
+# curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
+curMission['debrisCatFile']           = 'Debug.txt'
 curMission['atmospherePickle'] = rootDir + "data/AtmoProfiles/Cape.pkl"
+
+if not debug:
+    print "Debris catalog is still set to debug"
+    sys.exit() 
 
 
 '''
@@ -131,7 +136,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeMinutes']       = -5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -148,13 +153,16 @@ curMission['deltaT']                  = 5.      # Seconds, this is the time reso
 curMission['deltaTFail']              = 5.0     # Seconds, this is how often we explode the rocket
 curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
-curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 
 curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
+if not debug:
+    print "Reaction time is negative (i.e. turned off)"
+    sys.exit() 
 
 
 '''
@@ -297,8 +305,15 @@ makeFootprintFromTimes = TJC.makeFootprintFromTimes
 # footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
 
+PyPointCloud = ceb.PyPointCloud
+PySkyGrid = ceb.PySkyGrid
 
+deltaXY                 = curMission['deltaXY']
+deltaZ                  = curMission['deltaZ']
+h1                      = curMission['h1']
+h2                      = curMission['h2']
 debrisPickleFolder      = curMission['debrisPickleFolder']
+
 tfailSec = 100.
 inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
 input = open(inFileName, 'rb')
@@ -306,7 +321,6 @@ cur_mpc = pickle.load(input)
 input.close()
 
 TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail=100., cutoffNAS = False)
-sys.exit()
 
 arefMeanList = cur_mpc['arefMeanList']
 numberOfPiecesMeanList = cur_mpc['numberOfPiecesMeanList']
@@ -322,6 +336,9 @@ curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
 # Place the cloud into a Grid
 curSkyGrid    = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
 
+
+print 'ASHING'
+curSkyGrid.generateASH(h1, h2)
 
 
 
