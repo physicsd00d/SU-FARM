@@ -526,30 +526,31 @@ def genFootprint(curMission, tfailSec, curPFail):
     # print 'tfailsec = ' + str(tfailSec)
     # return -1, './GeneratedFiles/footprintVectorFolder/fpVec_20.0.dat'
 
-    # Get the lat/lons of the filled cells
-    print 'createEmptyAircraftDensityMap'
-    latlonArray = curSkyGrid.createEmptyAircraftDensityMap()
+    # # Get the lat/lons of the filled cells
+    # print 'createEmptyAircraftDensityMap'
+    # latlonArray = curSkyGrid.createEmptyAircraftDensityMap()
 
-    if useAircraftDensityMap:
-        # With those lat/lons, find the probAircraft for each cell
-        from AircraftDensityMap import AircraftDensityMap as ADM
-        density = ADM()
-        densityArray = density.getDensity(latlonArray, ExportDateDT)
-        print 'THIS IS PROBABLY A DENSITY AND NOT A PROBABILITY.  FIX THIS!!!'
-        sys.exit()
+    # Using density maps are just not a good idea.  
+    # if useAircraftDensityMap:
+    #     # With those lat/lons, find the probAircraft for each cell
+    #     from AircraftDensityMap import AircraftDensityMap as ADM
+    #     density = ADM()
+    #     densityArray = density.getDensity(latlonArray, ExportDateDT)
+    #     print 'THIS IS PROBABLY A DENSITY AND NOT A PROBABILITY.  FIX THIS!!!'
+    #     sys.exit()
 
-        # Send that information back into C++
-        curSkyGrid.populateAircraftDensityMap(densityArray, len(densityArray))
-    else:
-        fourNM2 = 13.72                     #// 4 (n.m.)^2 * (1.852 km/nm)^2 = 13.72 km^2
-        aircraftDensity = 1./fourNM2        #// [prob/km^2] Paul Wilde's assumed aircraft density (1 every 4nm^2)
-        cellArea = deltaXY*deltaXY
-        probOfAirplaneInCell = aircraftDensity * cellArea;
+    #     # Send that information back into C++
+    #     curSkyGrid.populateAircraftDensityMap(densityArray, len(densityArray))
+    # else:
+    #     fourNM2 = 13.72                     #// 4 (n.m.)^2 * (1.852 km/nm)^2 = 13.72 km^2
+    #     aircraftDensity = 1./fourNM2        #// [prob/km^2] Paul Wilde's assumed aircraft density (1 every 4nm^2)
+    #     cellArea = deltaXY*deltaXY
+    #     probOfAirplaneInCell = aircraftDensity * cellArea;
 
-        import numpy as np
-        # Send that information back into C++
-        print 'populateAircraftDensityMap'
-        curSkyGrid.populateAircraftDensityMap(np.array([probOfAirplaneInCell]), -1)
+    #     import numpy as np
+    #     # Send that information back into C++
+    #     print 'populateAircraftDensityMap'
+    #     curSkyGrid.populateAircraftDensityMap(np.array([probOfAirplaneInCell]), -1)
 
     # After uploading the density map, we have to generate the hazard probabilities
     print 'generateHazardProbabilities'

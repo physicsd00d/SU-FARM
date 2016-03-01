@@ -183,24 +183,25 @@ cdef class PySkyGrid:
     def DumpGridToMatlab(self, char *filename):
         self.thisptr.DumpGridToMatlab(filename)
 
-    def createEmptyAircraftDensityMap(self):
-#        cdef vector<double> tempAns = self.thisptr.createEmptyAircraftDensityMap()
+    # TODO: If the code is working without this stuff, then send it to a graveyard.
+#     def createEmptyAircraftDensityMap(self):
+# #        cdef vector<double> tempAns = self.thisptr.createEmptyAircraftDensityMap()
 
-        # i cannot figure out how to do this nicely, so it's going to become a slow-ass hack
-        tempAns = self.thisptr.createEmptyAircraftDensityMap()
-        numEntries = tempAns.size()
+#         # i cannot figure out how to do this nicely, so it's going to become a slow-ass hack
+#         tempAns = self.thisptr.createEmptyAircraftDensityMap()
+#         numEntries = tempAns.size()
         
-        # Allocate the memory
-        latlonArray = np.zeros( (numEntries,))
-        for ix in range(numEntries):
-            latlonArray[ix] = tempAns[ix]
+#         # Allocate the memory
+#         latlonArray = np.zeros( (numEntries,))
+#         for ix in range(numEntries):
+#             latlonArray[ix] = tempAns[ix]
 
-        latlonArray = latlonArray.reshape(numEntries/4, 4)
-        return latlonArray
+#         latlonArray = latlonArray.reshape(numEntries/4, 4)
+#         return latlonArray
 
-    def populateAircraftDensityMap(self, np.ndarray[double, ndim = 1, mode="c"] densityMapArray, int numElements):
-        if (numElements > 0) or (numElements == -1):
-            self.thisptr.populateAircraftDensityMap(&densityMapArray[0], numElements)
+#     def populateAircraftDensityMap(self, np.ndarray[double, ndim = 1, mode="c"] densityMapArray, int numElements):
+#         if (numElements > 0) or (numElements == -1):
+#             self.thisptr.populateAircraftDensityMap(&densityMapArray[0], numElements)
 
     def SendGridToPython(self, int tx_desired):
         # Get the grid

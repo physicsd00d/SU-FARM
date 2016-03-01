@@ -118,10 +118,7 @@ private:
     int halfBufferCells;                                    // The number of extra cells you need on a side to have the bufferDist
     
     bool isProbability;     // Once you convert the object to a probability, you can never go back and add more grid points.
-    bool usingMITDensityMap;
-    
-    double uniformProbabilityValue;
-    
+        
 //    void GridTheSky(vector<vector<Point> > &total_points_at);   //[tx][point]   Only gets called in the constructorss
     void GridTheSky();   //[tx][point]   Only gets called in the constructorss
 
@@ -158,10 +155,6 @@ public:
     void StoreGrid(string outFileName);
     
     void ASH2(double h1, double h2);
-    
-    vector<double> createEmptyAircraftDensityMap();
-    void populateAircraftDensityMap(void *densityMapArray, int numElements);
-    
     
     void UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in);
 //    void UploadAircraftTrackMap(map<int, vector<vector<double> > > AircraftTrackMap);
