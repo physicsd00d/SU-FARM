@@ -576,7 +576,9 @@ def genFootprint(curMission, tfailSec, curPFail):
         EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, newDeltaXY, newDeltaZ)
 
     elif cumulative == 'TJC':
-        EV_strike = curSkyGrid.generateAllPoints_CumulativeTJC(thresh, whichProbability)
+        # EV_strike = curSkyGrid.generateAllPoints_CumulativeTJC(thresh, whichProbability)
+        print "ERROR: TJC Cumulative no longer exists"
+        sys.exit()
 
 
 

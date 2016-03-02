@@ -318,12 +318,13 @@ bool compareXYZ (vector<double> i, vector<double> j) { return (i[3] > j[3]); }
  * Note that it partially destroys the ProbabilityMapDebIX structure by writing the values
  *  of the probabilities to the first index of the debris category...so don't try to use this again.
  *  This sucks, I know, but it saves some memory and i have other things to do right now.
+ *
+ * Removing pFail, this calculates \prod_d^D (1 - \phi_{ij}  \Xi^d_{i \mid jf})
  */
-//void SkyGrid::generateProbabilityOfImpact(vector<int> numberOfPiecesMean, double pFail){
 void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, double pFail){
     // For now, don't allow pFail to alter the calculations.  Simply don't use it
     if (pFail != 1.){
-        cout << "WARNING: pFail isn't being used but you passed one in anyways\n";
+//        cout << "WARNING: pFail isn't being used but you passed one in anyways\n";
     }
     
     // Check to make sure that this hasn't already been done
@@ -389,7 +390,7 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, double
         
         for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
             int zindex = it_z->first;
-            //cout << "  " << xindex << endl;
+            //cout << "  " << zindex << endl;
             
             for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
                 int xindex = it_x->first;
@@ -408,10 +409,11 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, double
                         cout << "ERROR: Some debris class has stolen the ID used for recording hazard probabilities" << endl;
                         exit(-2);
                     }
+                    
                     for (it_ID = ProbabilityMapDebIX[tx][zindex][xindex][yindex].begin(); it_ID != ProbabilityMapDebIX[tx][zindex][xindex][yindex].end(); ++it_ID){
                         int curID = it_ID->first;
-                        
                         binData PD = (it_ID->second);
+                        
                         // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
                         // Keep in mind that as the grid gets finer, probDebrisHere can get bigger than 1 or arbitrarily large because we're dividing by such a
                         // small number.
@@ -473,14 +475,21 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, double
                         probNoStrike        *= probOfNoStrikeFromCurID;
                         probNoCasualty      *= probOfNoCasualtyFromCurID;
                         probNoCatastrophe   *= probOfNoCatastropheFromCurID;
-                        
+
+//                        if ((zindex < 0)){
+//                            printf("zindex = %d, probDebrisInCell = %E, Aproj = %E, A_Casualty = %E \n", zindex, probDebrisInCell, A_Proj, A_Casualty);
+//                        }
                     }
                     
-                    //                    double probOfAirplaneInCell = ACDensityMap[0][xindex][yindex]/numZBins; // Currently only using 2d density, so assume uniform prob over altitude
-                    
-                    //                    double probStrike = probOfAirplaneInCell*(1. - probNoStrike)*pFail;
-//                    double probStrike = (1. - probNoStrike);
-                    // =========== End of the ACTA method ===========================================
+                    // Error check on LandedIX and TooHighIX.  Should be exactly zero probability of strike, probNoStrike = 1.
+                    // This is because both mass and velocity have been set to zero when gridding, so the projected areas will
+                    // be zero.  Thus probOfNoStrikeFromCurID = (1.-0.)^numPieces should be basically exactly 1.  This is kind
+                    // of a fragile condition, checking for equality with a double, but it really should be exactly 1.0.  If
+                    // it's not, then something is wrong.  Maybe should just set it to 1.0 for safety?
+                    if ((zindex < 0) && (probNoStrike != 1.)){
+                        printf("ERROR generateHazardProbabilities: zindex = %d  vs probNoStrike = %E \n", zindex, probNoStrike);
+                        exit(-12);
+                    }
                     
                     // Save the probability for this grid cell.  Only put it in the leading debIX.
                     ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoImpact         = probNoStrike;
@@ -1002,6 +1011,26 @@ void SkyGrid::generateSpatialProbability(int whichProb){
                     
                 } } }   // Ends loop back to it_z
     }
+    
+//    // Check on the probabilities
+//    { // Changing scope so I can redefine the iterators
+//        map<int, map<int, map<int,double> > >::iterator it_z;
+//        map<int, map<int,double> >::iterator it_x;
+//        map<int, double>::iterator it_y;
+//        
+//        for (it_z = SpatialProbabilty.begin(); it_z != SpatialProbabilty.end(); ++it_z){
+//            int zindex = it_z->first;
+//            for (it_x = SpatialProbabilty[zindex].begin(); it_x != SpatialProbabilty[zindex].end(); ++it_x){
+//                int xindex = it_x->first;
+//                for (it_y = SpatialProbabilty[zindex][xindex].begin(); it_y != SpatialProbabilty[zindex][xindex].end(); ++it_y){
+//                    int yindex = it_y->first;
+//                    
+//                    if (zindex < 0){
+//                        printf("SpatialProbabilty[%d][%d][%d] = %E\n",
+//                               zindex, xindex, yindex, SpatialProbabilty[zindex][xindex][yindex]);
+//                    }
+//                }}}
+//    }
 
 //    cout << "C++ maxVal = " << maxVal << endl;
     
