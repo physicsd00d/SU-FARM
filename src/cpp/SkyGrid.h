@@ -202,8 +202,8 @@ public:
 //    double generateAllPointsFromASH(vector<int> numberOfPiecesMeanArray_in, vector<double> arefMeanList_in, int numDebIX, double thresh, double pFail);
     
 
-    void generateHazardProbabilities(vector<int> numberOfPiecesMean, double pFail);
-    double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in);
+    void generateHazardProbabilities(vector<int> numberOfPiecesMean);
+    double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail);
     
     
 

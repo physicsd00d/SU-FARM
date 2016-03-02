@@ -555,7 +555,7 @@ def genFootprint(curMission, tfailSec, curPFail):
 
     # After uploading the density map, we have to generate the hazard probabilities
     print 'generateHazardProbabilities'
-    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList, curPFail)
+    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
 
 
     # Now apply the current definition of 'cumulative' for the chosen type of probability
@@ -573,7 +573,7 @@ def genFootprint(curMission, tfailSec, curPFail):
         #   to alter the curMission here because if it's shared memory than that could potentially mess up other
         #   calculations that are happening in parallel threads.  Wait until whole thing is over and then do it.
         print 'generateAllPoints_CumulativeFAA'
-        EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, newDeltaXY, newDeltaZ)
+        EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, curPFail)
 
     elif cumulative == 'TJC':
         # EV_strike = curSkyGrid.generateAllPoints_CumulativeTJC(thresh, whichProbability)

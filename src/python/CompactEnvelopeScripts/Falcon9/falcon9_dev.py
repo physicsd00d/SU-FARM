@@ -19,7 +19,7 @@ freshWind   = False
 freshDebris = False
 debug       = True
 
-doMain      = True
+doMain      = False
 addStageReentry = False
 
 
@@ -166,7 +166,7 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-curMission['pFail'] = 0.02/curMission['all_points_delta_t']     # Probability that vehicle will fail somewhere
+curMission['pFail'] = 0.02    # Probability that vehicle will fail somewhere
 
 
 
@@ -224,7 +224,7 @@ curMission['ExportDateDT'] = ExportDate
 if debug:
     # Change a few values
     curMission['debrisCatFile']           = 'Debug.txt'
-    curMission['reactionTimeMinutes']       = -5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+    curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
     curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
 
 
@@ -281,7 +281,7 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 
 
 # ============ DEBUGGING STUFF ==================
-if debug:
+if debug and (not doMain):
     import numpy as np
     makeFootprintFromTimes = TJC.makeFootprintFromTimes
 
@@ -343,7 +343,7 @@ if debug:
 
     print 'generateHazardProbabilities'
     curPFail = 1.
-    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList, curPFail)
+    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)  # remove pFail in TJC when this works
 
 
     whichProbability        = curMission['whichProbability']
@@ -351,7 +351,7 @@ if debug:
     newDeltaXY   = -1      #//[km]  These don't even get used.
     newDeltaZ    = -1
     print 'generateAllPoints_CumulativeFAA'
-    EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, newDeltaXY, newDeltaZ)
+    EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, curPFail)
 
     sys.exit()
 # ============ DEBUGGING STUFF ==================

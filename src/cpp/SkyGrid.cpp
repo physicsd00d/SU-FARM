@@ -321,11 +321,7 @@ bool compareXYZ (vector<double> i, vector<double> j) { return (i[3] > j[3]); }
  *
  * Removing pFail, this calculates \prod_d^D (1 - \phi_{ij}  \Xi^d_{i \mid jf})
  */
-void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, double pFail){
-    // For now, don't allow pFail to alter the calculations.  Simply don't use it
-    if (pFail != 1.){
-//        cout << "WARNING: pFail isn't being used but you passed one in anyways\n";
-    }
+void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
     
     // Check to make sure that this hasn't already been done
     if (not hazardProbabilitiesGenerated){
@@ -793,8 +789,9 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, double
 
 /*! This replicates, as closely as reasonably possible, the way the FAA creates SUAs from probability of 
  *      impact debris clouds.  The
+ *  TODO: Finish removing the coarsen grid stuff. All references to newDeltaXY_in, newDeltaZ_in
  */
-double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in){
+double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail){
     
     // Make sure that the probabilities have been generated, otherwise we cannot proceed
     if (not hazardProbabilitiesGenerated){
@@ -869,7 +866,7 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
                 // No matter how small the cell area is, assume an aircraft is present and ask "what's the probability of impact?"
                 //      Dividing by probAircraftPresentInCell is the "assume an aircraft is present".
 //                double curProb = SpatialProbabilty_Coarse[zindex][xindex][yindex] / probAircraftPresentInCell;
-                double curProb = SpatialProbabilty[zindex][xindex][yindex];
+                double curProb = SpatialProbabilty[zindex][xindex][yindex] * pFail;
                 
                 if (curProb > (thresh)) {
                     
@@ -960,8 +957,16 @@ void SkyGrid::loadRemainingPointsIntoAllPoints(int tx, vector<vector<double> > P
             } } }
 }
 
-
-void SkyGrid::generateSpatialProbability(int whichProb){
+/*
+ * Currently this function calculates and returns P_{I}(i \mid t \leq J, f) where I corresponds to whichProb
+ * TODO: Generalize this function to P_{I}(i \mid t \leq j, f), i.e. calculate only up to time j
+ *          Probably a good idea to make f an input when you do that, so you can get f=t case easily
+ *
+ */
+void SkyGrid::generateSpatialProbability(int whichProb/*, int j, int f*/){
+    // whichProb selects between impact, casualty, and catastrophe
+    // j is the INDEX of the maximum time to consider
+    // f is the INDEX of the fail time that this probability corresponds to
     
     // Iterators for the probability grid
     map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
@@ -1002,6 +1007,11 @@ void SkyGrid::generateSpatialProbability(int whichProb){
                     //  here we multiply all the time points together to get the probability of no event
                     //  over all times.
 //                    SpatialProbabilty[zindex][xindex][yindex] *= thisProb;
+                    
+                    // Checking to make sure that default values of the map are zero
+//                    if (SpatialProbabilty[zindex][xindex].count(yindex) == 0){
+//                        printf("[%d][%d][%d][%d] = %E\n", tx, zindex, xindex, yindex, SpatialProbabilty[zindex][xindex][yindex]);
+//                    }
                     
                     // TODO: Check to see if there are roundoff errors or something doing it this way versus above.
                     double prevVal = SpatialProbabilty[zindex][xindex][yindex];
