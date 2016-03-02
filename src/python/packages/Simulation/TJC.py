@@ -526,6 +526,7 @@ def genFootprint(curMission, tfailSec, curPFail):
     # print 'tfailsec = ' + str(tfailSec)
     # return -1, './GeneratedFiles/footprintVectorFolder/fpVec_20.0.dat'
 
+    # TODO: Move this ac density map stuff to a graveyard.
     # # Get the lat/lons of the filled cells
     # print 'createEmptyAircraftDensityMap'
     # latlonArray = curSkyGrid.createEmptyAircraftDensityMap()

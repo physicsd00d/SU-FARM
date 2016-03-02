@@ -37,6 +37,8 @@ using std::max;
 #define PROB_CASUALTY    1002
 #define PROB_CATASTROPHE 1003
 
+#define STORE_IX -666
+
 
 #define XREF 0.
 #define YREF 0.
@@ -55,6 +57,11 @@ private:
         double probCasualty;
         double probCatastrophe;
         
+        // Transitioning to these.  Delete the above eventually when they're fully phased out.
+        double probNoImpact;
+        double probNoCasualty;
+        double probNoCatastrophe;
+        
         double minVel;  // Velocity stats are measured in km/s
         double maxVel;
         double avgVel;
@@ -72,6 +79,12 @@ private:
         binData() {
             probDebris = 0;
             probImpact = 0;
+            probCasualty = 0.;
+            probCatastrophe = 0.;
+
+            probNoImpact = 0;
+            probNoCasualty = 0.;
+            probNoCatastrophe = 0.;
             
             minVel = 1e10;
             maxVel = 0;
@@ -190,7 +203,6 @@ public:
     
 
     void generateHazardProbabilities(vector<int> numberOfPiecesMean, double pFail);
-    double generateAllPoints_CumulativeTJC(double thresh, int whichProb);
     double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in);
     
     

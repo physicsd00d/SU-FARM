@@ -100,7 +100,7 @@ cdef extern from "SkyGrid.h":
         map[int, map[int, map[int,double]]] projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ)
 
         void generateHazardProbabilities(vector[int] numberOfPiecesMean, double pFail)
-        double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
+        # double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
         double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in)
 
 
@@ -286,8 +286,8 @@ cdef class PySkyGrid:
     def generateHazardProbabilities(self, numberOfPiecesMean, pFail):
         self.thisptr.generateHazardProbabilities(numberOfPiecesMean, pFail)
 
-    def generateAllPoints_CumulativeTJC(self, double thresh, int whichProb):
-        return self.thisptr.generateAllPoints_CumulativeTJC(thresh, whichProb)
+    # def generateAllPoints_CumulativeTJC(self, double thresh, int whichProb):
+    #     return self.thisptr.generateAllPoints_CumulativeTJC(thresh, whichProb)
             
     def generateAllPoints_CumulativeFAA(self, double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in):
         return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, newDeltaXY_in, newDeltaZ_in)

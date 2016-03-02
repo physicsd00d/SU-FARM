@@ -543,7 +543,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
         int curID = it->first;
         int numThisID = it->second;
 //        printf("curID %d has %d pieces\n", curID, numThisID);
-        printf("curID %d has %d pieces and max timesteps %d\n", curID, numThisID, maxStepsPerID[curID]);
+//        printf("curID %d has %d pieces and max timesteps %d\n", curID, numThisID, maxStepsPerID[curID]);
     }
     
     // Check to make sure the pointCloud timestep is not smaller than the propagated timestep
