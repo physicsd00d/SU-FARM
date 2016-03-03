@@ -325,12 +325,12 @@ cdef class PyPointCloud:
     def __cinit__(self, dict pcd, double secondsFromLaunch, dict curMission):
         
         reactionTimeMinutes     = curMission['reactionTimeMinutes']
-        all_points_delta_t      = curMission['all_points_delta_t']
+        debrisDeltaT            = curMission['deltaT']  # Should be the deltaT for the debris propagations, not the envelopes!
         NASkm                   = curMission['NASkm']
         
         self.thisptr = new PointCloud(pcd['flatPointArray'],    pcd['debrisID'],        pcd['numPieces'],       pcd['numTimeSteps'],
                                       pcd['maxTime'],           pcd['deltaTsec'],
-                                      pcd['UTC'],               all_points_delta_t,     secondsFromLaunch,
+                                      pcd['UTC'],               debrisDeltaT,     secondsFromLaunch,
                                       pcd['launchLat'],         pcd['launchLon'],       pcd['launchAzimuth'],
                                       pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeMinutes,    NASkm)
     

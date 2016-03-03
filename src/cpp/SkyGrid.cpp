@@ -1699,15 +1699,22 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
                         int curID = it_ID->first;
                         
                         checkSum[curID] += ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris;
+                        
+                        //double curProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris;
+                        //if ((tx == 0) && (curID == 0)) {
+                        //    printf("CheckSum[%d][%d],[%d][%d][%d] = %E \n", tx, curID, zindex, xindex, yindex, checkSum[curID] );
+                        //}
+                        
                     } } } }
         
+        // For every time, check that each debris class sums to 1 over all space
         map<int, double>::iterator it_CS;
         for (it_CS = checkSum.begin(); it_CS != checkSum.end(); ++it_CS){
             int curID = it_CS->first;
 
             // printf("CheckSum[%d][%d] = %E \n", tx, curID, checkSum[curID]-1.);
             if (fabs(checkSum[curID]-1.) > 1e-13){
-                printf("CheckSum[%d][%d] = %E \n", tx, curID, checkSum[curID]-1.);
+                printf("ERROR ASH2: CheckSum[%d][%d] = %E \n", tx, curID, checkSum[curID]-1.);
                 exit(-15);}
 
         }

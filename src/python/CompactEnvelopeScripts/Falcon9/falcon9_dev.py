@@ -12,11 +12,13 @@ If you want to use valgrind to debug, compile with -g for debug symbols then cal
 valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9.py
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
-
+ # 346  salloc -n12 --nodelist=ADL-node7 bash &
+ #  347  sinfo
+ #  348  squeue
 
 '''These are the most-likely-to-be-changed parameters'''
 freshWind   = False
-freshDebris = False
+freshDebris = True
 debug       = True
 
 doMain      = True
@@ -145,9 +147,18 @@ curMission['cumulative']                = 'FAA' # The definition for 'cumulative
 curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
 
 # The different time steps within the mission
-curMission['deltaT']                  = 5.      # Seconds, this is the time resolution of a propagated trajectory
-curMission['deltaTFail']              = 5.0     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
+curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
+                                                # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
+                                                # Envelope is half the size if =1 vs =5
+                                                # Alternatively, might be required to be deltaTFail because must nest.
+
+curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
+# IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
+#  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
+#  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
+#  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
+
+curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
 curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
@@ -279,11 +290,28 @@ vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, vehicleNotes
 mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
-
 # ============ DEBUGGING STUFF ==================
+# sys.exit()
+
+# genFootprint = TJC.genFootprint
+# import numpy as np
+
+# # Inputs
+# mission1 = curMission
+# timelo = 0
+# timehi = 10
+
+
+# sys.exit()
+
+
+
+
+
+
 if debug and (not doMain):
     import numpy as np
-    makeFootprintFromTimes = TJC.makeFootprintFromTimes
+    makeFootprintFromTimes_InstantaneousOnly = TJC.makeFootprintFromTimes_InstantaneousOnly
 
     # footprintStart, footprintUntil = 100., 105. 
     # footprintTotal = []
