@@ -28,7 +28,7 @@ def catchArgs():
 
 # Contains cython wrapping information
 pyxFile = "CompactEnvelopeBuilder.pyx"
-srcNames = ["SkyGrid", "Debris", "Footprint3D", "Point", "Random_Number",  "timer", "PointCloud", "Trajectory"]
+srcNames = ["SkyGrid", "Footprint3D", "Point", "timer", "PointCloud", "Trajectory"]
 
 # Location of the Cython file (pyx)
 pyxDir = os.path.realpath('src/') 
@@ -47,7 +47,7 @@ linkThese = []
 
 # Check which C++ files need to be compiled
 for ix in range(len(srcNames)):
-    srcFiles[ix] = os.path.join(cppDir,srcNames[ix]) + ".cpp"
+    srcFiles[ix] = os.path.join(srcDir,srcNames[ix]) + ".cpp"
     objFiles[ix] = os.path.join(objDir,srcNames[ix]) + ".o"
 
     # Check which files have been modified and only compile them
@@ -76,9 +76,9 @@ compileThese.insert(0,pyxDir + '/' + pyxFile);
 compactEnvelopeModule = Extension(
      "CompactEnvelopeBuilder",                 # name of extension
      compileThese, #  our Cython source
-     include_dirs = [numpy.get_include(), '/sw/include/', cppDir],
+     include_dirs = [numpy.get_include(), '/ADL/tcolvin/sw/include/', '/opt/Boost/1.55.0/include/', cppDir],
      libraries = ['gsl','gslcblas','kmlbase','kmldom','kmlengine'],
-     library_dirs = ['/sw/lib/'],
+     library_dirs = ['/ADL/tcolvin/sw/lib/'],
     # points compiler to the correct std library (flags placed here OVERRIDE previous flags...e.g. -O0 here overrides default -O3)
      extra_compile_args=['-mmacosx-version-min=10.8'],
      extra_objects = linkThese,
@@ -118,6 +118,53 @@ config = {
 
 catchArgs()  
 setup(**config)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# extensions = [Extension(
+#      "CompactEnvelopeBuilder",                 # name of extension
+#      compileThese, #  our Cython source
+#      #include_dirs = [numpy.get_include(), '/sw/include/', srcDir],
+#      include_dirs = [numpy.get_include(), '/ADL/tcolvin/sw/include/', '/opt/Boost/1.55.0/include/',srcDir],
+#      libraries = ['kmlbase','kmldom','kmlengine'],
+#      library_dirs = ['/ADL/tcolvin/sw/lib/'],
+#     # points compiler to the correct std library (flags placed here OVERRIDE previous flags...e.g. -O0 here overrides default -O3)
+#      #extra_compile_args=['-mmacosx-version-min=10.8'],
+#      #extra_compile_args = ['-t ../build/'],
+#      extra_objects = linkThese,
+#      language="c++"),]
+
+# setup(
+#     cmdclass = {'build_ext': build_ext},
+#     name = "My hello app",
+#     ext_modules = cythonize(extensions),
+# )
+
+
+
+
+
+
+
+
+
 
 
 
