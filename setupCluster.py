@@ -47,7 +47,7 @@ linkThese = []
 
 # Check which C++ files need to be compiled
 for ix in range(len(srcNames)):
-    srcFiles[ix] = os.path.join(srcDir,srcNames[ix]) + ".cpp"
+    srcFiles[ix] = os.path.join(cppDir,srcNames[ix]) + ".cpp"
     objFiles[ix] = os.path.join(objDir,srcNames[ix]) + ".o"
 
     # Check which files have been modified and only compile them
@@ -77,10 +77,11 @@ compactEnvelopeModule = Extension(
      "CompactEnvelopeBuilder",                 # name of extension
      compileThese, #  our Cython source
      include_dirs = [numpy.get_include(), '/ADL/tcolvin/sw/include/', '/opt/Boost/1.55.0/include/', cppDir],
-     libraries = ['gsl','gslcblas','kmlbase','kmldom','kmlengine'],
+     #libraries = ['gsl','gslcblas','kmlbase','kmldom','kmlengine'],
+     libraries = ['kmlbase','kmldom','kmlengine'],
      library_dirs = ['/ADL/tcolvin/sw/lib/'],
     # points compiler to the correct std library (flags placed here OVERRIDE previous flags...e.g. -O0 here overrides default -O3)
-     extra_compile_args=['-mmacosx-version-min=10.8'],
+#     extra_compile_args=['-mmacosx-version-min=10.8'],
      extra_objects = linkThese,
                 #export_symbols = ['CC=/Library/Frameworks/EPD64.framework/Versions/Current/bin/ccache-swig\ g++'],
      language="c++")
