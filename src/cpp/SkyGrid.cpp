@@ -815,7 +815,9 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
     all_points_total.assign(NumTimestepsHere, vector<Point>());
     
     // This generates the spatial probability over the grid originally specified
-    generateSpatialProbability(whichProb);
+    int J_maxTimeStep   =  100000000; //s
+    int f_startTimeStep = -100000000;
+    generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep);
     
 //    // The FAA uses a rather coarse grid, so convert to their coarse grid
 //    //      These are the parameters of the coarsened grid
@@ -963,9 +965,9 @@ void SkyGrid::loadRemainingPointsIntoAllPoints(int tx, vector<vector<double> > P
  *          Probably a good idea to make f an input when you do that, so you can get f=t case easily
  *
  */
-void SkyGrid::generateSpatialProbability(int whichProb/*, int j, int f*/){
+void SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep){
     // whichProb selects between impact, casualty, and catastrophe
-    // j is the INDEX of the maximum time to consider
+    // J is the INDEX of the maximum time to consider
     // f is the INDEX of the fail time that this probability corresponds to
     
     // Iterators for the probability grid
@@ -981,45 +983,50 @@ void SkyGrid::generateSpatialProbability(int whichProb/*, int j, int f*/){
     for (it_time=ProbabilityMapDebIX.begin(); it_time != ProbabilityMapDebIX.end(); ++it_time) {
         int tx = it_time->first;        //Assuming, for the moment, that it starts at tx = 0
         
-        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
-            int zindex = it_z->first;
+        if ((tx >= f_startTimeStep) && (tx <= J_maxTimeStep)) {
+            // Probabilities are only >= 0 when tx is after f
+            // Only calculate dangers for time steps up to J
             
-            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
-                int xindex = it_x->first;
+            for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
+                int zindex = it_z->first;
                 
-                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
-                    int yindex = it_y->first;
+                for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
+                    int xindex = it_x->first;
                     
-                    // Options are PROB_IMPACT, PROB_CASUALTY, PROB_CATASTROPHE
-                    if (whichProb == PROB_IMPACT){
-                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoImpact;}
-                    else if (whichProb == PROB_CASUALTY){
-                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCasualty;}
-                    else if (whichProb == PROB_CATASTROPHE){
-                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCatastrophe;}
-                    else {
-                        cout << "You chose a bad probability option.  Exiting\n";
-                        exit(-99);
-                    }
-                    
-                    // This was probably incorrect in previous version, was += instead of *=
-                    // Now though, thisProb is probOfNoEvent over all debris but only at a single point,
-                    //  here we multiply all the time points together to get the probability of no event
-                    //  over all times.
-//                    SpatialProbabilty[zindex][xindex][yindex] *= thisProb;
-                    
-                    // Checking to make sure that default values of the map are zero
-//                    if (SpatialProbabilty[zindex][xindex].count(yindex) == 0){
-//                        printf("[%d][%d][%d][%d] = %E\n", tx, zindex, xindex, yindex, SpatialProbabilty[zindex][xindex][yindex]);
-//                    }
-                    
-                    // TODO: Check to see if there are roundoff errors or something doing it this way versus above.
-                    double prevVal = SpatialProbabilty[zindex][xindex][yindex];
-                    SpatialProbabilty[zindex][xindex][yindex] = 1. - (prevVal+1.) * thisProb;
-                    
-                    maxVal = std::max(maxVal, SpatialProbabilty[zindex][xindex][yindex]);
-                    
-                } } }   // Ends loop back to it_z
+                    for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
+                        int yindex = it_y->first;
+                        
+                        // Options are PROB_IMPACT, PROB_CASUALTY, PROB_CATASTROPHE
+                        if (whichProb == PROB_IMPACT){
+                            thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoImpact;}
+                        else if (whichProb == PROB_CASUALTY){
+                            thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCasualty;}
+                        else if (whichProb == PROB_CATASTROPHE){
+                            thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCatastrophe;}
+                        else {
+                            cout << "You chose a bad probability option.  Exiting\n";
+                            exit(-99);
+                        }
+                        
+                        // This was probably incorrect in previous version, was += instead of *=
+                        // Now though, thisProb is probOfNoEvent over all debris but only at a single point,
+                        //  here we multiply all the time points together to get the probability of no event
+                        //  over all times.
+    //                    SpatialProbabilty[zindex][xindex][yindex] *= thisProb;
+                        
+                        // Checking to make sure that default values of the map are zero
+    //                    if (SpatialProbabilty[zindex][xindex].count(yindex) == 0){
+    //                        printf("[%d][%d][%d][%d] = %E\n", tx, zindex, xindex, yindex, SpatialProbabilty[zindex][xindex][yindex]);
+    //                    }
+                        
+                        // TODO: Check to see if there are roundoff errors or something doing it this way versus above.
+                        double prevVal = SpatialProbabilty[zindex][xindex][yindex];
+                        SpatialProbabilty[zindex][xindex][yindex] = 1. - (prevVal+1.) * thisProb;
+                        
+                        maxVal = std::max(maxVal, SpatialProbabilty[zindex][xindex][yindex]);
+                        
+                    } } }   // Ends loop back to it_z
+        }
     }
     
 //    // Check on the probabilities

@@ -96,7 +96,7 @@ cdef extern from "SkyGrid.h":
 
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
-        void generateSpatialProbability(int whichProb)
+        void generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
         map[int, map[int, map[int,double]]] projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ)
 
         void generateHazardProbabilities(vector[int] numberOfPiecesMean)
@@ -271,11 +271,11 @@ cdef class PySkyGrid:
                                                                        h1_in, h2_in)
 
 
-    def GenerateSpatialProbability(self, whichProb):
+    def GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
         #define PROB_IMPACT      1001
         #define PROB_CASUALTY    1002
         #define PROB_CATASTROPHE 1003
-        self.thisptr.generateSpatialProbability(whichProb)
+        self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
             
     def GetSpatialProbabilty(self):
         return self.thisptr.getSpatialProbabilty()

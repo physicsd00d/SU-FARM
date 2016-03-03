@@ -184,7 +184,7 @@ public:
     
     // Debugging Functions (Used for being interactive with Python)
     map<int, map<int, map<int,double> > > getSpatialProbabilty();
-    void generateSpatialProbability(int whichProb);
+    void generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
     map<int, map<int, map<int,double> > > projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ);
 
     

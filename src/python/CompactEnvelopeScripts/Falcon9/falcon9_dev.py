@@ -19,7 +19,7 @@ freshWind   = False
 freshDebris = False
 debug       = True
 
-doMain      = False
+doMain      = True
 addStageReentry = False
 
 
