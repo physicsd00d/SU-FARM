@@ -1586,7 +1586,7 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
     
     // This is to explicitly bound the probabilities by zeros and is my own addition in order
     //      to make the map structure work the way i want for interpolating values later on.
-    int extraTouch = 1;     // not set up to be anything other than 0 or 1
+    int extraTouch = 0;     // not set up to be anything other than 0 or 1
     // Actually, i get different risk numbers if i use extraTouch at all.  Why?  Don't use until fixed.
     // I assume it's because of the spreading around velocities, areas, etc.
     // You'll create zero-probability areas that have non-zero velocities and whatnot...is that actually a problem???
@@ -1713,7 +1713,7 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
             int curID = it_CS->first;
 
             // printf("CheckSum[%d][%d] = %E \n", tx, curID, checkSum[curID]-1.);
-            if (fabs(checkSum[curID]-1.) > 1e-13){
+            if (fabs(checkSum[curID]-1.) > 1e-11){
                 printf("ERROR ASH2: CheckSum[%d][%d] = %E \n", tx, curID, checkSum[curID]-1.);
                 exit(-15);}
 
