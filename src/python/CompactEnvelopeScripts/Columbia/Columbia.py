@@ -13,12 +13,12 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain   			= False  # State Vector
-freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = True
-debug                   = True
+freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = False
+debug                   = False
 
 plotColumbiaGround      = True
-calcIndividualHazard    = False
+calcIndividualHazard    = True
 makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
 
 import os
@@ -181,7 +181,7 @@ ExportDate = dt.datetime(year=yyyy, month=mm, day=dd, hour=hour, minute=min, sec
 curMission['ExportDate'] = [yyyy, mm, dd, hour, min]
 curMission['ExportDateDT'] = ExportDate
 
-# secondsFromMidnightUTC = hour*3600 + min*60 + sec
+secondsFromMidnightUTC = hour*3600 + min*60 + sec
 
 '''Unique to Columbia?'''
 # Wind angle measured from East, positive is counterclock
@@ -333,6 +333,135 @@ if plotColumbiaGround:
     # sys.exit()
 
 
+
+if calcIndividualHazard:
+    # ============ First going to load up the aircraft tracks ============
+
+    # Read in the aircraft information
+    # input = open('HighRiskOutput.txt', 'r')
+    input = open('HighRiskOutputInterp.txt', 'r')
+    acid2typeMap = dict()
+    curTrackTime = 0
+
+    ft2km       = 0.0003048
+    knots2km_s  = 0.000514444444
+    # Going to leave the top layer as a dict / map because acids are not necessarily going to start at zero or appear in order
+    # Be careful also to realize that will a python dict will let you mix types in a layer, std::map will not
+    aircraftRecord = dict()
+    for line in input:
+        key = line.split()
+
+        if len(key) > 0:
+            # There's something here
+            if (len(key) == 1) and (int(key[0]) < 24*3600):
+                # This is a track time
+                curTrackTime = int(key[0])
+            elif (len(key) == 6):
+                # This is an aircraft track
+                acid = int(key[0])
+                acType = key[1]
+                curLat = float(key[2])
+                curLon = float(key[3])
+                curLevel = float(key[4]) * 100. * ft2km
+                curSpeed = float(key[5]) * knots2km_s
+
+                # Attempt a conversion from geodetic to spherical
+                # [curLat, curLon, _] = TJC.geodetic2spherical(curLat,curLon,curLevel*1e3)
+
+
+                # Make sure python knows the structure if this is the first time seeing the acid
+                if not aircraftRecord.has_key(acid):
+                    aircraftRecord[acid] = [],acType    # It's a tuple, which will get translated to a std::pair
+
+                aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
+    input.close()
+
+
+    # ============ Now load the debris, grid it, and ASH it ============
+
+    # Get the debris
+    import pickle
+    profiles = pickle.load(open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl','rb'))
+    numDebrisPickles = profiles['numWindSamples']
+
+
+    ### Eventually this will all get wrapped into a function
+    import CompactEnvelopeBuilder as ceb
+
+    curSkyGrid = []
+    # Load each of the pickle files into one large skygrid
+    for windIX in range(numDebrisPickles):
+    # for windIX in range(2):
+        '''This makes the assumption that we're ONLY using the zeroth timestep'''
+        inputFile = '{0}/mpc_{1}_{2}.pkl'.format(curMission['debrisPickleFolder'], windIX, int(0))
+        input = open(inputFile, 'rb')
+        # input = open(curMission['debrisPickleFolder'] + '/mpc_' + str(windIX) + '.pkl', 'rb')
+        cur_mpc = pickle.load(input)
+        input.close()
+
+        # Package them up into a PointCLoud
+        timeOfInitialFailure = 0
+        curPointCloud = ceb.PyPointCloud(cur_mpc, timeOfInitialFailure, curMission)     # Applies all_points_delta_t
+
+        # Loading the pointcloud throws out points past the reaction time, still need to chop???
+        # newNumSteps = curPointCloud.ChopAfterSeconds(int(tfailSec + 60*reactionTimeMinutes))
+        #print '(' + str(tfailSec) + ',' + str(newNumSteps) + ')'
+
+        # Place the cloud into a Grid
+        if windIX == 0:
+            curSkyGrid    = ceb.PySkyGrid(curPointCloud, curMission['deltaXY'], curMission['deltaXY'], curMission['deltaZ'])
+        else:
+            curSkyGrid.IncorporatePointCloudIntoGrid(curPointCloud)
+
+    # Making the assumption that all profiles use the exactly same debris catalog
+    arefMeanList            = cur_mpc['arefMeanList']
+    numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
+    debrisMass              = cur_mpc['debrisMass']
+    # Upload the aircraft data (locations, areas, type)
+    curSkyGrid.UploadAircraft(aircraftRecord)
+
+    from AircraftAreaModel import AircraftAreaModel as AAM
+    curSkyGrid.UploadAircraftPropertiesMap(AAM)
+
+    #Assuming all debris categories had same number of pieces simulated
+    numUniqueIDs = len(np.unique(cur_mpc['debrisID']))
+    numTotalPieces = cur_mpc['numPieces']
+
+    # Basically, this is a count of how many individual pieces of debris were simulated, within each
+    #  ballistic coefficient group, over the all_points timestep.  So if you simulate a single piece of debris with
+    #  a timestep of 1 sec, but then grid the sky in 60 second increments, it's like you simulated that piece 60 times
+    #  over that larger timestep.  Put another way, you've double-counted that same piece 60 times when histogramming.
+    #
+    # The above is only true if the debris timestep is 1.0.  Really, you're double-counting by all_points_delta_t/debrisDeltaT
+    # TODO: Unfortunately, that time step is not an option.  Attend to this soon
+    # TODO: Make these changes in TJC.genFootprint as well
+    #
+    # numDebrisPerIXSimulated = numDebrisPickles * numTotalPieces * (mission1['all_points_delta_t'])/numUniqueIDs
+    # print '\n\n\nWHEN YOU ARE LESS TIRED, CHECK THAT MULTIPLYING BY DELTA T IS THE RIGHT THING TO DO HERE!!!!!\n\n\n'
+
+    # # ASH the probabilities around
+    # curSkyGrid.generateASH(mission1['h1'], mission1['h2'], numDebrisPerIXSimulated)
+    #
+    # numDebrisTimeSteps = curSkyGrid.getNumRange()
+    # print "numDebrisTimeSteps = {0}".format(numDebrisTimeSteps)
+    #
+    # # Do risk calculation
+    # riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC)
+
+
+    riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
+                                                   curMission['h1'], curMission['h2'])
+
+
+    for acid in riskToAC:
+        print '{0} = {1}'.format(aircraftRecord[acid][1], riskToAC[acid])
+
+    print '\nCorrecting for difference in timesteps'
+    for acid in riskToAC:
+        print '{0} = {1}'.format(aircraftRecord[acid][1], riskToAC[acid]/curMission['all_points_delta_t'])
+
+    print 'Number of Pieces     = {0}'.format(np.sum(numberOfPiecesMeanList))
+    print 'Total Mass of Pieces = {0}'.format(np.sum(debrisMass))
 
 
 
