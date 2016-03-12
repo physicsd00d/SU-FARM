@@ -431,6 +431,7 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
                         double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
                         double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
                         
+                        // NOTE:  WHERE DID THESE VALUES COME FROM???  This is not what's in Wilde's AVM paper.
                         if (PD.avgMass < 0.001){
                             // Throw out pieces that are less than 1g.  They pose no danger
                             A_Casualty      = 0.;

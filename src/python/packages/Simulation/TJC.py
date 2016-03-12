@@ -1045,7 +1045,7 @@ def GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples):
 
 ### CURRENTLY IN USE (Called by Columbia.py)
 def GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSamples, angleLow, angleHi, windMagCoeff):
-
+    """Appears to take in an atmoprofile, disregards the standardDev values, and instead uniformly distributes the directional variation uniformly between angleLow and Hi."""
     # To read in
     import pickle
     [altitudeList,densityMeanList,uMeanList,vMeanList,wMeanList,densitySDList,uSDList,vSDList,wSDList,nlist] \
@@ -1057,8 +1057,14 @@ def GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSampl
     thetagStorage = []    #This is a constant for a given time of launch and failure
     tfailStorage = []
 
+    # print np.where(altitudeList < 11)[0]
+    # print altitudeList[np.where(altitudeList < 11)[0]]
+    # # print zip(altitudeList[:,0],densityMeanList[:,0])
+    # for ix in range(len(altitudeList)):
+    #     print "{0}, {1}".format(altitudeList[ix], densityMeanList[ix])
+
     # This index is around 10m
-    around10mIX = np.where(altitudeList < 11)[0][0,0]
+    around10mIX = np.where(altitudeList < 11)[0][0]
 
     # Generate the wind profiles first
     for windIX in range(numWindSamples):
@@ -1583,11 +1589,11 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
     # Use the passed-in values
     lowerBreakLimit = lowerTime
     upperBreakLimit = upperTime
-    # Unless the time range is not specified, then explode everywhere
-    if (len(lowerTime) == 0) and (len(upperTime) == 0):
-        # Set the times to explode to coincide with the nominal profile
-        lowerBreakLimit = profiles['tfailStorage'][0][0][0] #Assuming first trajectory is representative
-        upperBreakLimit = profiles['tfailStorage'][0][0][-1]
+    # # Unless the time range is not specified, then explode everywhere
+    # if (len(lowerTime) == 0) and (len(upperTime) == 0):
+    #     # Set the times to explode to coincide with the nominal profile
+    #     lowerBreakLimit = profiles['tfailStorage'][0][0][0] #Assuming first trajectory is representative
+    #     upperBreakLimit = profiles['tfailStorage'][0][0][-1]
 
 
     deltaTFail = curMission['deltaTFail']
@@ -1618,11 +1624,11 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
                               args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
                                                  profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
                               depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
-                              modules=('numpy as np','debrisReader as DR', 'orbitTools', 'debrisPropagation as dp'), \
+                              modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
                               callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
 
-    print "This will fail because the modules like debrisReader are now inside a package.  \
-            Must include package info or put all of these modules in the root package. 1447"
+    # print "This will fail because the modules like debrisReader are now inside a package.  \
+            # Must include package info or put all of these modules in the root package. 1447"
     # sys.exit()
 
     job_server.wait()
@@ -2231,7 +2237,7 @@ def LoadPrecomputed(mission):
     inputFile = open(mission['pathToMissionFiles'] + mission['precomputedParamFile'], 'r')
 
     stateVecProfile = []
-    import orbitTools as ot
+    from FriscoLegacy import orbitTools as ot
 
     isLATLON    = False
     isSTATEVEC  = False

@@ -1,0 +1,360 @@
+'''
+#
+This file calculates the risk to aircraft from the Columbia accident
+#
+'''
+
+'''
+System imports that let python know about the file structure of the code
+Note: This block should be the same across all main scripts
+
+If you want to use valgrind to debug, compile with -g for debug symbols then call
+valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9.py
+Be sure to remove -g from compilation when done otherwise code will be slooooow
+'''
+freshMain   			= False  # State Vector
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = True
+debug                   = True
+
+plotColumbiaGround      = True
+calcIndividualHazard    = False
+makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
+
+import os
+import sys
+
+rootDir =   os.path.abspath("../../../../") + "/"
+outputDir = rootDir + "outputs/"
+tempDir =   rootDir + "temp/"
+
+
+'''
+Import the modules necessary for the script.
+Note: Must Come After sys.path update
+Note: This block is probably the same across all main scripts
+'''
+# import debrisPythonWrapper as dpw
+# import getPropTraj as traj
+# import AtmosProfile as AP
+import CompactEnvelopeBuilder as ceb
+import numpy as np
+from Simulation import TJC
+import datetime as dt
+
+import matplotlib
+matplotlib.use('Agg')  # Allows plot generation on server without X-windows
+import matplotlib.pyplot as plt
+
+from Simulation import LaunchSites
+from Simulation import LaunchProviders
+
+# TODO: Add a columbia reentry thing
+# These parameters get injected into the final footprint name
+vehicleName     = LaunchProviders.Reentry
+launchLocation  = LaunchSites.OK    # NOTE: even though it says 'launch', in this context it really means 'landing'
+vehicleNotes    = ''
+
+# I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
+#   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
+launchLat = LaunchSites.siteDict[launchLocation]['lat']
+launchLon = LaunchSites.siteDict[launchLocation]['lon']
+
+# Define statements from inside SkyGrid.h
+PROB_IMPACT         = 1001
+PROB_CASUALTY       = 1002
+PROB_CATASTROPHE    = 1003
+
+'''
+# ============= Define the Mission ====================== #
+This section is rather convoluted and should be cleaned up.
+'''
+from TrajectoryInfo import initVec
+
+# Initialize the mission
+propagationParamFile = []                   # Points to thrust profile for doing propagations
+precomputedParamFile = 'ColumbiaMainPieceTrajectory.txt'  # Points to file with precomputed profile for nominal trajectory
+pathToMissionFiles = './'                   # Kind of a holdover from a previous file structure
+
+# Planet info
+omegaE = 7.2921158494529352e-05             # rad/s
+planetModel = initVec.planetModel           # 0 means spherical, 1 means elliptical
+
+curMission = dict(propagationParamFile = propagationParamFile, precomputedParamFile = precomputedParamFile,
+                pathToMissionFiles = pathToMissionFiles, omegaE = omegaE, planetModel = planetModel)
+curMission = TJC.InitializeMission(curMission)
+TJC.SetupOutputFolders(curMission, tempDir, outputDir, vehicleName, launchLocation)
+
+# Use the same parameters that were used in the initVec that generated the main trajectories
+if initVec.cloption == 0:
+    curMission['useLoverD'] = True
+else:
+    curMission['useLoverD'] = False
+curMission['loverd'] = initVec.loverd
+
+# These hold files that need to be read in
+curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatFile']           = 'testFileDistributed.txt'
+# curMission['debrisCatFile']           = 'debugDistributed.txt'
+curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
+
+
+
+'''
+PROPAGATION and PROBABILITY PARAMETERS
+Set parameters related to:
+    * ASH / density estimation
+    * Sky grid granularity
+    * NAS reaction time
+    * Important time steps (this is kind of confusing)
+'''
+# Defines the granularity of the gridded sky.  Note, you're restricted to squares in the horizontal plane
+# # Parameters for the ASH
+NASkm = 18.289
+
+curMission['deltaXY']                   = 2.    #km
+curMission['deltaZ']                    = NASkm/1.   #km
+curMission['h1']                        = 6.    # Smoothing parameters for the ASH.  Should be >= deltaXY
+curMission['h2']                        = 6.
+
+# Parameters for the safety architecture of the NAS
+curMission['reactionTimeMinutes']       = -5    # The number of minutes that the NAS needs to safely handle a sudden debris event.
+                                                #   Negative means to turn off reaction time and keep all points
+curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
+                                                #   there are different definitions of "cumulative" AND there are multiple types of probability.
+                                                #   These differences are currently hardcoded and must be changed / recompiled.
+curMission['cumulative']                = 'FAA' # The definition for 'cumulative' that we wish to use.
+                                                # Options are: FAA, TJC
+                                                # Note that if FAA is chosen, the grid will be coarsened to reflect how the FAA calculates
+                                                #   hazard areas.  The values of deltaXY and deltaZ will be updated at the appropriate time
+                                                #   but they WILL change.
+
+curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
+
+# The different time steps within the mission
+curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
+                                                #   Make sure this matches the timestep of the trajectory you have
+curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
+curMission['all_points_delta_t']      = 1.0     # Seconds, this will be the time resolution of a compact envelope
+                                                #       should be GREATER THAN OR EQUAL to deltaT
+                                                #       For reentry, appears to control the deltaT of the movies made
+curMission['numPiecesPerSample']      = [10]      # The number of pieces to consider within each debris group
+                                                #       IF EMPTY, that means use the actual number for each debris group
+curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
+
+curMission['numNodes']                  = 1
+curMission['numNodesEnvelopes']         = -1 	# This should not get used.
+curMission['NASkm']                     = NASkm
+
+
+
+# '''
+# Do I still need these? If they're uncommented, they're asked for in monte carlo function
+# '''
+
+# # Updated, but not sure i need these (this is the first point from the nominal trajecotry file, read this in eventually)
+curMission['launchLat'] = launchLat
+curMission['launchLon'] = launchLon
+curMission['launchAlt'] = 0.   #km
+
+# # Not updated, also not sure i need these
+curMission['initialUTC'] = 156.84861111111113 	# (i think) This number could be anything, as long as it's consistent
+												# Asked for in the monte carlo functions
+# # curMission['launchAzimuth'] = 169.    #degrees, this is the heading angle of the SSA runway.  Measured with Google Earth
+curMission['launchAzimuth'] = 0.    #degrees, this is what it looks like on Google Earth
+
+'''
+OUTPUT options
+'''
+# Export files as GoogleEarth or FACET
+curMission['exportGE']    = True
+curMission['exportFACET'] = False
+
+# This date gets used for GE.  I believe the FACET files are date agnostic, but i think the time of day might get set here
+yyyy = 2003
+mm = 2
+dd = 1
+hour = 13
+min = 59        # min = 49
+sec = 30        # sec = 15
+ExportDate = dt.datetime(year=yyyy, month=mm, day=dd, hour=hour, minute=min, second=sec)
+curMission['ExportDate'] = [yyyy, mm, dd, hour, min]
+curMission['ExportDateDT'] = ExportDate
+
+# secondsFromMidnightUTC = hour*3600 + min*60 + sec
+
+'''Unique to Columbia?'''
+# Wind angle measured from East, positive is counterclock
+curMission['noWind'] = True
+# angleLow    = 0.
+# angleHi     = 0.
+angleHi         = -5.
+angleLow        = -35. #-90
+windMagCoeff    = 1.0   # Scale the wind profile
+
+''' Some comments about the initial state vector'''
+# For Columbia, this is the moment of initial breakup (when we have the statevector for)
+# 8:59:37 EST -- TJC: the time when the shuttle lost hydraulic pressure and would have spun out of control
+# (13:59 UTC)
+
+# Entry Interface (EI) over the Pacific Ocean at 8:44:09 a.m. EST  (13:44:09 UTC)
+# EI + 555 is first reports of people seeing debris being shed (13:53:09 UTC)
+
+# 13:59:30 GMT is the time used for simulation in CAIB as being the beginning of the 2-minute breakup
+# Francisco's state vector starts 15 seconds before that, so the time is 13:59:15
+
+# 01
+# Correcting for difference in timesteps
+# angleHi         = -10.
+# angleLow        = -30. #-90
+# windMagCoeff    = 1.0   # Scale the wind profile
+# E120 = 7.56701529558e-06
+# MD82 = 2.76489574755e-05
+# B733 = 1.49465958892e-05
+# B735 = 5.54765289564e-05
+# MD90 = 0.000121642723396
+# B738 = 1.78835542652e-05
+# CRJ2 = 0.000113516714622
+# CRJ2 = 7.72987187524e-05
+# B733 = 6.31568551159e-05
+
+# 02
+# Correcting for difference in timesteps
+# angleHi         = -5.
+# angleLow        = -35. #-90
+# windMagCoeff    = 1.0   # Scale the wind profile
+# E120 = 7.23672775471e-06
+# MD82 = 2.6999740812e-05
+# B733 = 1.46709281366e-05
+# B735 = 5.31696191339e-05
+# MD90 = 0.00012085102269
+# B738 = 2.49021304948e-05
+# CRJ2 = 0.00011157188999
+# CRJ2 = 7.9430048788e-05
+# B733 = 6.23311270627e-05
+
+
+
+# ======================= Begin Computations ============================ #
+# Precompute some Atmosphere and Trajectory profiles
+
+# Can't really incorporate this because to create curMission, the trajectory.txt must already exist
+# If you have changed anything in initVec, then you will want to regenerate the nominal trajectory
+if (freshMain):
+    # import subprocess
+    # # subprocess.Popen("Sandbox/GenerateMainPieceTrajectory.py", shell=True)
+    # subprocess.call("cd Sandbox && python GenerateMainPieceTrajectory.py && cd -", shell=True)
+
+    from TrajectoryInfo import GenerateMainPieceTrajectory as GMPT
+    GMPT.Generate(curMission)
+    print "You generated a new trajectory.  Now must restart the script..."
+    sys.exit()
+
+profiles = []
+if (freshWind):
+    # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
+    
+    numTrajSamples = 1      # If you change this to anything other than 1, it might break.  Look at numDebrisPerIXSimulated to start.
+    numWindSamples = 1
+
+    # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
+    # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
+
+    atmStorage, stateVecStorage, thetagStorage, tfailStorage\
+        = TJC.GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSamples, angleLow, angleHi, windMagCoeff)
+
+    profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage,
+                    tfailStorage = tfailStorage, numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+
+    # It doesn't seem like te tfailStorage here would be useful.  Those are the statetimes of the vehicle's trajectory.
+    # What I want to do with Columbia is explode it at a single time, possibly the first time, and then have a
+    # progressive breakup.  So the number of failure timesteps would be equal to the time steps in the debris catalog.
+    import pickle
+    output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')
+    pickle.dump(profiles,output)
+    output.close()
+else:
+    import pickle
+    profiles = pickle.load(open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl','rb'))
+
+
+if freshDebris:
+    # Generate the debris
+    coeffIX = []
+    lowerBreakLimit = 0 # By setting these to 0 and 1, we'll explode at just the lower time
+    upperBreakLimit = 1 # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
+    TJC.MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, curMission['numPiecesPerSample'],
+                                                    lowerBreakLimit, upperBreakLimit, profiles)
+
+
+
+
+if plotColumbiaGround:
+    # ==== Now Make A Plot Of The Debris ====
+    # Use this to plot
+    finalLat = []
+    finalLon = []
+
+    numWindIX = len(profiles['atmStorage'])
+    print 'numWindIX = ' + str(numWindIX)
+
+    for windIX in range(numWindIX):
+
+        '''This makes the assumption that we're ONLY using the zeroth timestep'''
+        inputFile = '{0}/mpc_{1}_{2}.pkl'.format(curMission['debrisPickleFolder'], windIX, int(0))
+        input = open(inputFile, 'rb')
+        # input = open(curMission['debrisPickleFolder'] + '/mpc_' + str(windIX) + '.pkl', 'rb')
+        cur_mpc = pickle.load(input)
+        input.close()
+        sizeFlatPointArray = cur_mpc['sizeFlatPointArray']
+        numTimeSteps = cur_mpc['numTimeSteps']
+        flatPointArray = cur_mpc['flatPointArray']
+
+        for ix in range(len(numTimeSteps)):
+            curDebris = flatPointArray[ (6*np.sum(numTimeSteps[:ix])) : (6*np.sum(numTimeSteps[:(ix+1)])) ].reshape((numTimeSteps[ix],6))
+            finalLat.append(curDebris[-1][0])
+            finalLon.append(curDebris[-1][1])
+
+    # for plotting purposes
+    im = plt.imread('debrisField.png')
+    latShift = 0.086     # Increasing this number moves the test point downward
+    lonShift = -0.01      # Increasing this number moves the test point leftward
+
+    leftLon     = -98.2617 + lonShift
+    rightLon    = -92.1090 + lonShift
+    bottomLat   = 29.6854 + latShift -0.04
+    upperLat    = 34.0093 + latShift
+    corners = [leftLon,rightLon,bottomLat,upperLat]
+    # corners = [-98.2617,-92.1090,29.6854,34.0093]
+    implot = plt.imshow(im,extent=corners)
+
+    plt.scatter(finalLon, finalLat,marker='o', color='red', s=.1)
+    plt.savefig(curMission['GeneratedFilesFolder'] + "ResultsMain")
+    # sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
