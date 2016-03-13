@@ -2083,6 +2083,7 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
                 
                 if (PD.avgMass < 0.001){
                     // Throw out pieces that are less than 1g.  They pose no danger
+                    A_Proj          = 0.;
                     A_Casualty      = 0.;
                     A_Catastrope    = 0.;
                 }
@@ -2170,277 +2171,278 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
 
 
 
+// // Commenting out on March 12 2016
+// // I think this used to get used, but it's been replaced.  For calculating hazard areas, now use generateHazardProbabilities/
+// //  For calculating risks to individual aircraft, don't need to ASH the whole world (VERY SLOW) so just ASH _OnTheFly
+// map<int, double> SkyGrid::CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMean, vector<double> arefMean,int secondsFromMidnightUTC){
+//     // NOTE: I'm going to require that the aircraft data come at a fixed timestep so if you ever wind up
+//     //   having an irregular timestep then this will break.  Don't break it.
+//     int planeStepSec = 1;
+    
+//     double delta_t = getDeltaT();
+//     double ft_2_km = 0.0003048;
+    
+//     string debugFileName = "debugOutput.txt";
+//     ofstream outfile;
+// 	outfile.open(debugFileName.c_str(), ios::out);
+        
+    
+// //    vector<int> pieces (numberOfPiecesMeanArray, numberOfPiecesMeanArray + numDebIX);
+// //    vector<double> areas (arefMeanList, arefMeanList + numDebIX);
+    
+//     // From python aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
+//     // map<int, pair<vector<vector<double> >, string> >
+//     // AircraftTrackMap;
+    
+//     // [acType][property] = value
+//     // property --> dict(topArea=topArea, frontArea=frontArea, acClass=acClass)
+//     // acClass = 0 for business, 1 for commercial
+//     //    map<string,map<string,double> > AircraftPropertiesMap;
+    
+    
+//     map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
+    
+//     for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
+//         int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
+//         string acType   = it_ACID->second.second;   // B737, etc
+    
+//         cout << "acid = " << acid << ", model = " << acType << endl;
+//         int lenHere = (it_ACID->second.first).size();
+        
+//         // Find the index where the explosion occurs
+//         int tx = 0;
+//         while (tx < lenHere){
+//             if ((it_ACID->second.first)[tx][0] == secondsFromMidnightUTC) {
+//                 break; }
+            
+//             tx++;
+//         }
+        
+//         for (int ix = 0; (tx + ix) < std::min(lenHere,tx + 5); ix++){
+//             cout << "   " << (it_ACID->second.first)[tx + ix][0] << "   "
+//                     << (it_ACID->second.first)[tx + ix][1] << "  "
+//                     << (it_ACID->second.first)[tx + ix][2] << "  "
+//                     << (it_ACID->second.first)[tx + ix][3] << "  "
+//                     << (it_ACID->second.first)[tx + ix][4] << "  "
+//                     << endl;
+//         }
+//     }
+    
+//     map<string,map<string,double> >::iterator it_acType;
+//     map<string,double>::iterator it_property;
+    
+//     cout << "========= Dumping the AircraftPropertiesMap ========= " << endl;
+//     for (it_acType = AircraftPropertiesMap.begin(); it_acType != AircraftPropertiesMap.end(); ++it_acType){
+//         cout << it_acType->first << endl;
+//         for (it_property = it_acType->second.begin(); it_property != it_acType->second.end(); ++it_property){
+//             cout << "   " << it_property->first << " = " << it_property->second << endl;
+//         }
+//     }
+    
+//     // Start the calculation
 
+//     // The iterators for ProbabilityMapDebIX
+//     map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
+//     map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
+//     map<int, map<int, map<int,binData> > >::iterator it_x;
+//     map<int, map<int, binData> >::iterator it_y;
+//     map<int, binData>::iterator it_ID;
+    
+//     double cellVolume = xBinLength*yBinLength*zBinHeight;
 
-map<int, double> SkyGrid::CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMean, vector<double> arefMean,int secondsFromMidnightUTC){
-    // NOTE: I'm going to require that the aircraft data come at a fixed timestep so if you ever wind up
-    //   having an irregular timestep then this will break.  Don't break it.
-    int planeStepSec = 1;
+//     map<int, double> probabilityOfImpactRecord;
     
-    double delta_t = getDeltaT();
-    double ft_2_km = 0.0003048;
+//     // Loop over the aircraft themselves
+//     // NEED THE TIME OFFSET!!!
     
-    string debugFileName = "debugOutput.txt";
-    ofstream outfile;
-	outfile.open(debugFileName.c_str(), ios::out);
+//     for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
+//         int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
+//         string acType   = it_ACID->second.second;   // B737, etc
         
-    
-//    vector<int> pieces (numberOfPiecesMeanArray, numberOfPiecesMeanArray + numDebIX);
-//    vector<double> areas (arefMeanList, arefMeanList + numDebIX);
-    
-    // From python aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
-    // map<int, pair<vector<vector<double> >, string> >
-    // AircraftTrackMap;
-    
-    // [acType][property] = value
-    // property --> dict(topArea=topArea, frontArea=frontArea, acClass=acClass)
-    // acClass = 0 for business, 1 for commercial
-    //    map<string,map<string,double> > AircraftPropertiesMap;
-    
-    
-    map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
-    
-    for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
-        int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
-        string acType   = it_ACID->second.second;   // B737, etc
-    
-        cout << "acid = " << acid << ", model = " << acType << endl;
-        int lenHere = (it_ACID->second.first).size();
+//         probabilityOfImpactRecord[acid] = 0.;
         
-        // Find the index where the explosion occurs
-        int tx = 0;
-        while (tx < lenHere){
-            if ((it_ACID->second.first)[tx][0] == secondsFromMidnightUTC) {
-                break; }
+//         cout << "acid = " << acid << ", model = " << acType << endl;
+//         int lenHere = (it_ACID->second.first).size();
+        
+//         // Find the areas that are relevant for this aircraft
+// //        acClass = 1
+// //        frontArea = 0.0223973
+// //        topArea = 0.154464
+//         int     acClass     = AircraftPropertiesMap[acType]["acClass"];
+//         double  frontArea   = AircraftPropertiesMap[acType]["frontArea"];
+//         double  topArea     = AircraftPropertiesMap[acType]["topArea"];
+        
+//         // Find the index where the explosion occurs.  Time Explosion Offest = TEO
+//         int plane_tx = 0;
+//         while (plane_tx < lenHere){
+//             if ((it_ACID->second.first)[plane_tx][0] == secondsFromMidnightUTC) {
+//                 break; }
             
-            tx++;
-        }
+//             plane_tx++; }
+//         int TEO = (it_ACID->second.first)[plane_tx][0];
         
-        for (int ix = 0; (tx + ix) < std::min(lenHere,tx + 5); ix++){
-            cout << "   " << (it_ACID->second.first)[tx + ix][0] << "   "
-                    << (it_ACID->second.first)[tx + ix][1] << "  "
-                    << (it_ACID->second.first)[tx + ix][2] << "  "
-                    << (it_ACID->second.first)[tx + ix][3] << "  "
-                    << (it_ACID->second.first)[tx + ix][4] << "  "
-                    << endl;
-        }
-    }
-    
-    map<string,map<string,double> >::iterator it_acType;
-    map<string,double>::iterator it_property;
-    
-    cout << "========= Dumping the AircraftPropertiesMap ========= " << endl;
-    for (it_acType = AircraftPropertiesMap.begin(); it_acType != AircraftPropertiesMap.end(); ++it_acType){
-        cout << it_acType->first << endl;
-        for (it_property = it_acType->second.begin(); it_property != it_acType->second.end(); ++it_property){
-            cout << "   " << it_property->first << " = " << it_property->second << endl;
-        }
-    }
-    
-    // Start the calculation
+//         cout << "TEO = " << TEO << endl;
+        
+//         Point tempPt;
+//         for (plane_tx = plane_tx; plane_tx < lenHere; plane_tx++){
+            
+//             // What's the time index at this point?
+//             double plane_seconds       = (it_ACID->second.first)[plane_tx][0];
+//             int debris_tx           = (int) floor((plane_seconds - TEO)/all_points_delta_t);
+//             double aircraftLat      = (it_ACID->second.first)[plane_tx][1];
+//             double aircraftLon      = (it_ACID->second.first)[plane_tx][2];
+//             double aircraftZ        = (it_ACID->second.first)[plane_tx][3];
+//             double aircraftSpeed    = (it_ACID->second.first)[plane_tx][4];
+            
+//             // This should be the xyz coordinate of the map
+//             tempPt.set_xy_from_latlon(aircraftLat * PI/180., aircraftLon * PI/180.);
+//             int xindex = floor((tempPt.get_x() - XREF)/xBinLength);
+//             int yindex = floor((tempPt.get_y() - YREF)/yBinLength);
+//             int zindex = floor((aircraftZ - ZREF)/zBinHeight);
 
-    // The iterators for ProbabilityMapDebIX
-    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
-    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
-    map<int, map<int, map<int,binData> > >::iterator it_x;
-    map<int, map<int, binData> >::iterator it_y;
-    map<int, binData>::iterator it_ID;
-    
-    double cellVolume = xBinLength*yBinLength*zBinHeight;
-
-    map<int, double> probabilityOfImpactRecord;
-    
-    // Loop over the aircraft themselves
-    // NEED THE TIME OFFSET!!!
-    
-    for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
-        int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
-        string acType   = it_ACID->second.second;   // B737, etc
-        
-        probabilityOfImpactRecord[acid] = 0.;
-        
-        cout << "acid = " << acid << ", model = " << acType << endl;
-        int lenHere = (it_ACID->second.first).size();
-        
-        // Find the areas that are relevant for this aircraft
-//        acClass = 1
-//        frontArea = 0.0223973
-//        topArea = 0.154464
-        int     acClass     = AircraftPropertiesMap[acType]["acClass"];
-        double  frontArea   = AircraftPropertiesMap[acType]["frontArea"];
-        double  topArea     = AircraftPropertiesMap[acType]["topArea"];
-        
-        // Find the index where the explosion occurs.  Time Explosion Offest = TEO
-        int plane_tx = 0;
-        while (plane_tx < lenHere){
-            if ((it_ACID->second.first)[plane_tx][0] == secondsFromMidnightUTC) {
-                break; }
+//             // Does it exist?
+// //            it_time = ProbabilityMapDebIX.find(debris_tx);
+// //            it_z    = it_time->second.find(zindex);
+// //            it_x    = it_z->second.find(xindex);
+// //            it_y    = it_x->second.find(yindex);
             
-            plane_tx++; }
-        int TEO = (it_ACID->second.first)[plane_tx][0];
-        
-        cout << "TEO = " << TEO << endl;
-        
-        Point tempPt;
-        for (plane_tx = plane_tx; plane_tx < lenHere; plane_tx++){
+//             // Get iterators to entry in map that corresponds to the time that this aircraft is in the sky.  It may not exist.
+//             it_time = ProbabilityMapDebIX.find(debris_tx);
             
-            // What's the time index at this point?
-            double plane_seconds       = (it_ACID->second.first)[plane_tx][0];
-            int debris_tx           = (int) floor((plane_seconds - TEO)/all_points_delta_t);
-            double aircraftLat      = (it_ACID->second.first)[plane_tx][1];
-            double aircraftLon      = (it_ACID->second.first)[plane_tx][2];
-            double aircraftZ        = (it_ACID->second.first)[plane_tx][3];
-            double aircraftSpeed    = (it_ACID->second.first)[plane_tx][4];
-            
-            // This should be the xyz coordinate of the map
-            tempPt.set_xy_from_latlon(aircraftLat * PI/180., aircraftLon * PI/180.);
-            int xindex = floor((tempPt.get_x() - XREF)/xBinLength);
-            int yindex = floor((tempPt.get_y() - YREF)/yBinLength);
-            int zindex = floor((aircraftZ - ZREF)/zBinHeight);
-
-            // Does it exist?
-//            it_time = ProbabilityMapDebIX.find(debris_tx);
-//            it_z    = it_time->second.find(zindex);
-//            it_x    = it_z->second.find(xindex);
-//            it_y    = it_x->second.find(yindex);
-            
-            // Get iterators to entry in map that corresponds to the time that this aircraft is in the sky.  It may not exist.
-            it_time = ProbabilityMapDebIX.find(debris_tx);
-            
-            // Does that timestep exist?
-            if (it_time != ProbabilityMapDebIX.end()) {
+//             // Does that timestep exist?
+//             if (it_time != ProbabilityMapDebIX.end()) {
                 
-                // It does, now look for the iterator to the entry in the map that corresponds to the altitude level specified by zindex
-                it_z    = it_time->second.find(zindex);
+//                 // It does, now look for the iterator to the entry in the map that corresponds to the altitude level specified by zindex
+//                 it_z    = it_time->second.find(zindex);
                 
-//                cout << it_time->first << endl;
+// //                cout << it_time->first << endl;
                 
-                // Does it exist?
-                if (it_z != it_time->second.end()) {
-                    // It does.  Look for an iterator to the current xvalue.
-                    it_x    = it_z->second.find(xindex);
+//                 // Does it exist?
+//                 if (it_z != it_time->second.end()) {
+//                     // It does.  Look for an iterator to the current xvalue.
+//                     it_x    = it_z->second.find(xindex);
                     
-                    // Find the lower and upper bound of x values at this point
-                    int lowerX = it_z->second.begin()->first;
-                    int upperX = (--(it_z->second.end()))->first;
+//                     // Find the lower and upper bound of x values at this point
+//                     int lowerX = it_z->second.begin()->first;
+//                     int upperX = (--(it_z->second.end()))->first;
                     
-                    //  Print some stuff so I know I'm not crazy
-//                    cout << "debris_tx = " << debris_tx << " = " << it_time->first << ", zindex = " << zindex << " = " << it_z->first << endl;
-//                    cout << "   lowerX = " << lowerX << ", xindex = " << xindex << ", upperX = " << upperX << endl;
+//                     //  Print some stuff so I know I'm not crazy
+// //                    cout << "debris_tx = " << debris_tx << " = " << it_time->first << ", zindex = " << zindex << " = " << it_z->first << endl;
+// //                    cout << "   lowerX = " << lowerX << ", xindex = " << xindex << ", upperX = " << upperX << endl;
                 
                     
-                    if (it_x != it_z->second.end()){
+//                     if (it_x != it_z->second.end()){
                         
-                        // Look for an iterator to the current yvalue
-                        it_y    = it_x->second.find(yindex);
+//                         // Look for an iterator to the current yvalue
+//                         it_y    = it_x->second.find(yindex);
 
-                        // Does it exist?
-                        if (it_y != it_x->second.end()){
+//                         // Does it exist?
+//                         if (it_y != it_x->second.end()){
                             
-                            // It does.  The plane will probabilistically strike some debris here.
-                            // Loop through the possible pieces of debris that might be here and calculate probabilities of impact.
+//                             // It does.  The plane will probabilistically strike some debris here.
+//                             // Loop through the possible pieces of debris that might be here and calculate probabilities of impact.
                             
-                            double probNoStrike         = 1.;
+//                             double probNoStrike         = 1.;
 
-                            for (it_ID = it_y->second.begin(); it_ID != it_y->second.end(); ++it_ID){
-                                int curID = it_ID->first;
-                                binData PD = (it_ID->second);
-                                // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
+//                             for (it_ID = it_y->second.begin(); it_ID != it_y->second.end(); ++it_ID){
+//                                 int curID = it_ID->first;
+//                                 binData PD = (it_ID->second);
+//                                 // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
                                 
-                                double probDebrisHere = (PD.probDebris)/cellVolume;
+//                                 double probDebrisHere = (PD.probDebris)/cellVolume;
                                 
-                                //                        double AF = pow(d_Airplane_front + sqrt(PD.avgArea),2);
-                                //                        double AT = pow(d_Airplane_top + sqrt(PD.avgArea),2);
-                                //                        double probOfSingleStrike = probDebrisHere * (AF*speed787 + AT*PD.avgVel) * delta_t;
+//                                 //                        double AF = pow(d_Airplane_front + sqrt(PD.avgArea),2);
+//                                 //                        double AT = pow(d_Airplane_top + sqrt(PD.avgArea),2);
+//                                 //                        double probOfSingleStrike = probDebrisHere * (AF*speed787 + AT*PD.avgVel) * delta_t;
                                 
-                                // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
-                                double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
-                                double A_Proj = frontArea*sin(theta) + topArea*cos(theta);
-                                double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));
+//                                 // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
+//                                 double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
+//                                 double A_Proj = frontArea*sin(theta) + topArea*cos(theta);
+//                                 double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));
 
-                                double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
-                                double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
+//                                 double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
+//                                 double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
 
-                                if (PD.avgMass < 0.001){
-                                    // Throw out pieces that are less than 1g.  They pose no danger
-                                    A_Casualty      = 0.;
-                                    A_Catastrope    = 0.;
-                                }
-                                else if (PD.avgMass < 0.300){
-                                    A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
-                                    A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
-                                }
+//                                 if (PD.avgMass < 0.001){
+//                                     // Throw out pieces that are less than 1g.  They pose no danger
+//                                     A_Casualty      = 0.;
+//                                     A_Catastrope    = 0.;
+//                                 }
+//                                 else if (PD.avgMass < 0.300){
+//                                     A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
+//                                     A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
+//                                 }
                                 
-                                double probOfSingleStrike   = probDebrisHere * A_Proj * V_impact * delta_t;
-//                                double probOfCasualty       = probDebrisHere * A_Casualty * V_impact * delta_t;
-//                                double probOfCatastrophe    = probDebrisHere * A_Catastrope * V_impact * delta_t;
+//                                 double probOfSingleStrike   = probDebrisHere * A_Proj * V_impact * delta_t;
+// //                                double probOfCasualty       = probDebrisHere * A_Casualty * V_impact * delta_t;
+// //                                double probOfCatastrophe    = probDebrisHere * A_Catastrope * V_impact * delta_t;
                                 
-                                double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
-                                double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
-//                                double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
-//                                double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
+//                                 double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
+//                                 double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
+// //                                double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
+// //                                double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
                                 
-                                probNoStrike        *= probOfNoStrikeFromCurID;
-//                                probNoCasualty      *= probOfNoCasualtyFromCurID;
-//                                probNoCatastrophe   *= probOfNoCatastropheFromCurID;
+//                                 probNoStrike        *= probOfNoStrikeFromCurID;
+// //                                probNoCasualty      *= probOfNoCasualtyFromCurID;
+// //                                probNoCatastrophe   *= probOfNoCatastropheFromCurID;
                                 
-                            }
+//                             }
 
-                            double probStrike = (1. - probNoStrike);
+//                             double probStrike = (1. - probNoStrike);
                             
-                            // When initialized, will initialize to 0.
-                            // Update rule is to multiply the old probNoStrike by the new probNoStrike to get the total probNoStrike
-                            // Then 1 - that is the probability of a strike
-                            probabilityOfImpactRecord[acid] = 1- (1-probabilityOfImpactRecord[acid])*probNoStrike;
+//                             // When initialized, will initialize to 0.
+//                             // Update rule is to multiply the old probNoStrike by the new probNoStrike to get the total probNoStrike
+//                             // Then 1 - that is the probability of a strike
+//                             probabilityOfImpactRecord[acid] = 1- (1-probabilityOfImpactRecord[acid])*probNoStrike;
                             
-                            outfile << "debris_tx = " << debris_tx << ", plane_seconds = " << plane_seconds << ", probStrike = " << probStrike << ", total = " << probabilityOfImpactRecord[acid] << endl;
-                        }  
+//                             outfile << "debris_tx = " << debris_tx << ", plane_seconds = " << plane_seconds << ", probStrike = " << probStrike << ", total = " << probabilityOfImpactRecord[acid] << endl;
+//                         }  
                          
                    
-                    }
+//                     }
                     
-                }
-            }
+//                 }
+//             }
             
             
-////            if (it_time != ProbabilityMapDebIX.end()){
-//            if (it_x != it_z->second.end()){
-////                cout << "woot!" << endl;
-//
-//                cout << "   " << it_time->first << endl;
-//            }
+// ////            if (it_time != ProbabilityMapDebIX.end()){
+// //            if (it_x != it_z->second.end()){
+// ////                cout << "woot!" << endl;
+// //
+// //                cout << "   " << it_time->first << endl;
+// //            }
             
         
             
-        }
-    }
+//         }
+//     }
     
 
 
-//    for (it_time=ProbabilityMapDebIX.begin(); it_time != ProbabilityMapDebIX.end(); ++it_time) {
-//
-//        int tx = it_time->first;        //Assuming, for the moment, that it starts at tx = 0
-//
-//        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
-//            int zindex = it_z->first;
-//            //cout << "  " << xindex << endl;
-//
-//            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
-//                int xindex = it_x->first;
-//                //cout << "    " << yindex << endl;
-//
-//                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
-//                    int yindex = it_y->first;
-//
-//                    // ========== This is roughly how Wilde computes the probabilities =============
-//                    double probNoStrike         = 1.;
-//                    double probNoCasualty       = 1.;
-//                    double probNoCatastrophe    = 1.;
+// //    for (it_time=ProbabilityMapDebIX.begin(); it_time != ProbabilityMapDebIX.end(); ++it_time) {
+// //
+// //        int tx = it_time->first;        //Assuming, for the moment, that it starts at tx = 0
+// //
+// //        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
+// //            int zindex = it_z->first;
+// //            //cout << "  " << xindex << endl;
+// //
+// //            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
+// //                int xindex = it_x->first;
+// //                //cout << "    " << yindex << endl;
+// //
+// //                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
+// //                    int yindex = it_y->first;
+// //
+// //                    // ========== This is roughly how Wilde computes the probabilities =============
+// //                    double probNoStrike         = 1.;
+// //                    double probNoCasualty       = 1.;
+// //                    double probNoCatastrophe    = 1.;
     
-    outfile.close();
+//     outfile.close();
     
-    return probabilityOfImpactRecord;
-}
+//     return probabilityOfImpactRecord;
+// }
 
 
 

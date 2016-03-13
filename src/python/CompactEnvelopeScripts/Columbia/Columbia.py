@@ -112,10 +112,10 @@ Set parameters related to:
 # # Parameters for the ASH
 NASkm = 18.289
 
-curMission['deltaXY']                   = 2.    #km
+curMission['deltaXY']                   = .5    #km
 curMission['deltaZ']                    = NASkm/1.   #km
-curMission['h1']                        = 6.    # Smoothing parameters for the ASH.  Should be >= deltaXY
-curMission['h2']                        = 6.
+curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
+curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
 curMission['reactionTimeMinutes']       = -5    # The number of minutes that the NAS needs to safely handle a sudden debris event.
@@ -386,7 +386,7 @@ if calcIndividualHazard:
 
 
     ### Eventually this will all get wrapped into a function
-    import CompactEnvelopeBuilder as ceb
+    # import CompactEnvelopeBuilder as ceb
 
     curSkyGrid = []
     # Load each of the pickle files into one large skygrid
@@ -446,8 +446,6 @@ if calcIndividualHazard:
     # print "numDebrisTimeSteps = {0}".format(numDebrisTimeSteps)
     #
     # # Do risk calculation
-    # riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC)
-
 
     riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                    curMission['h1'], curMission['h2'])
@@ -462,6 +460,221 @@ if calcIndividualHazard:
 
     print 'Number of Pieces     = {0}'.format(np.sum(numberOfPiecesMeanList))
     print 'Total Mass of Pieces = {0}'.format(np.sum(debrisMass))
+
+
+    # ============ End of Risk Calculation =====================
+
+
+    '''
+    This is for making animations.  It's long and convoluted, sorry.
+    If you don't want one, you can stop the program here!
+    '''
+    if not makeAnimation:
+        sys.exit()
+
+    from scipy.interpolate import griddata
+    # import matplotlib
+    # matplotlib.use('Agg')  # Allows plot generation on server without X-windows
+    # import matplotlib.pyplot as plt
+
+    import matplotlib.animation as animation
+    # import types # used in duck punching
+
+    np.set_printoptions(linewidth=120)
+
+    from matplotlib.colors import LogNorm
+    import matplotlib.gridspec as gridspec
+
+    # for plotting purposes
+    fig1 = plt.figure()
+
+
+    latShift = 0.086     # Increasing this number moves the test point downward
+    lonShift = -0.01      # Increasing this number moves the test point leftward
+#
+# # for plotting purposes
+# im = plt.imread('debrisField.png')
+# corners = [-98.2617 + lonShift, -92.1090 + lonShift, 29.6854 + latShift -0.04, 34.0093 + latShift]
+
+    debrisField = plt.imread('debrisField.png')
+    leftLon     = -98.2617 + lonShift
+    rightLon    = -92.1090 + lonShift
+    bottomLat   = 29.6854 + latShift -0.04
+    upperLat    = 34.0093 + latShift
+    corners = [leftLon,rightLon,bottomLat,upperLat]
+    # corners = [-98.2617,-92.1090,29.6854,34.0093]
+    # implot = ax1.imshow(debrisField,extent=corners)
+
+
+    # TIME LOOP WILL START HERE
+    altIX2plot  = 0
+    lowAlt      = altIX2plot * curMission['deltaZ']
+    highAlt     = (altIX2plot+1) * curMission['deltaZ']
+
+    # ASH the probabilities around
+    print "ASHING"
+    curSkyGrid.generateASH(curMission['h1'], curMission['h2'])
+
+    # numDebrisTimeSteps will each be all_points_delta_t long
+    numDebrisTimeSteps = curSkyGrid.getNumRange()
+    print "numDebrisTimeSteps = {0}".format(numDebrisTimeSteps)
+
+    figCounter = 1
+    images = []
+    for tx in range(numDebrisTimeSteps):
+        # Get the individual probability of impact grid
+        probGrid = curSkyGrid.SendGridToPython(tx)
+        if len(probGrid) == 0:
+            continue    # Debris hasn't made it to the NAS yet or there are no planes in the area of the debris
+
+        # The indices that correspond to the lowest alt level
+        altitudeLevels = np.unique(probGrid[:,0])
+        if len(altitudeLevels) < (altIX2plot+1):
+            continue    # no probabilities to plot here.  move on
+        altIX = (probGrid[:,0] == altitudeLevels[altIX2plot])
+        altGrid = probGrid[altIX,:]
+
+        # Find the limits of the current grid in order to interpolate over them
+        minLat = np.min(altGrid[:,2])
+        maxLat = np.max(altGrid[:,2])
+        minLon = np.min(altGrid[:,1])
+        maxLon = np.max(altGrid[:,1])
+
+        # This is the mesh to interpolate over based on above limits
+        lonVec = np.linspace(minLon,maxLon,100)
+        latVec = np.linspace(minLat,maxLat,100)
+
+        # probInterp = griddata((altGrid[:,1], altGrid[:,2]), altGrid[:,3], (lonVec[None,:], latVec[:,None]), method='cubic')
+        probInterp = griddata((altGrid[:,1], altGrid[:,2]), altGrid[:,3], (lonVec[None,:], latVec[:,None]), method='linear')
+
+        print 'tx = {0} with a timestep of {1}'.format(tx, curMission['all_points_delta_t'])
+
+
+        # plt.clf()
+        # plt.imshow(debrisField,extent=corners)   # Hopefully this will wipe the old
+        # single_im = plt.contour(lonVec,latVec,probInterp,15,linewidths=0.5,colors='k')
+        # plt.text(0,1,"tx = {0:04d}".format(tx))
+
+        # # duck punching so that contour works
+        # def setvisible(self,vis):
+        #    for c in self.collections: c.set_visible(vis)
+        # single_im.set_visible = types.MethodType(setvisible,single_im,None)
+        # single_im.axes = plt.gca()
+        # images.append([single_im])
+
+        plt.clf()
+        gs = gridspec.GridSpec(1, 2,width_ratios=[15,1])
+        lowerBoundExponent = -4
+        upperBoundExponent = 0
+
+        # do the 2nd subplot, the pseudo colorbar, first
+        ax2 = plt.subplot(gs[1])
+        # np.logspace gives you logarithmically spaced levels -
+        # this, however, is not what you want in your colorbar
+        #
+        # you want equally spaced labels for each exponential group:
+        #
+        levls = np.array([])
+        for lix in range(lowerBoundExponent, upperBoundExponent):
+            levls = np.concatenate((levls, np.linspace(10**lix,10**(lix+1),10)))
+
+        # levls = np.linspace(1,10,10)
+        # levls = np.concatenate((levls[:-1],np.linspace(10,100,10)))
+        # levls = np.concatenate((levls[:-1],np.linspace(100,1000,10)))
+        # levls = np.concatenate((levls[:-1],np.linspace(1000,10000,10)))
+
+        #
+        # simple x,y setup for a contourf plot to serve as colorbar
+        #
+        XC = [np.zeros(len(levls)), np.ones(len(levls))]
+        YC = [levls, levls]
+        CM = ax2.contourf(XC,YC,YC, levels=levls, norm = LogNorm())
+        # log y-scale
+        ax2.set_yscale('log')
+        # y-labels on the right
+        ax2.yaxis.tick_right()
+        # no x-ticks
+        ax2.set_xticks([])
+
+
+
+        ax1 = plt.subplot(gs[0])
+        ax1.imshow(debrisField,extent=corners)   # Hopefully this will wipe the old
+        # plt.contour(lonVec,latVec,probInterp,15,linewidths=0.5,colors='k')
+        # cbarTicks = np.linspace(0, 1, 11, endpoint=True)
+        # cbarTicks = np.log10(np.logspace(1e-5, 1, endpoint=True))
+        cbarTicks = np.logspace(-4,0)
+
+
+        ax1.contourf(lonVec,latVec,probInterp, cbarTicks, cmap=plt.cm.jet, norm=LogNorm(), vmin=0., vmax=1.)
+        # ax1.colorbar(ticks=cbarTicks)
+        # plt.colorbar(ticks=cbarTicks, spacing='proportional')
+
+        # print 'cbarTicks = ' + str(cbarTicks)
+        plt.title("tx = {0:04d}, dt = {1} sec, altRange = [{2}, {3}]km".format(tx, curMission['all_points_delta_t'], lowAlt, highAlt))
+
+        # Try to fix the axis
+        # plt.axis([0, 6, 0, 20])
+        plt.axis(corners)
+
+
+        # Find the AC tracks at this time
+        for key in aircraftRecord:
+            curAC = np.array(aircraftRecord[key][0])
+            # goodIX = np.where((curAC[:,0] - secondsFromMidnightUTC) == 1.*(tx))
+            # print 'goodIX = ' + str(goodIX)
+
+            acType = aircraftRecord[key][1]
+
+            # goodIX = (curAC[:,0] - secondsFromMidnightUTC) == 1.*(tx)*mission1['all_points_delta_t']
+            timesHere       = range(tx*int(curMission['all_points_delta_t']), (tx+1)*int(curMission['all_points_delta_t']) )
+            goodIX          = np.in1d(curAC[:,0].ravel() - secondsFromMidnightUTC, timesHere).reshape(curAC[:,0].shape)
+            totalACLat      = curAC[goodIX,1]
+            totalACLon      = curAC[goodIX,2]
+            totalACLevel    = curAC[goodIX,3]
+
+            # print 'times here = ' + str(timesHere)
+            # print 'len = ' + str(len(totalACLat))
+            # Is there anybody here?
+            # if len(totalACLat) > 0:
+            for pt in range(len(totalACLat)):
+                curLat = totalACLat[pt]
+                curLon = totalACLon[pt]
+                curAlt = totalACLevel[pt]
+                # print '{0}, {1}'.format(curLon, curLat)
+                if ((upperLat > curLat) & (curLat > bottomLat) & (leftLon < curLon) & (curLon < rightLon) & (lowAlt <= curAlt) & ( curAlt < highAlt)):
+                #     print 'HERE!!!!'
+                    ax1.scatter(curLon ,curLat,marker='o',s=5, color='red')
+
+                # If last pt
+                if pt == (len(totalACLat)-1):
+                    ax1.annotate(acType, xy=(totalACLon[pt],totalACLat[pt]))
+
+        plt.savefig(curMission['GeneratedFilesFolder'] + "_tmp{0:04d}.png".format(figCounter))
+        # images.append( (plt.contour(lonVec,latVec,probInterp,15,linewidths=0.5,colors='k'),) )
+        figCounter += 1
+
+        # plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k')
+        # plt.contourf(lonVec,latVec,probInterp,15,cmap=plt.cm.jet)
+
+    im_ani = animation.ArtistAnimation(fig1, images, interval=1, repeat_delay=1, blit=True)
+
+    # im_ani = animation.Animation(fig1, images, blit=True)
+    # im_ani.save('GeneratedFiles/basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+
+    im_ani.save('doesntmatter.mp4', clear_temp=False)
+    from subprocess import call
+    call(["ffmpeg -y -r 5 -i _tmp%04d.png -b:v 1800k {0}Contours.mp4".format(curMission['GeneratedFilesFolder'])], shell=True)
+    # call(["ffmpeg -y -r 5 -i _tmp%04d.png -b:v 1800k ../../GeneratedFiles/Contours.mp4"], shell=True)
+    call(["mv _tmp*.png MoviePngs/"], shell=True)
+
+
+
+    # plt.contour(lonVec,latVec,probInterp,15,linewidths=0.5,colors='k')
+    # plt.savefig('GeneratedFiles/PlotGridProb')
+
+    print 'exiting'
+    sys.exit()
 
 
 

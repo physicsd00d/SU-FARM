@@ -87,7 +87,6 @@ cdef extern from "SkyGrid.h":
         void UploadAircraftTrackMap(map[int,pair[vector[vector[double]], string]] AircraftTrackMap)
         void UploadAircraftPropertiesMap(map[string,map[string,double]] AircraftPropertiesMap)
 
-        map[int, double] CalculateRiskToIndividualAircraft(vector[int] numberOfPiecesMeanList, vector[double] arefMeanList, int secondsFromMidnightUTC)
         map[int, double] CalculateRiskToIndividualAircraft_OnTheFly(vector[int] numberOfPiecesMean, vector[double] arefMean, int secondsFromMidnightUTC,
                                                                      double h1_in, double h2_in)
         
@@ -262,9 +261,6 @@ cdef class PySkyGrid:
         self.thisptr.UploadAircraftPropertiesMap(incomingMap)
         
         
-    def CalculateRiskToIndividualAircraft(self, numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC):
-        return self.thisptr.CalculateRiskToIndividualAircraft(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC)
-
     def CalculateRiskToIndividualAircraft_OnTheFly(self, numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                    h1_in, h2_in):
         return self.thisptr.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,

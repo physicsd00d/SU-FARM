@@ -172,7 +172,7 @@ public:
     void UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in);
 //    void UploadAircraftTrackMap(map<int, vector<vector<double> > > AircraftTrackMap);
     void UploadAircraftPropertiesMap(map<string,map<string,double> > AircraftPropertiesMap_in);
-    map<int, double> CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC);
+    // map<int, double> CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC);
 
     map<int, double> CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC,
                                                                 double h1_in, double h2_in);
