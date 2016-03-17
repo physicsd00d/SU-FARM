@@ -84,7 +84,7 @@ cdef extern from "SkyGrid.h":
         vector[double] createEmptyAircraftDensityMap()
         void populateAircraftDensityMap(void *densityMapArray, int numElements)
 
-        void UploadAircraftTrackMap(map[int,pair[vector[vector[double]], string]] AircraftTrackMap)
+        void UploadAircraftTrackMap(map[int,pair[vector[vector[double]], string]] AircraftTrackMap, int aircraftTrackDeltaTSec)
         void UploadAircraftPropertiesMap(map[string,map[string,double]] AircraftPropertiesMap)
 
         map[int, double] CalculateRiskToIndividualAircraft_OnTheFly(vector[int] numberOfPiecesMean, vector[double] arefMean, int secondsFromMidnightUTC,
@@ -245,7 +245,7 @@ cdef class PySkyGrid:
 #            inc(curz)
 #        return probGrid
 
-    def UploadAircraft(self, ACdict):
+    def UploadAircraft(self, ACdict, aircraftTrackDeltaTSec):
 #        # Just take one aircraft for now
 #        keys = ACdict.keys()
 #        singleAC = ACdict[keys[0]]
@@ -255,7 +255,7 @@ cdef class PySkyGrid:
 #
 #        cdef map[int,vector[vector[double]]] testMap = ACdict
 #        self.thisptr.UploadSingleAircraft(testMap)
-        self.thisptr.UploadAircraftTrackMap(ACdict)
+        self.thisptr.UploadAircraftTrackMap(ACdict, aircraftTrackDeltaTSec)
 
     def UploadAircraftPropertiesMap(self, incomingMap):
         self.thisptr.UploadAircraftPropertiesMap(incomingMap)

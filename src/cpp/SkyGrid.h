@@ -169,7 +169,7 @@ public:
     
     void ASH2(double h1, double h2);
     
-    void UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in);
+    void UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in, int aircraftTrackDeltaTSec);
 //    void UploadAircraftTrackMap(map<int, vector<vector<double> > > AircraftTrackMap);
     void UploadAircraftPropertiesMap(map<string,map<string,double> > AircraftPropertiesMap_in);
     // map<int, double> CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC);
@@ -178,6 +178,10 @@ public:
                                                                 double h1_in, double h2_in);
     vector<map<int,binData> > ASHDesiredPoint(double h1_in, double h2_in, vector<vector<double> > desiredPt);
 
+    vector<double> ProbNoConsequence(map<int, binData> &probBeta, vector<int> numberOfPiecesMean,
+                                     double cellVolume, double d_Airplane_top,
+                                     double d_Airplane_front, double aircraftSpeed, double delta_t);
+    
     // Debugging Functions (Matlab)
     void GoMatlab(string fileName, vector<Point> tempVec);
     void DumpGridToMatlab(char *fileName);

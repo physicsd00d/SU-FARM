@@ -14,7 +14,7 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain   			= False  # State Vector
 freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = True
+freshDebris             = False
 debug                   = False
 
 plotColumbiaGround      = True
@@ -114,7 +114,7 @@ Set parameters related to:
 NASkm = 18.289
 
 curMission['deltaXY']                   = .5    #km
-curMission['deltaZ']                    = NASkm/1.   #km
+curMission['deltaZ']                    = NASkm/4.   #km
 curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
 curMission['h2']                        = 3.
 
@@ -172,6 +172,7 @@ curMission['exportGE']    = True
 curMission['exportFACET'] = False
 
 # This date gets used for GE.  I believe the FACET files are date agnostic, but i think the time of day might get set here
+# This specific time of 13:59:30 is the time that the CAIB used for the beginning of the progressive breakup.
 yyyy = 2003
 mm = 2
 dd = 1
@@ -234,7 +235,19 @@ windMagCoeff    = 1.0   # Scale the wind profile
 # CRJ2 = 7.9430048788e-05
 # B733 = 6.23311270627e-05
 
-
+## This is with the new interpolated aircraft tracks.  Still need to check on the risk calculation.  1 alt level, 0.5 vs 3, nowind
+# Correcting for difference in timesteps
+# E120 = 0.000176470285798
+# MD82 = 0.00187881155333
+# B733 = 0.00104933947812
+# B735 = 0.0013383864785
+# MD90 = 0.00269132952572
+# B738 = 0.0
+# CRJ2 = 0.002097949861
+# CRJ2 = 0.00144988348205
+# B733 = 0.000894275342716
+# Number of Pieces     = 78849
+# Total Mass of Pieces = 26403.8302996
 
 # ======================= Begin Computations ============================ #
 # Precompute some Atmosphere and Trajectory profiles
@@ -341,6 +354,7 @@ if calcIndividualHazard:
     # Read in the aircraft information
     # input = open('HighRiskOutput.txt', 'r')
     input = open('HighRiskETMSInterp.txt', 'r')
+    aircraftTrackDeltaTSec = 1
     acid2typeMap = dict()
     curTrackTime = 0
 
@@ -426,7 +440,7 @@ if calcIndividualHazard:
     numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
     debrisMass              = cur_mpc['debrisMass']
     # Upload the aircraft data (locations, areas, type)
-    curSkyGrid.UploadAircraft(aircraftRecord)
+    curSkyGrid.UploadAircraft(aircraftRecord, aircraftTrackDeltaTSec)
 
     from AircraftAreaModel import AircraftAreaModel as AAM
     curSkyGrid.UploadAircraftPropertiesMap(AAM)
@@ -703,8 +717,16 @@ if calcIndividualHazard:
 
 
 
-
-
+### Going to make some changes to SkyGrid, but these numbers shouldn't change!
+# E120 = 0.000117191951219
+# MD82 = 0.00161827291763
+# B733 = 0.000948470675794
+# B735 = 0.00107918905044
+# MD90 = 0.0054834297398
+# B738 = 0.0
+# CRJ2 = 0.00273988944608
+# CRJ2 = 0.00340425330452
+# B733 = 0.000463863781848
 
 
 

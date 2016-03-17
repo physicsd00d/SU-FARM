@@ -343,7 +343,7 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
     
     //    double cellArea = xBinLength*yBinLength;
     //    double probOfAirplaneInCell = aircraftDensity * cellArea / numZBins;    // Probability of having an aircraft in a cell (divide by number of zbins)
-    double ft_2_km = 0.0003048;
+    //    double ft_2_km = 0.0003048;
     
     // Quasi-following Wilde's Modeling of Risk to Aircraft from Space Vehicle Debris
     //    double span787 = 0.0601401;     //km        (span = 197.31ft  =  0.0601401km)
@@ -359,12 +359,6 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
     //    double volumeToAvoid = span787*(speed787 * delta_t + length787) * height787;
     double cellVolume = xBinLength*yBinLength*zBinHeight;
     double delta_t = getDeltaT();
-    
-    // Do a little bit of error checking
-    double maxProbSingleStrike = 1.;
-    double minProbSingleStrike = 0.;
-    
-    double maxSweptVolume = cellVolume;
     
     // ===========  Start to load up the probabilities at the given time index tx
     //    vector<double> temp4Vec;
@@ -396,9 +390,9 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
                     int yindex = it_y->first;
                     
                     // ========== This is roughly how Wilde computes the probabilities =============
-                    double probNoStrike         = 1.;
-                    double probNoCasualty       = 1.;
-                    double probNoCatastrophe    = 1.;
+//                    double probNoStrike         = 1.;
+//                    double probNoCasualty       = 1.;
+//                    double probNoCatastrophe    = 1.;
 
                     // Define the index where we'll store info and then check that it's not already being used.
                     if (ProbabilityMapDebIX[tx][zindex][xindex][yindex].count(STORE_IX) > 0){
@@ -406,77 +400,12 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
                         exit(-2);
                     }
                     
-                    for (it_ID = ProbabilityMapDebIX[tx][zindex][xindex][yindex].begin(); it_ID != ProbabilityMapDebIX[tx][zindex][xindex][yindex].end(); ++it_ID){
-                        int curID = it_ID->first;
-                        binData PD = (it_ID->second);
-                        
-                        // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
-                        // Keep in mind that as the grid gets finer, probDebrisHere can get bigger than 1 or arbitrarily large because we're dividing by such a
-                        // small number.
-                        
-                        double probDebrisInCell     = PD.probDebris;
-                        double probDensityOfDebris  = 1. / cellVolume;    //Swept volume of debris / cellVolume
-                        
-                        //                        double probDebrisHere = ((it_ID->second).probDebris)/cellVolume;        // Prob Density
-                        
-                        //                        double AF = pow(d_Airplane_front + sqrt(PD.avgArea),2);
-                        //                        double AT = pow(d_Airplane_top + sqrt(PD.avgArea),2);
-                        //                        double probOfSingleStrike = probDebrisHere * (AF*speed787 + AT*PD.avgVel) * delta_t;
-                        
-                        // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
-                        double theta = atan2(speed787, PD.avgVel);  // Sure hope velocity is in km/s
-                        double A_Proj = pow(d_Airplane_front, 2)*sin(theta) + pow(d_Airplane_top, 2)*cos(theta);
-                        double V_impact = sqrt(pow(speed787, 2) + pow(PD.avgVel,2));
-                        
-                        double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
-                        double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
-                        
-                        // NOTE:  WHERE DID THESE VALUES COME FROM???  This is not what's in Wilde's AVM paper.
-                        if (PD.avgMass < 0.001){
-                            // Throw out pieces that are less than 1g.  They pose no danger
-                            A_Casualty      = 0.;
-                            A_Catastrope    = 0.;
-                            A_Proj          = 0.;
-                        }
-                        else if (PD.avgMass < 0.300){
-                            // If the mass is below 300g, these areas are modeled as a function of the piece's mass
-                            A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
-                            A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
-                        }
-                        
-                        // Prob density integrated over swept volume of airplane
-                        //                        double probOfSingleStrike   = probDebrisInCell * probDensityOfDebris * A_Proj * V_impact * delta_t;         // Pure Probability
-                        double probOfSingleStrike   = probDebrisInCell * probDensityOfDebris * A_Proj * V_impact * delta_t;         // Pure Probability
-                        double probOfCasualty       = probDebrisInCell * probDensityOfDebris * A_Casualty * V_impact * delta_t;
-                        double probOfCatastrophe    = probDebrisInCell * probDensityOfDebris * A_Catastrope * V_impact * delta_t;
-                        
-                        if (probOfSingleStrike > maxProbSingleStrike){
-                            printf("ERROR: probOfSingleStrike %E > %E maxProbSingleStrike\n",probOfSingleStrike, maxProbSingleStrike);
-                            exit(-90);
-                        } else if (probOfSingleStrike < minProbSingleStrike){
-                            printf("ERROR: probOfSingleStrike %E > %E minProbSingleStrike\n",probOfSingleStrike, minProbSingleStrike);
-                            exit(-90);
-                        } else if (A_Proj * V_impact * delta_t > maxSweptVolume){
-                            printf("ERROR: Vswept %E > %E maxSweptVolume\n", A_Proj * V_impact * delta_t, maxSweptVolume);
-                            exit(-90);
-                        }
-                        
-                        // How different are the projected areas anyways?
-                        // printf("Proj %E  --  Cas %E  --  Cat %E\n", A_Proj, A_Casualty, A_Catastrope);
-                        
-                        double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
-                        double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
-                        double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
-                        double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
-                        
-                        probNoStrike        *= probOfNoStrikeFromCurID;
-                        probNoCasualty      *= probOfNoCasualtyFromCurID;
-                        probNoCatastrophe   *= probOfNoCatastropheFromCurID;
+                    vector<double> probNos = ProbNoConsequence(ProbabilityMapDebIX[tx][zindex][xindex][yindex], numberOfPiecesMean, cellVolume, d_Airplane_top,
+                                                               d_Airplane_front, speed787, delta_t);
 
-//                        if ((zindex < 0)){
-//                            printf("zindex = %d, probDebrisInCell = %E, Aproj = %E, A_Casualty = %E \n", zindex, probDebrisInCell, A_Proj, A_Casualty);
-//                        }
-                    }
+                    double probNoStrike         = probNos[0];
+                    double probNoCasualty       = probNos[1];
+                    double probNoCatastrophe    = probNos[2];
                     
                     // Error check on LandedIX and TooHighIX.  Should be exactly zero probability of strike, probNoStrike = 1.
                     // This is because both mass and velocity have been set to zero when gridding, so the projected areas will
@@ -1850,31 +1779,14 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
 
 
 
-void SkyGrid::UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in){
-//    int len = inputVec.size();
-//    cout << "len of incoming vec = " << len << endl;
-//    for (int ix = 0; ix < len; ix++){
-//        cout << "inputVec = " << inputVec[ix] << endl;
-//    }
+void SkyGrid::UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in, int aircraftTrackDeltaTSec){
+    if (aircraftTrackDeltaTSec != 1){
+        printf("ERROR: Aircraft tracks must have delta_t = 1 second.  You indicated %d\n", aircraftTrackDeltaTSec);
+        exit(-4);
+    }
     
+    // From python aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
     AircraftTrackMap = AircraftTrackMap_in;
-    
-    // From python aircraftRecord[acid].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
-    
-//    map<int, vector< vector<double> > >::iterator it_ACID;
-//    for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
-//        int acid = it_ACID->first;
-////        string acType = it_ACID->second["acType"];
-////
-////        cout << "acid = " << acid << " is type " << acType << endl;
-//        
-//        
-//        int lenHere = (it_ACID->second).size();
-//        for (int ix = 0; ix < std::min(lenHere,5); ix++){
-//            cout << "   " << (it_ACID->second)[ix][1] << "  " << (it_ACID->second)[ix][2] << endl;
-//        }
-//    }
-    
     
     return;
 }
@@ -1901,23 +1813,15 @@ void SkyGrid::UploadAircraftPropertiesMap(map<string,map<string,double> > Aircra
 
 
 
-
 map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMean, vector<double> arefMean, int secondsFromMidnightUTC,
                                                                      double h1_in, double h2_in){
     // NOTE: I'm going to require that the aircraft data come at a fixed timestep so if you ever wind up
     //   having an irregular timestep then this will break.  Don't break it.
-    int planeStepSec = 1;
     
     double delta_t = getDeltaT();
-    double ft_2_km = 0.0003048;
-
+    
     // The iterator needed for traversing through the aircraft track map
     map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
-
-    // Open the file to dump the debug output
-    string debugFileName = "debugOutput.txt";
-    ofstream outfile;
-	outfile.open(debugFileName.c_str(), ios::out);
     
     bool debugTrackMapReadIn = false;
     if (debugTrackMapReadIn){
@@ -1927,7 +1831,7 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
             string acType   = it_ACID->second.second;   // B737, etc
             
             cout << "acid = " << acid << ", model = " << acType << endl;
-            int lenHere = (it_ACID->second.first).size();
+            int lenHere = (int) (it_ACID->second.first).size();
             
             // Find the index where the explosion occurs
             int tx = 0;
@@ -1965,12 +1869,6 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
     }
     
     // Start the calculation
-    
-//    // The iterators for ProbabilityMapDebIX
-//    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
-//    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
-//    map<int, map<int, map<int,binData> > >::iterator it_x;
-//    map<int, map<int, binData> >::iterator it_y;
     map<int, binData>::iterator it_ID;
     
     double cellVolume = xBinLength*yBinLength*zBinHeight;
@@ -1987,7 +1885,7 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
         probabilityOfImpactRecord[acid] = 0.;
         
         //cout << "acid = " << acid << ", model = " << acType << endl;
-        int lenHere = (it_ACID->second.first).size();
+        int lenHere = (int)(it_ACID->second.first).size();
         
         // Find the areas that are relevant for this aircraft
         //        acClass = 1
@@ -1995,7 +1893,7 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
         //        topArea = 0.154464
         int     acClass     = AircraftPropertiesMap[acType]["acClass"];
         double  frontArea   = AircraftPropertiesMap[acType]["frontArea"];   // These areas come in km^2
-        double  topArea     = AircraftPropertiesMap[acType]["topArea"]; 
+        double  topArea     = AircraftPropertiesMap[acType]["topArea"];
         
         // Find the index where the explosion occurs.  Time Explosion Offest = TEO
         // Find the index where the plane is in the air AND the explosion occurs / has previously occurred
@@ -2013,149 +1911,449 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
         
         //int TEO = (it_ACID->second.first)[plane_tx][0];
         //cout << "TEO = " << TEO << ",  secondsFromMidnightUTC = " << secondsFromMidnightUTC << endl;
-
+        
         double secondsSinceImpact   = 0.;
-
-        Point tempPt;
+        int trackTimeStepsRemaining = lenHere - plane_tx;
+        int ptCounter = 0;
+        
+        // Look up the probability at these points.
+        vector<vector<double> > ptsOfInterest;
+        ptsOfInterest.assign(trackTimeStepsRemaining,vector<double>());
+        
+        vector<double> acSpeeds;
+        acSpeeds.assign(trackTimeStepsRemaining,0.);
+        
         for (plane_tx = plane_tx; plane_tx < lenHere; plane_tx++){
             
             // What's the time index at this point?
-            double plane_seconds       = (it_ACID->second.first)[plane_tx][0];
-//            int debris_tx           = (int) floor((plane_seconds - TEO)/all_points_delta_t);
-            int debris_tx           = (int) floor((plane_seconds - secondsFromMidnightUTC)/all_points_delta_t);
+            double plane_seconds    = (it_ACID->second.first)[plane_tx][0];
+            //            int debris_tx           = (int) floor((plane_seconds - TEO)/all_points_delta_t);
+            //int debris_tx           = (int) floor((plane_seconds - secondsFromMidnightUTC)/all_points_delta_t);
             double aircraftLat      = (it_ACID->second.first)[plane_tx][1];
             double aircraftLon      = (it_ACID->second.first)[plane_tx][2];
             double aircraftZ        = (it_ACID->second.first)[plane_tx][3];
             double aircraftSpeed    = (it_ACID->second.first)[plane_tx][4];
-
+            
             // This should be the xyz coordinate of the map
+            Point tempPt;
             tempPt.set_xy_from_latlon(aircraftLat * PI/180., aircraftLon * PI/180.);
-
+            
             //            int xindex = floor((tempPt.get_x() - XREF)/xBinLength);
             //            int yindex = floor((tempPt.get_y() - YREF)/yBinLength);
             //            int zindex = floor((aircraftZ - ZREF)/zBinHeight);
+            
+            ptsOfInterest[ptCounter].assign(4,0.);
+            
+            //            ptsOfInterest[0][0] = (plane_seconds - TEO);
+            ptsOfInterest[ptCounter][0] = (plane_seconds - secondsFromMidnightUTC);  // Debris times are zero at time of explosion
+            ptsOfInterest[ptCounter][1] = aircraftZ;
+            ptsOfInterest[ptCounter][2] = tempPt.get_x();
+            ptsOfInterest[ptCounter][3] = tempPt.get_y();
+            
+            acSpeeds[ptCounter] = aircraftSpeed;
+            ptCounter++;
+        }
+        
+        // Call the function
+        vector<map<int,binData> > desiredProbabilities = ASHDesiredPoint(h1_in, h2_in, ptsOfInterest);
 
-            
-            // Look up the probability at this point.  Only do one point at a time, for the moment, to minimize changes to code flow.
-            vector<vector<double> > ptsOfInterest;
-            ptsOfInterest.assign(1,vector<double>());
-            ptsOfInterest[0].assign(4,0.);
-            
-//            ptsOfInterest[0][0] = (plane_seconds - TEO);
-            ptsOfInterest[0][0] = (plane_seconds - secondsFromMidnightUTC);  // Debris times are zero at time of explosion
-            ptsOfInterest[0][1] = aircraftZ;
-            ptsOfInterest[0][2] = tempPt.get_x();
-            ptsOfInterest[0][3] = tempPt.get_y();
-            
-            // Call the function
-            vector<map<int,binData> > desiredProbabilities =
-                ASHDesiredPoint(h1_in, h2_in, ptsOfInterest);
+        double probNoStrike         = 1.;
 
-            
-            // Only had one point, so no need to loop, but anticipating a loop sometime
-            int numPtsOfInterest = ptsOfInterest.size();
-            int curPt = 0;
+        // Only had one point, so no need to loop, but anticipating a loop sometime
+        int numPtsOfInterest = (int) ptsOfInterest.size();
+        for (int curPt = 0; curPt < numPtsOfInterest; curPt++){
             map<int,binData> curProbMap = desiredProbabilities[curPt];
             
-            double probNoStrike         = 1.;
-            
-
-            // If there was no overlap between debris and aircraft at this timestep, then curProbMap should be empty and this loop be skipped
-            for (it_ID = curProbMap.begin(); it_ID != curProbMap.end(); ++it_ID){
-                int curID = it_ID->first;
-                binData PD = (it_ID->second);
-                // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
-                
-                double probDebrisHere = (PD.probDebris)/cellVolume;
-                
-                
-//                // ==== Old ACTA way ====
-//                double AF = pow(d_Airplane_front + sqrt(PD.avgArea),2);
-//                double AT = pow(d_Airplane_top + sqrt(PD.avgArea),2);
-//                double probOfSingleStrike = probDebrisHere * (AF*speed787 + AT*PD.avgVel) * delta_t;
-                
-                // ==== New ACTA way ====
-                // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
-                double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
-                double A_Proj = frontArea*sin(theta) + topArea*cos(theta);
-                double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));
-                
-                double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
-                double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
-                
-                if (PD.avgMass < 0.001){
-                    // Throw out pieces that are less than 1g.  They pose no danger
-                    A_Proj          = 0.;
-                    A_Casualty      = 0.;
-                    A_Catastrope    = 0.;
-                }
-                else if (PD.avgMass < 0.300){
-                    A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
-                    A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
-                }
-                
-                double probOfSingleStrike   = probDebrisHere * A_Proj * V_impact * delta_t;
-                //                                double probOfCasualty       = probDebrisHere * A_Casualty * V_impact * delta_t;
-                //                                double probOfCatastrophe    = probDebrisHere * A_Catastrope * V_impact * delta_t;
-                
-                double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
-                double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
-                //                                double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
-                //                                double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
-                
-                probNoStrike        *= probOfNoStrikeFromCurID;
-                //                                probNoCasualty      *= probOfNoCasualtyFromCurID;
-                //                                probNoCatastrophe   *= probOfNoCatastropheFromCurID;
-                
-            }
-            
-            // Want to save the time at which the aircraft is first at risk
-            if (probabilityOfImpactRecord[acid] == 0.){
-                secondsSinceImpact = debris_tx * getDeltaT();
-                
-            }
-            
-            double probStrike = (1. - probNoStrike);
-            // When initialized, will initialize to 0.
-            // Update rule is to multiply the old probNoStrike by the new probNoStrike to get the total probNoStrike
-            // Then 1 - that is the probability of a strike
-            probabilityOfImpactRecord[acid] = 1- (1-probabilityOfImpactRecord[acid])*probNoStrike;
-            
-            outfile << "debris_tx = " << debris_tx << ", plane_seconds = " << plane_seconds << ", probStrike = " << probStrike << ", total = " << probabilityOfImpactRecord[acid] << endl;
+            double aircraftSpeed = acSpeeds[curPt];
+            vector<double> probNos = ProbNoConsequence(curProbMap, numberOfPiecesMean, cellVolume, sqrt(topArea),
+                                        sqrt(frontArea), aircraftSpeed, delta_t);
+        
+            probNoStrike *= probNos[0];
         }
-        cout << "minutes since accident = " << secondsSinceImpact/60. << endl;
 
+        // 1 - probNoStrike is the probability of a strike from >= 1 pieces at >=1 times
+        probabilityOfImpactRecord[acid] = (1. - probNoStrike);
+        
+        //cout << "minutes since accident = " << secondsSinceImpact/60. << endl;
+        
     }
     
-                        
 
-    
-    
-    
-    //    for (it_time=ProbabilityMapDebIX.begin(); it_time != ProbabilityMapDebIX.end(); ++it_time) {
-    //
-    //        int tx = it_time->first;        //Assuming, for the moment, that it starts at tx = 0
-    //
-    //        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
-    //            int zindex = it_z->first;
-    //            //cout << "  " << xindex << endl;
-    //
-    //            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
-    //                int xindex = it_x->first;
-    //                //cout << "    " << yindex << endl;
-    //
-    //                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
-    //                    int yindex = it_y->first;
-    //
-    //                    // ========== This is roughly how Wilde computes the probabilities =============
-    //                    double probNoStrike         = 1.;
-    //                    double probNoCasualty       = 1.;
-    //                    double probNoCatastrophe    = 1.;
-    
-    outfile.close();
+    bool debugRiskValues = false;
+    if (debugRiskValues){
+        printf("C++ probabilityOfImpactRecord\n");
+        for (map<int,double>::iterator it = probabilityOfImpactRecord.begin(); it != probabilityOfImpactRecord.end(); ++it){
+            printf("%d --> %E\n", it->first, it->second);
+        }
+        printf("\n\n");
+    }
     
     return probabilityOfImpactRecord;
 }
+
+
+// Take the probability data for a given x,y,z,t cell and calculate the probabilities of no conequences
+//  for an aircraft in that cell over all ballistic coefficient categories (curID)
+vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<int> numberOfPiecesMean,
+                                          double cellVolume, double d_Airplane_top,
+                                          double d_Airplane_front, double aircraftSpeed, double delta_t){
+    
+    double ft_2_km = 0.0003048;
+    
+    // ========== This is roughly how Wilde computes the probabilities =============
+    double probNoStrike         = 1.;
+    double probNoCasualty       = 1.;
+    double probNoCatastrophe    = 1.;
+    
+    // Use these for a little bit of error checking
+    double maxProb = 1.;
+    double minProb = 0.;
+    double maxSweptVolume = cellVolume;
+    
+    for (map<int, binData>::iterator it_ID = probBeta.begin(); it_ID != probBeta.end(); ++it_ID){
+        int curID = it_ID->first;
+        binData PD = (it_ID->second);
+        
+        // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
+        // Keep in mind that as the grid gets finer, probDebrisHere can get bigger than 1 or arbitrarily large because we're dividing by such a
+        // small number.
+        
+        //double probDebrisInCell     = PD.probDebris;
+        //double probDensityOfDebris  = 1. / cellVolume;    //Swept volume of debris / cellVolume
+        
+        double probDensity = PD.probDebris / cellVolume;
+        
+        // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
+        // This calculation is from Wilde_AVM.  The projected area is a function of mass, not debris area, for pieces under 300g.
+        double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
+        double A_Proj = pow(d_Airplane_front, 2)*sin(theta) + pow(d_Airplane_top, 2)*cos(theta);
+        double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));  // Assumes aircraft and debris velocities are perpendicular.
+        
+        double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
+        double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
+        
+        // NOTE:  WHERE DID THESE VALUES COME FROM???  This is not what's in Wilde's AVM paper.
+        if (PD.avgMass < 0.001){
+            // Throw out pieces that are less than 1g.  They pose no danger
+            A_Casualty      = 0.;
+            A_Catastrope    = 0.;
+            A_Proj          = 0.;
+        }
+        else if (PD.avgMass < 0.300){
+            // If the mass is below 300g, these areas are modeled as a function of the piece's mass
+            A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
+            A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
+        }
+        
+        // Prob density integrated over swept volume of airplane
+        //                        double probOfSingleStrike   = probDebrisInCell * probDensityOfDebris * A_Proj * V_impact * delta_t;         // Pure Probability
+        double probOfSingleStrike   = probDensity * A_Proj * V_impact * delta_t;         // Pure Probability
+        double probOfCasualty       = probDensity * A_Casualty * V_impact * delta_t;
+        double probOfCatastrophe    = probDensity * A_Catastrope * V_impact * delta_t;
+
+        // Make sure nothing is obviously wrong.
+        if (probDensity > maxProb){
+            printf("ERROR: probDensity %E > %E maxProb\n",probOfSingleStrike, maxProb);
+            exit(-90);
+        } else if (probOfSingleStrike > maxProb){
+            printf("ERROR: probOfSingleStrike %E > %E maxProb\n",probOfSingleStrike, maxProb);
+            exit(-90);
+        } else if (probOfSingleStrike < minProb){
+            printf("ERROR: probOfSingleStrike %E > %E minProb\n",probOfSingleStrike, minProb);
+            exit(-90);
+        } else if (A_Proj * V_impact * delta_t > maxSweptVolume){
+            printf("ERROR: Vswept %E > %E maxSweptVolume\n", A_Proj * V_impact * delta_t, maxSweptVolume);
+            exit(-90);
+        }
+        
+        // How different are the projected areas anyways?
+        // printf("Proj %E  --  Cas %E  --  Cat %E\n", A_Proj, A_Casualty, A_Catastrope);
+        
+        double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
+        double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
+        double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
+        double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
+        
+        probNoStrike        *= probOfNoStrikeFromCurID;
+        probNoCasualty      *= probOfNoCasualtyFromCurID;
+        probNoCatastrophe   *= probOfNoCatastropheFromCurID;
+        
+    }
+    
+    // Package up the answers
+    vector<double> ans;
+    ans.assign(3, 0.);
+    
+    ans[0] = probNoStrike;
+    ans[1] = probNoCasualty;
+    ans[2] = probNoCatastrophe;
+    
+    return ans;
+}
+
+
+
+
+
+
+
+
+
+// Delete this once the new one is working (above)
+//map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMean, vector<double> arefMean, int secondsFromMidnightUTC,
+//                                                                     double h1_in, double h2_in){
+//    // NOTE: I'm going to require that the aircraft data come at a fixed timestep so if you ever wind up
+//    //   having an irregular timestep then this will break.  Don't break it.
+//    int planeStepSec = 1;
+//
+//    double delta_t = getDeltaT();
+//    double ft_2_km = 0.0003048;
+//
+//    // The iterator needed for traversing through the aircraft track map
+//    map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
+//
+//    // Open the file to dump the debug output
+//    string debugFileName = "debugOutput.txt";
+//    ofstream outfile;
+//	outfile.open(debugFileName.c_str(), ios::out);
+//
+//    bool debugTrackMapReadIn = false;
+//    if (debugTrackMapReadIn){
+//        // Dump a little bit of the AircraftTrackMap to stdout
+//        for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
+//            int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
+//            string acType   = it_ACID->second.second;   // B737, etc
+//            
+//            cout << "acid = " << acid << ", model = " << acType << endl;
+//            int lenHere = (it_ACID->second.first).size();
+//            
+//            // Find the index where the explosion occurs
+//            int tx = 0;
+//            while (tx < lenHere){
+//                if ((it_ACID->second.first)[tx][0] == secondsFromMidnightUTC) {
+//                    break; }
+//                
+//                tx++;
+//            }
+//            
+//            for (int ix = 0; (tx + ix) < std::min(lenHere,tx + 5); ix++){
+//                cout << "   " << (it_ACID->second.first)[tx + ix][0] << "   "
+//                << (it_ACID->second.first)[tx + ix][1] << "  "
+//                << (it_ACID->second.first)[tx + ix][2] << "  "
+//                << (it_ACID->second.first)[tx + ix][3] << "  "
+//                << (it_ACID->second.first)[tx + ix][4] << "  "
+//                << endl;
+//            }
+//        }
+//    }
+//    
+//    bool debugAircraftProperties = false;
+//    if (debugAircraftProperties){
+//        // Dump a little bit of the AircraftPropertiesMap to stdout
+//        map<string,map<string,double> >::iterator it_acType;
+//        map<string,double>::iterator it_property;
+//        
+//        cout << "========= Dumping the AircraftPropertiesMap ========= " << endl;
+//        for (it_acType = AircraftPropertiesMap.begin(); it_acType != AircraftPropertiesMap.end(); ++it_acType){
+//            cout << it_acType->first << endl;
+//            for (it_property = it_acType->second.begin(); it_property != it_acType->second.end(); ++it_property){
+//                cout << "   " << it_property->first << " = " << it_property->second << endl;
+//            }
+//        }
+//    }
+//    
+//    // Start the calculation
+//    
+////    // The iterators for ProbabilityMapDebIX
+////    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
+////    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
+////    map<int, map<int, map<int,binData> > >::iterator it_x;
+////    map<int, map<int, binData> >::iterator it_y;
+//    map<int, binData>::iterator it_ID;
+//    
+//    double cellVolume = xBinLength*yBinLength*zBinHeight;
+//    
+//    map<int, double> probabilityOfImpactRecord;
+//    
+//    // Loop over the aircraft themselves
+//    // NEED THE TIME OFFSET!!!
+//    
+//    for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
+//        int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
+//        string acType   = it_ACID->second.second;   // B737, etc
+//        
+//        probabilityOfImpactRecord[acid] = 0.;
+//        
+//        //cout << "acid = " << acid << ", model = " << acType << endl;
+//        int lenHere = (it_ACID->second.first).size();
+//        
+//        // Find the areas that are relevant for this aircraft
+//        //        acClass = 1
+//        //        frontArea = 0.0223973
+//        //        topArea = 0.154464
+//        int     acClass     = AircraftPropertiesMap[acType]["acClass"];
+//        double  frontArea   = AircraftPropertiesMap[acType]["frontArea"];   // These areas come in km^2
+//        double  topArea     = AircraftPropertiesMap[acType]["topArea"]; 
+//        
+//        // Find the index where the explosion occurs.  Time Explosion Offest = TEO
+//        // Find the index where the plane is in the air AND the explosion occurs / has previously occurred
+//        int plane_tx = 0;
+//        while (plane_tx < lenHere){
+//            if ((it_ACID->second.first)[plane_tx][0] >= secondsFromMidnightUTC) {
+//                break; }
+//            
+//            plane_tx++; }
+//        
+//        if (plane_tx == lenHere){
+//            // This aircraft is not in the air at the same time as the accident
+//            continue;
+//        }
+//        
+//        //int TEO = (it_ACID->second.first)[plane_tx][0];
+//        //cout << "TEO = " << TEO << ",  secondsFromMidnightUTC = " << secondsFromMidnightUTC << endl;
+//
+//        double secondsSinceImpact   = 0.;
+//
+//        Point tempPt;
+//        for (plane_tx = plane_tx; plane_tx < lenHere; plane_tx++){
+//            
+//            // What's the time index at this point?
+//            double plane_seconds       = (it_ACID->second.first)[plane_tx][0];
+////            int debris_tx           = (int) floor((plane_seconds - TEO)/all_points_delta_t);
+//            int debris_tx           = (int) floor((plane_seconds - secondsFromMidnightUTC)/all_points_delta_t);
+//            double aircraftLat      = (it_ACID->second.first)[plane_tx][1];
+//            double aircraftLon      = (it_ACID->second.first)[plane_tx][2];
+//            double aircraftZ        = (it_ACID->second.first)[plane_tx][3];
+//            double aircraftSpeed    = (it_ACID->second.first)[plane_tx][4];
+//
+//            // This should be the xyz coordinate of the map
+//            tempPt.set_xy_from_latlon(aircraftLat * PI/180., aircraftLon * PI/180.);
+//
+//            //            int xindex = floor((tempPt.get_x() - XREF)/xBinLength);
+//            //            int yindex = floor((tempPt.get_y() - YREF)/yBinLength);
+//            //            int zindex = floor((aircraftZ - ZREF)/zBinHeight);
+//
+//            
+//            // Look up the probability at this point.  Only do one point at a time, for the moment, to minimize changes to code flow.
+//            vector<vector<double> > ptsOfInterest;
+//            ptsOfInterest.assign(1,vector<double>());
+//            ptsOfInterest[0].assign(4,0.);
+//            
+////            ptsOfInterest[0][0] = (plane_seconds - TEO);
+//            ptsOfInterest[0][0] = (plane_seconds - secondsFromMidnightUTC);  // Debris times are zero at time of explosion
+//            ptsOfInterest[0][1] = aircraftZ;
+//            ptsOfInterest[0][2] = tempPt.get_x();
+//            ptsOfInterest[0][3] = tempPt.get_y();
+//            
+//            // Call the function
+//            vector<map<int,binData> > desiredProbabilities =
+//                ASHDesiredPoint(h1_in, h2_in, ptsOfInterest);
+//
+//            
+//            // Only had one point, so no need to loop, but anticipating a loop sometime
+//            int numPtsOfInterest = ptsOfInterest.size();
+//            int curPt = 0;
+//            map<int,binData> curProbMap = desiredProbabilities[curPt];
+//            
+//            double probNoStrike         = 1.;
+//            
+//
+//            // If there was no overlap between debris and aircraft at this timestep, then curProbMap should be empty and this loop be skipped
+//            for (it_ID = curProbMap.begin(); it_ID != curProbMap.end(); ++it_ID){
+//                int curID = it_ID->first;
+//                binData PD = (it_ID->second);
+//                // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
+//                
+//                double probDebrisHere = (PD.probDebris)/cellVolume;
+//                
+//                
+////                // ==== Old ACTA way ====
+////                double AF = pow(d_Airplane_front + sqrt(PD.avgArea),2);
+////                double AT = pow(d_Airplane_top + sqrt(PD.avgArea),2);
+////                double probOfSingleStrike = probDebrisHere * (AF*speed787 + AT*PD.avgVel) * delta_t;
+//                
+//                // ==== New ACTA way ====
+//                // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
+//                double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
+//                double A_Proj = frontArea*sin(theta) + topArea*cos(theta);
+//                double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));
+//                
+//                double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
+//                double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
+//                
+//                if (PD.avgMass < 0.001){
+//                    // Throw out pieces that are less than 1g.  They pose no danger
+//                    A_Proj          = 0.;
+//                    A_Casualty      = 0.;
+//                    A_Catastrope    = 0.;
+//                }
+//                else if (PD.avgMass < 0.300){
+//                    A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
+//                    A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
+//                }
+//                
+//                double probOfSingleStrike   = probDebrisHere * A_Proj * V_impact * delta_t;
+//                //                                double probOfCasualty       = probDebrisHere * A_Casualty * V_impact * delta_t;
+//                //                                double probOfCatastrophe    = probDebrisHere * A_Catastrope * V_impact * delta_t;
+//                
+//                double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
+//                double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
+//                //                                double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
+//                //                                double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
+//                
+//                probNoStrike        *= probOfNoStrikeFromCurID;
+//                //                                probNoCasualty      *= probOfNoCasualtyFromCurID;
+//                //                                probNoCatastrophe   *= probOfNoCatastropheFromCurID;
+//                
+//            }
+//            
+//            // Want to save the time at which the aircraft is first at risk
+//            if (probabilityOfImpactRecord[acid] == 0.){
+//                secondsSinceImpact = debris_tx * getDeltaT();
+//                
+//            }
+//            
+//            double probStrike = (1. - probNoStrike);
+//            // When initialized, will initialize to 0.
+//            // Update rule is to multiply the old probNoStrike by the new probNoStrike to get the total probNoStrike
+//            // Then 1 - that is the probability of a strike
+//            probabilityOfImpactRecord[acid] = 1- (1-probabilityOfImpactRecord[acid])*probNoStrike;
+//            
+//            outfile << "debris_tx = " << debris_tx << ", plane_seconds = " << plane_seconds << ", probStrike = " << probStrike << ", total = " << probabilityOfImpactRecord[acid] << endl;
+//        }
+//        cout << "minutes since accident = " << secondsSinceImpact/60. << endl;
+//
+//    }
+//    
+//                        
+//
+//    
+//    
+//    
+//    //    for (it_time=ProbabilityMapDebIX.begin(); it_time != ProbabilityMapDebIX.end(); ++it_time) {
+//    //
+//    //        int tx = it_time->first;        //Assuming, for the moment, that it starts at tx = 0
+//    //
+//    //        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
+//    //            int zindex = it_z->first;
+//    //            //cout << "  " << xindex << endl;
+//    //
+//    //            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
+//    //                int xindex = it_x->first;
+//    //                //cout << "    " << yindex << endl;
+//    //
+//    //                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
+//    //                    int yindex = it_y->first;
+//    //
+//    //                    // ========== This is roughly how Wilde computes the probabilities =============
+//    //                    double probNoStrike         = 1.;
+//    //                    double probNoCasualty       = 1.;
+//    //                    double probNoCatastrophe    = 1.;
+//    
+//    outfile.close();
+//    
+//    return probabilityOfImpactRecord;
+//}
 
 
 

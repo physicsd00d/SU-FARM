@@ -18,7 +18,7 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 
 '''These are the most-likely-to-be-changed parameters'''
 freshWind   = False
-freshDebris = True
+freshDebris = False
 debug       = True
 
 doMain      = True
@@ -236,7 +236,7 @@ if debug:
     # Change a few values
     curMission['debrisCatFile']           = 'Debug.txt'
     curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
-    curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
+    curMission['numPiecesPerSample']      = 2      # The number of pieces to consider within each debris group
 
 
 profiles = []
@@ -474,5 +474,23 @@ if addStageReentry:
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
 
+
+# Gonna make a few changes.  Match this
+# StoreFootprintAsVector
+# (0.0, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_1.0.dat')
+# (2.186262579755342e-11, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_2.0.dat')
+# (4.727746156737436e-13, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_3.0.dat')
+# (3.808736648987429e-12, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_4.0.dat')
+# (4.185821338608514e-12, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_5.0.dat')
+# (3.1280756438857586e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_6.0.dat')
+# (5.4377846324668e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_7.0.dat')
+# (5.7704690421333385e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_8.0.dat')
+# (6.019996737953345e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_9.0.dat')
+# (7.698497774434498e-14, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_10.0.dat')
+# (3.576020939636407e-14, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_11.0.dat')
+# (2.3254035319395172e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_12.0.dat')
+# (3.1055387634380695e-12, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_13.0.dat')
+# (6.096703844904762e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_14.0.dat')
+# (7.783041672976858e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_15.0.dat')
 
 
