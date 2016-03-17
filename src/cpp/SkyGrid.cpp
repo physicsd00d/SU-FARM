@@ -1515,9 +1515,7 @@ vector<map<int,SkyGrid::binData> > SkyGrid::ASHDesiredPoint(double h1_in, double
                 } } }
     }
     
-    
-    
-    
+    // This is the probability of debris being present [point of interest][ballistic coefficient]
     return probabilityRecord;
 }
 
@@ -1912,49 +1910,57 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
     
     double delta_t = getDeltaT();
     double ft_2_km = 0.0003048;
-    
+
+    // The iterator needed for traversing through the aircraft track map
+    map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
+
     // Open the file to dump the debug output
     string debugFileName = "debugOutput.txt";
     ofstream outfile;
 	outfile.open(debugFileName.c_str(), ios::out);
     
-    // Dump a little bit of the AircraftTrackMap to stdout
-    map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
-    for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
-        int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
-        string acType   = it_ACID->second.second;   // B737, etc
-        
-        cout << "acid = " << acid << ", model = " << acType << endl;
-        int lenHere = (it_ACID->second.first).size();
-        
-        // Find the index where the explosion occurs
-        int tx = 0;
-        while (tx < lenHere){
-            if ((it_ACID->second.first)[tx][0] == secondsFromMidnightUTC) {
-                break; }
+    bool debugTrackMapReadIn = false;
+    if (debugTrackMapReadIn){
+        // Dump a little bit of the AircraftTrackMap to stdout
+        for (it_ACID = AircraftTrackMap.begin(); it_ACID != AircraftTrackMap.end(); ++it_ACID){
+            int acid        = it_ACID->first;           // the aircraft id -- self-explanatory
+            string acType   = it_ACID->second.second;   // B737, etc
             
-            tx++;
-        }
-        
-        for (int ix = 0; (tx + ix) < std::min(lenHere,tx + 5); ix++){
-            cout << "   " << (it_ACID->second.first)[tx + ix][0] << "   "
-            << (it_ACID->second.first)[tx + ix][1] << "  "
-            << (it_ACID->second.first)[tx + ix][2] << "  "
-            << (it_ACID->second.first)[tx + ix][3] << "  "
-            << (it_ACID->second.first)[tx + ix][4] << "  "
-            << endl;
+            cout << "acid = " << acid << ", model = " << acType << endl;
+            int lenHere = (it_ACID->second.first).size();
+            
+            // Find the index where the explosion occurs
+            int tx = 0;
+            while (tx < lenHere){
+                if ((it_ACID->second.first)[tx][0] == secondsFromMidnightUTC) {
+                    break; }
+                
+                tx++;
+            }
+            
+            for (int ix = 0; (tx + ix) < std::min(lenHere,tx + 5); ix++){
+                cout << "   " << (it_ACID->second.first)[tx + ix][0] << "   "
+                << (it_ACID->second.first)[tx + ix][1] << "  "
+                << (it_ACID->second.first)[tx + ix][2] << "  "
+                << (it_ACID->second.first)[tx + ix][3] << "  "
+                << (it_ACID->second.first)[tx + ix][4] << "  "
+                << endl;
+            }
         }
     }
     
-    // Dump a little bit of the AircraftPropertiesMap to stdout
-    map<string,map<string,double> >::iterator it_acType;
-    map<string,double>::iterator it_property;
-    
-    cout << "========= Dumping the AircraftPropertiesMap ========= " << endl;
-    for (it_acType = AircraftPropertiesMap.begin(); it_acType != AircraftPropertiesMap.end(); ++it_acType){
-        cout << it_acType->first << endl;
-        for (it_property = it_acType->second.begin(); it_property != it_acType->second.end(); ++it_property){
-            cout << "   " << it_property->first << " = " << it_property->second << endl;
+    bool debugAircraftProperties = false;
+    if (debugAircraftProperties){
+        // Dump a little bit of the AircraftPropertiesMap to stdout
+        map<string,map<string,double> >::iterator it_acType;
+        map<string,double>::iterator it_property;
+        
+        cout << "========= Dumping the AircraftPropertiesMap ========= " << endl;
+        for (it_acType = AircraftPropertiesMap.begin(); it_acType != AircraftPropertiesMap.end(); ++it_acType){
+            cout << it_acType->first << endl;
+            for (it_property = it_acType->second.begin(); it_property != it_acType->second.end(); ++it_property){
+                cout << "   " << it_property->first << " = " << it_property->second << endl;
+            }
         }
     }
     
@@ -1980,10 +1986,8 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
         
         probabilityOfImpactRecord[acid] = 0.;
         
-        cout << "acid = " << acid << ", model = " << acType << endl;
+        //cout << "acid = " << acid << ", model = " << acType << endl;
         int lenHere = (it_ACID->second.first).size();
-        
-
         
         // Find the areas that are relevant for this aircraft
         //        acClass = 1
@@ -1992,8 +1996,6 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
         int     acClass     = AircraftPropertiesMap[acType]["acClass"];
         double  frontArea   = AircraftPropertiesMap[acType]["frontArea"];   // These areas come in km^2
         double  topArea     = AircraftPropertiesMap[acType]["topArea"]; 
-        
-
         
         // Find the index where the explosion occurs.  Time Explosion Offest = TEO
         // Find the index where the plane is in the air AND the explosion occurs / has previously occurred
@@ -2009,8 +2011,8 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
             continue;
         }
         
-        int TEO = (it_ACID->second.first)[plane_tx][0];
-        cout << "TEO = " << TEO << ",  secondsFromMidnightUTC = " << secondsFromMidnightUTC << endl;
+        //int TEO = (it_ACID->second.first)[plane_tx][0];
+        //cout << "TEO = " << TEO << ",  secondsFromMidnightUTC = " << secondsFromMidnightUTC << endl;
 
         double secondsSinceImpact   = 0.;
 
@@ -2040,7 +2042,7 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
             ptsOfInterest[0].assign(4,0.);
             
 //            ptsOfInterest[0][0] = (plane_seconds - TEO);
-            ptsOfInterest[0][0] = (plane_seconds - secondsFromMidnightUTC);
+            ptsOfInterest[0][0] = (plane_seconds - secondsFromMidnightUTC);  // Debris times are zero at time of explosion
             ptsOfInterest[0][1] = aircraftZ;
             ptsOfInterest[0][2] = tempPt.get_x();
             ptsOfInterest[0][3] = tempPt.get_y();
