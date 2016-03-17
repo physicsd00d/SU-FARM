@@ -177,12 +177,12 @@ for callSign in aircraftRecord:
     ktasVec         = np.zeros_like(interpLon)     # Initialize to zero
     for ix in range(len(interpLat)-1):
 
-        # If we land at the next time step, then don't want to interpolate speed, just set it to zero
+        # If we land at the next time step, then don't want to interpolate speed, just set it to one knot (not zero because 1 is more useful for debugging)
         if (interpLat[ix+1] > landedLimit):
             distKM = Haversine((interpLat[ix], interpLon[ix]), (interpLat[ix+1], interpLon[ix+1]))
             ktasVec[ix] = (distKM / 1.) * km_s2knots              # delta_t is one second, so km/s to knots
         else:
-            ktasVec[ix] = 0.0 
+            ktasVec[ix] = 1.0 
             
     ktasVec[-1] = ktasVec[-2] # Set the last value to be equal to the second-to-last
 
