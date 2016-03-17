@@ -142,7 +142,7 @@ for flight in ElementsFromPaper:
 
 
 km_s2knots  = 1./0.000514444444
-
+landedLimit = -600.
 
 # Loss of signal is at about 13:59:32 UTC.  So let's say there's no danger before 13:55:00.  
 # Similarly, let's say no danger after about two hours, 16:00:00.
@@ -169,24 +169,32 @@ for callSign in aircraftRecord:
     flightLevelVec = curAC['flightLevelVec']
 
     # Do the interpolations
-    interpLat = np.interp(secondsVec, curAC['time'], latVec, left=0., right=0.)
-    interpLon = np.interp(secondsVec, curAC['time'], lonVec, left=0., right=0.)
+    interpLat = np.interp(secondsVec, curAC['time'], latVec, left=landedLimit, right=landedLimit)
+    interpLon = np.interp(secondsVec, curAC['time'], lonVec, left=landedLimit, right=landedLimit)
     interpFL = np.interp(secondsVec, curAC['time'], flightLevelVec, left=0., right=0.)
 
     # Calculate the ground speed
     ktasVec         = np.zeros_like(interpLon)     # Initialize to zero
     for ix in range(len(interpLat)-1):
-        distKM = Haversine((interpLat[ix], interpLon[ix]), (interpLat[ix+1], interpLon[ix+1]))
-        ktasVec[ix] = (distKM / 1.) * km_s2knots              # delta_t is one second, so km/s to knots
+
+        # If we land at the next time step, then don't want to interpolate speed, just set it to zero
+        if (interpLat[ix+1] > landedLimit):
+            distKM = Haversine((interpLat[ix], interpLon[ix]), (interpLat[ix+1], interpLon[ix+1]))
+            ktasVec[ix] = (distKM / 1.) * km_s2knots              # delta_t is one second, so km/s to knots
+        else:
+            ktasVec[ix] = 0.0 
+            
     ktasVec[-1] = ktasVec[-2] # Set the last value to be equal to the second-to-last
 
+    # if ACid == 7:
+    #     break
     # Store them by times
     for tx in range(len(secondsVec)):
         curTime = int(secondsVec[tx])
         latDec = interpLat[tx]
         lonDec = interpLon[tx]
         curLine = "{0} {1} {2:.6f} {3:.6f} {4:.2f} {5:.2f}".format(ACid, ACtype, latDec, lonDec, int(interpFL[tx]), ktasVec[tx])
-        if latDec > 0:
+        if latDec > landedLimit:
             trackTimeRecord[curTime].append(curLine)
 
 # So here's the filed speed.  Multiple elements, not just [0]
@@ -234,7 +242,8 @@ outFile.close()
 
 
 
-
+# for obj in zip(secondsVec, interpFL, interpLat, interpLon, ktasVec):
+#     print obj
 
 
 
