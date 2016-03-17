@@ -209,7 +209,7 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-#curMission['pFail'] = 0.02/curMission['all_points_delta_t']     # Probability that vehicle will fail somewhere
+#curMission['pFail'] = 0.02     # Probability that vehicle will fail somewhere
 curMission['pFail'] = 1.     # Probability that vehicle will fail somewhere
 
 

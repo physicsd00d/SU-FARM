@@ -37,6 +37,8 @@ using std::max;
 #define PROB_CASUALTY    1002
 #define PROB_CATASTROPHE 1003
 
+#define STORE_IX -666
+
 
 #define XREF 0.
 #define YREF 0.
@@ -55,6 +57,11 @@ private:
         double probCasualty;
         double probCatastrophe;
         
+        // Transitioning to these.  Delete the above eventually when they're fully phased out.
+        double probNoImpact;
+        double probNoCasualty;
+        double probNoCatastrophe;
+        
         double minVel;  // Velocity stats are measured in km/s
         double maxVel;
         double avgVel;
@@ -72,6 +79,12 @@ private:
         binData() {
             probDebris = 0;
             probImpact = 0;
+            probCasualty = 0.;
+            probCatastrophe = 0.;
+
+            probNoImpact = 0;
+            probNoCasualty = 0.;
+            probNoCatastrophe = 0.;
             
             minVel = 1e10;
             maxVel = 0;
@@ -118,10 +131,7 @@ private:
     int halfBufferCells;                                    // The number of extra cells you need on a side to have the bufferDist
     
     bool isProbability;     // Once you convert the object to a probability, you can never go back and add more grid points.
-    bool usingMITDensityMap;
-    
-    double uniformProbabilityValue;
-    
+        
 //    void GridTheSky(vector<vector<Point> > &total_points_at);   //[tx][point]   Only gets called in the constructorss
     void GridTheSky();   //[tx][point]   Only gets called in the constructorss
 
@@ -159,26 +169,26 @@ public:
     
     void ASH2(double h1, double h2);
     
-    vector<double> createEmptyAircraftDensityMap();
-    void populateAircraftDensityMap(void *densityMapArray, int numElements);
-    
-    
-    void UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in);
+    void UploadAircraftTrackMap(map<int, pair<vector<vector<double> >, string> > AircraftTrackMap_in, int aircraftTrackDeltaTSec);
 //    void UploadAircraftTrackMap(map<int, vector<vector<double> > > AircraftTrackMap);
     void UploadAircraftPropertiesMap(map<string,map<string,double> > AircraftPropertiesMap_in);
-    map<int, double> CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC);
+    // map<int, double> CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC);
 
     map<int, double> CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC,
                                                                 double h1_in, double h2_in);
     vector<map<int,binData> > ASHDesiredPoint(double h1_in, double h2_in, vector<vector<double> > desiredPt);
 
+    vector<double> ProbNoConsequence(map<int, binData> &probBeta, vector<int> numberOfPiecesMean,
+                                     double cellVolume, double d_Airplane_top,
+                                     double d_Airplane_front, double aircraftSpeed, double delta_t);
+    
     // Debugging Functions (Matlab)
     void GoMatlab(string fileName, vector<Point> tempVec);
     void DumpGridToMatlab(char *fileName);
     
     // Debugging Functions (Used for being interactive with Python)
     map<int, map<int, map<int,double> > > getSpatialProbabilty();
-    void generateSpatialProbability(int whichProb);
+    void generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
     map<int, map<int, map<int,double> > > projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ);
 
     
@@ -196,9 +206,8 @@ public:
 //    double generateAllPointsFromASH(vector<int> numberOfPiecesMeanArray_in, vector<double> arefMeanList_in, int numDebIX, double thresh, double pFail);
     
 
-    void generateHazardProbabilities(vector<int> numberOfPiecesMean, double pFail);
-    double generateAllPoints_CumulativeTJC(double thresh, int whichProb);
-    double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in);
+    void generateHazardProbabilities(vector<int> numberOfPiecesMean);
+    double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail);
     
     
 

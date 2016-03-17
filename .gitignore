@@ -7,3 +7,9 @@ temp/**
 *.pyc
 *.so
 *.egg-info
+SUFARM/**
+upload
+download
+filesToUpload.txt
+**/OLD/**
+**/ColumbiaAircraftTracks/**

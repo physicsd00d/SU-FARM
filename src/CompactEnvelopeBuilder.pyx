@@ -84,10 +84,9 @@ cdef extern from "SkyGrid.h":
         vector[double] createEmptyAircraftDensityMap()
         void populateAircraftDensityMap(void *densityMapArray, int numElements)
 
-        void UploadAircraftTrackMap(map[int,pair[vector[vector[double]], string]] AircraftTrackMap)
+        void UploadAircraftTrackMap(map[int,pair[vector[vector[double]], string]] AircraftTrackMap, int aircraftTrackDeltaTSec)
         void UploadAircraftPropertiesMap(map[string,map[string,double]] AircraftPropertiesMap)
 
-        map[int, double] CalculateRiskToIndividualAircraft(vector[int] numberOfPiecesMeanList, vector[double] arefMeanList, int secondsFromMidnightUTC)
         map[int, double] CalculateRiskToIndividualAircraft_OnTheFly(vector[int] numberOfPiecesMean, vector[double] arefMean, int secondsFromMidnightUTC,
                                                                      double h1_in, double h2_in)
         
@@ -96,12 +95,12 @@ cdef extern from "SkyGrid.h":
 
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
-        void generateSpatialProbability(int whichProb)
+        void generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
         map[int, map[int, map[int,double]]] projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ)
 
-        void generateHazardProbabilities(vector[int] numberOfPiecesMean, double pFail)
-        double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
-        double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in)
+        void generateHazardProbabilities(vector[int] numberOfPiecesMean)
+        # double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
+        double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail)
 
 
 
@@ -183,24 +182,25 @@ cdef class PySkyGrid:
     def DumpGridToMatlab(self, char *filename):
         self.thisptr.DumpGridToMatlab(filename)
 
-    def createEmptyAircraftDensityMap(self):
-#        cdef vector<double> tempAns = self.thisptr.createEmptyAircraftDensityMap()
+    # TODO: If the code is working without this stuff, then send it to a graveyard.
+#     def createEmptyAircraftDensityMap(self):
+# #        cdef vector<double> tempAns = self.thisptr.createEmptyAircraftDensityMap()
 
-        # i cannot figure out how to do this nicely, so it's going to become a slow-ass hack
-        tempAns = self.thisptr.createEmptyAircraftDensityMap()
-        numEntries = tempAns.size()
+#         # i cannot figure out how to do this nicely, so it's going to become a slow-ass hack
+#         tempAns = self.thisptr.createEmptyAircraftDensityMap()
+#         numEntries = tempAns.size()
         
-        # Allocate the memory
-        latlonArray = np.zeros( (numEntries,))
-        for ix in range(numEntries):
-            latlonArray[ix] = tempAns[ix]
+#         # Allocate the memory
+#         latlonArray = np.zeros( (numEntries,))
+#         for ix in range(numEntries):
+#             latlonArray[ix] = tempAns[ix]
 
-        latlonArray = latlonArray.reshape(numEntries/4, 4)
-        return latlonArray
+#         latlonArray = latlonArray.reshape(numEntries/4, 4)
+#         return latlonArray
 
-    def populateAircraftDensityMap(self, np.ndarray[double, ndim = 1, mode="c"] densityMapArray, int numElements):
-        if (numElements > 0) or (numElements == -1):
-            self.thisptr.populateAircraftDensityMap(&densityMapArray[0], numElements)
+#     def populateAircraftDensityMap(self, np.ndarray[double, ndim = 1, mode="c"] densityMapArray, int numElements):
+#         if (numElements > 0) or (numElements == -1):
+#             self.thisptr.populateAircraftDensityMap(&densityMapArray[0], numElements)
 
     def SendGridToPython(self, int tx_desired):
         # Get the grid
@@ -245,7 +245,7 @@ cdef class PySkyGrid:
 #            inc(curz)
 #        return probGrid
 
-    def UploadAircraft(self, ACdict):
+    def UploadAircraft(self, ACdict, aircraftTrackDeltaTSec):
 #        # Just take one aircraft for now
 #        keys = ACdict.keys()
 #        singleAC = ACdict[keys[0]]
@@ -255,26 +255,23 @@ cdef class PySkyGrid:
 #
 #        cdef map[int,vector[vector[double]]] testMap = ACdict
 #        self.thisptr.UploadSingleAircraft(testMap)
-        self.thisptr.UploadAircraftTrackMap(ACdict)
+        self.thisptr.UploadAircraftTrackMap(ACdict, aircraftTrackDeltaTSec)
 
     def UploadAircraftPropertiesMap(self, incomingMap):
         self.thisptr.UploadAircraftPropertiesMap(incomingMap)
         
         
-    def CalculateRiskToIndividualAircraft(self, numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC):
-        return self.thisptr.CalculateRiskToIndividualAircraft(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC)
-
     def CalculateRiskToIndividualAircraft_OnTheFly(self, numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                    h1_in, h2_in):
         return self.thisptr.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                                        h1_in, h2_in)
 
 
-    def GenerateSpatialProbability(self, whichProb):
+    def GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
         #define PROB_IMPACT      1001
         #define PROB_CASUALTY    1002
         #define PROB_CATASTROPHE 1003
-        self.thisptr.generateSpatialProbability(whichProb)
+        self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
             
     def GetSpatialProbabilty(self):
         return self.thisptr.getSpatialProbabilty()
@@ -282,14 +279,14 @@ cdef class PySkyGrid:
     def GetSpatialProbabilty_Coarse(self, newDeltaXY, newDeltaZ):
         return self.thisptr.projectSpatialProbabilityFAA(newDeltaXY, newDeltaZ)
 
-    def generateHazardProbabilities(self, numberOfPiecesMean, pFail):
-        self.thisptr.generateHazardProbabilities(numberOfPiecesMean, pFail)
+    def generateHazardProbabilities(self, numberOfPiecesMean):
+        self.thisptr.generateHazardProbabilities(numberOfPiecesMean)
 
-    def generateAllPoints_CumulativeTJC(self, double thresh, int whichProb):
-        return self.thisptr.generateAllPoints_CumulativeTJC(thresh, whichProb)
+    # def generateAllPoints_CumulativeTJC(self, double thresh, int whichProb):
+    #     return self.thisptr.generateAllPoints_CumulativeTJC(thresh, whichProb)
             
-    def generateAllPoints_CumulativeFAA(self, double thresh, int whichProb, double newDeltaXY_in, double newDeltaZ_in):
-        return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, newDeltaXY_in, newDeltaZ_in)
+    def generateAllPoints_CumulativeFAA(self, double thresh, int whichProb, double pFail):
+        return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, pFail)
 
 
 
@@ -324,12 +321,12 @@ cdef class PyPointCloud:
     def __cinit__(self, dict pcd, double secondsFromLaunch, dict curMission):
         
         reactionTimeMinutes     = curMission['reactionTimeMinutes']
-        all_points_delta_t      = curMission['all_points_delta_t']
+        debrisDeltaT            = curMission['deltaT']  # Should be the deltaT for the debris propagations, not the envelopes!
         NASkm                   = curMission['NASkm']
         
         self.thisptr = new PointCloud(pcd['flatPointArray'],    pcd['debrisID'],        pcd['numPieces'],       pcd['numTimeSteps'],
                                       pcd['maxTime'],           pcd['deltaTsec'],
-                                      pcd['UTC'],               all_points_delta_t,     secondsFromLaunch,
+                                      pcd['UTC'],               debrisDeltaT,     secondsFromLaunch,
                                       pcd['launchLat'],         pcd['launchLon'],       pcd['launchAzimuth'],
                                       pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeMinutes,    NASkm)
     

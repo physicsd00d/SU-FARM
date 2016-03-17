@@ -1,0 +1,26 @@
+,Number of Pieces,Weight of each piece (lbs),Total Weight (lbs),Reference Area (ft^2),Ballistic Coeff (lb/ft^2),Velocity Increment (ft/sec),CD,CL
+Forward Section LOX Tank,1,6500,6500,594,8-16,21,B1,B1
+Mid Section Intertank and LH2 Tank,1,42000,42000,594,15-43,22,B2,B2
+Aft Section LH2 Tank,1,20000,20000,594,14-60,170,B3,B3
+LOX Feedline Elbow,1,530,530,12,55-190,260,B4,NONE
+LOX Feedline Segment,2,135-325,460,12-30,14-54,260,B4,NONE
+LOX Antigeyser Line and Elbow,3,20-40,100,3-7,7-23,260,B4,NONE
+GO2 Pressurization Line,3,8-15,33,2-3.5,5-16,50-260,B4,NONE
+GH2 Pressurization Line,2,10-15,25,2.5-3.5,5-16,260,B4,NONE
+LOX Vent Valve Actuation Line,2,0.8,1.6,0.2,4-30,50,B5,NONE
+Nose Cap Purge Duct,2,0.8,1.6,0.2,4-30,50,B5,NONE
+Helium Injection Line,4,1.3,5.2,0.3,4-30,260,B5,NONE
+Skin Segment Lox Tank (a),1,45,45,15,4,50,B6,NONE
+Skin Segment Lox Tank (b),1,415,415,140,4,50,B6,NONE
+Skin Segment LH2 Tank (a),1,90,90, 30,4,260,B6,NONE
+Skin Segment LH2 Tank (b),1,730,730,270,4,260,B6,NONE
+Skin Segment LH2 Tank (c),1,860,860,320,4,260,B6,NONE
+Ring Frame Stabilizer,8,0.1-5,20,0.04-1,2-32,260,B7,NONE
+Stability Ring Segment,14,4-22,98,2-9,1.6-3,260,B8,NONE
+Slosh Baffle Piece (a),16-48,1-3,48,0.2-0.7,3.4-6,50,B8,NONE
+Slosh Baffle Piece (b),4-48,3.5-42,170,5-60,0.9-1.2,16,B9,NONE
+Slosh Baffle Piece (c),160,0.1-0.2,24,0.2-0.3,0.4-0.7,50,B8,NONE
+Slosh Baffle Piece (d),16-32,1.5-2.5,56,5.4,0.3-0.8,50,B9,NONE
+Cable Tray Segments,50,0.9-19,167,1-7,50-200,50-260,B8,NONE
+LSC Sheath Segments,50-200,0.006-0.05,2.2,0.01-0.08,0.5-0.8,2300,B8,NONE
+Misc (Cabling / Bolts / Brackets / etc),100-500,0.01-5,1000,0.001-0.3,1-20,50-260,1,NONE

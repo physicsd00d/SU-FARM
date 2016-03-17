@@ -518,16 +518,37 @@ void PointCloud::PrintAllPoints(){
 //  by knowing how many timesteps (numTimeSteps) are associated with each piece of debris.  If there's a reactionTime passed
 //  in, then this will throw out all points that appear after the reactionTime has elapsed.  Puts all of the points into a 
 //  large vector array of Point objects.  Loads everything into all_points_total which will get passed to SkyGrid for histogramming.
+// I really want the SkyGrids to be self-contained in terms of normalization.  I was throwing out points
+//  before and then trying to keep track of what I was throwing out, but not anymore.  All of the incoming
+//  points are truncated at their last above-ground track.  Find the max time steps for each debris class
+//  and expand all debris in the class to have those timesteps by padding the end with underground values.
 void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vector<int> pointIdArray, vector<double> massArray,
                                             vector<double> areaArray, int numPieces, vector<int> numTimeSteps, int maxTime,
                                             double deltaTsec, double timeOffsetSec, double reactionTimeMinutes) {
     // Francisco's code outputs Lat / Lon / Alt as Deg / Deg / M
     // My Point stuff wants units of Rad / Rad / Km
     
-    // double tstepMinutes timestep already saved in the PointCloud
-    //    double tstepMinutes = all_points_delta_t;
     double tstepSeconds = all_points_delta_t;
     double m_2_km = 1e-3;
+
+    // Find the maximum number of timesteps for each debris class as well.  Wait why?
+    map<int, int> maxStepsPerID;
+
+    // First count up how many debris tracks there are for each class and find the max timesteps
+    for (int ix = 0; ix < pointIdArray.size(); ix++) {
+        int curID = pointIdArray[ix];
+        totalNumPointsPassedInPerID[curID] += 1;
+        maxStepsPerID[curID] = std::max(maxStepsPerID[curID], numTimeSteps[ix]);
+    }
+
+    // Print stuff too if you want.
+    for (std::map<int, int>::iterator it = totalNumPointsPassedInPerID.begin();
+         it !=totalNumPointsPassedInPerID.end(); ++it){
+        int curID = it->first;
+        int numThisID = it->second;
+//        printf("curID %d has %d pieces\n", curID, numThisID);
+//        printf("curID %d has %d pieces and max timesteps %d\n", curID, numThisID, maxStepsPerID[curID]);
+    }
     
     // Check to make sure the pointCloud timestep is not smaller than the propagated timestep
     if (tstepSeconds < deltaTsec){
@@ -538,13 +559,6 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
     // Make these inputs!!!
     int elementsPerTimestep = 6;
     //    double reactionTimeMinutes = 5.;
-    
-    // Cast the void arrays once here so we don't have to do it all the time later
-//    double *flatPointArray = (double *) flatPointArray_in;
-//    int *numTimeSteps = (int *) numTimeSteps_in;
-//    int *pointIdArray = (int *) pointIdArray_in;
-//    double *massArray = (double *) massArray_in;
-//    double *areaArray = (double *) areaArray_in;
 
     // Could avoid this hassle by using maps or lists...
     double timeInFlight = (timeOffsetSec + maxTime - 0.);	//seconds (assuming debrisStateTimes starts at zero)
@@ -579,30 +593,41 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 	
 	int timePointCounter = 0;   //this should wind up being equal to sum(numTimeSteps)*numPieces,  increment by 3 every time
 	for (int pc = 0; pc < numPieces; pc++) {
-        int numCurrTimeSteps = numTimeSteps[pc];
         int curID = pointIdArray[pc];
+        int numCurrTimeSteps = numTimeSteps[pc];
+        int numMaxSteps = maxStepsPerID[curID];
         double curMass = massArray[pc];
         double curArea = areaArray[pc] * pow(m_2_km,2);
         
-		for (int tstep = 0; tstep < numCurrTimeSteps; tstep++) {
+		for (int tstep = 0; tstep < numMaxSteps; tstep++) {
+
+            // Default assumption is that debris has landed and is below ground
+            double gdlat = 0.;
+            double lon = 0.;
+            double curAlt = -1.;
+            double Vx_km_s = 0.;
+            double Vy_km_s = 0.;
+            double Vz_km_s = 0.;
             
-            // First parse the flatPointArray to get the information about this current data point
-            double gdlat = flatPointArray[timePointCounter] * PI/180.;
-            double lon = flatPointArray[timePointCounter + 1]  * PI/180.;
-            double curAlt = fmax(flatPointArray[timePointCounter+ 2] * m_2_km, 0.00001);    //Don't let debris go negative, place 1cm above ground
-                                                                                            //If it's negative here, it will be the last timestep by construction
-            double Vx_km_s = flatPointArray[timePointCounter + 3]  * m_2_km;
-            double Vy_km_s = flatPointArray[timePointCounter + 4]  * m_2_km;
-            double Vz_km_s = flatPointArray[timePointCounter + 5]  * m_2_km;
-            
-            timePointCounter += elementsPerTimestep;
+            if (tstep < numCurrTimeSteps){
+                // First parse the flatPointArray to get the information about this current data point
+                gdlat = flatPointArray[timePointCounter] * PI/180.;
+                lon = flatPointArray[timePointCounter + 1]  * PI/180.;
+                curAlt = fmax(flatPointArray[timePointCounter+ 2] * m_2_km, 0.00001);    //Don't let last debris go negative, place 1cm above ground
+                                                                                                //If it's negative here, it will be the last timestep by construction
+                Vx_km_s = flatPointArray[timePointCounter + 3]  * m_2_km;
+                Vy_km_s = flatPointArray[timePointCounter + 4]  * m_2_km;
+                Vz_km_s = flatPointArray[timePointCounter + 5]  * m_2_km;
+                
+                timePointCounter += elementsPerTimestep;
+            }
             
             // Find the mission-level timestep
             int binTimeStep = floor((0. + timeOffsetSec + deltaTsec*tstep)/(tstepSeconds));
 
             // Before throwing anything out, make a record that a point of curID was passed in.
             //      We want to know the total number of points that were the result of the monte carlo simulation.
-            totalNumPointsPassedInPerID[curID] += 1;
+            // totalNumPointsPassedInPerID[curID] += 1;
             
 //            // Don't load up points that are in the air after the reaction time.  They don't need to be protected against.
 //            //   If I'm doing this here, do i still need to chop later???
@@ -612,9 +637,10 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 //            cout << "(t,lat,lon,alt_km) = " << tstep*deltaTsec << " " << gdlat*180./PI << " " << lon*180./PI << " " << curAlt << endl;
             
 			// I recall the lon == 0 condition fixed some problem when not all points were initialized.
-			//		I don't know if this is still a problem or not.  Keep it for now.
-			if (!(lon == 0)
-				&& (binTimeStep < time_steps_out)) {
+			if ((binTimeStep < time_steps_out)) {
+                
+                // Make sure that we're not losing the last step and that everything is as planned.
+                // printf("[%d][%d] = %f\n", curID, tstep, curAlt);
                 
                 // I think the local radis doesn't get used anymore, now we use a fixed reference lat and lon
                 double temp_local_R = 0.;
@@ -627,7 +653,9 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
                 temp_pt.mass_kg = curMass;
                 temp_pt.area_km2 = curArea;
                 
-				total_points_at[binTimeStep].push_back(temp_pt);   } } }
+				total_points_at[binTimeStep].push_back(temp_pt);   } }
+    
+    }
     
     
     all_points_total = total_points_at;

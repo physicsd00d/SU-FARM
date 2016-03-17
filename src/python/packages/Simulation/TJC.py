@@ -165,6 +165,14 @@ def createAtmoPickle(atmoFolder, atmoFile, pickleName):
 
 
 
+
+
+
+
+
+
+
+
 '''
 GenerateEnvelopes_HealthFlash: Calculates the envelopes to a threshold with a reaction time and then chains them all
     together.  All individual envelopes are projected down into a single timestep which is the length of
@@ -180,7 +188,7 @@ def GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, fo
         timehi = np.min( (footprintStart + (ix+1)*footprintIntervals, footprintUntil) )
 
         print 'TIMES: From {0} to {1}'.format(timelo, timehi)
-        EVstrike, curFootPrint = makeFootprintFromTimes(curMission, timelo, timehi)
+        EVstrike, curFootPrint = makeFootprintFromTimes_InstantaneousOnly(curMission, timelo, timehi)
         print 'EV =  ' + str(EVstrike)
 
         # Now take that footprint and...
@@ -248,7 +256,7 @@ def GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footp
     for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
         timelo = footprintStart + ix*footprintIntervals
         timehi = np.min( (footprintStart + (ix+1)*footprintIntervals - curMission['deltaTFail'], footprintUntil) )
-        EVstrike, Fprint = TJC.makeFootprintFromTimes(curMission, timelo, timehi)
+        EVstrike, Fprint = TJC.makeFootprintFromTimes_InstantaneousOnly(curMission, timelo, timehi)
 
         print 'EV =  ' + str(EVstrike)
 
@@ -272,97 +280,64 @@ def GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footp
 
 
 
-def makeFootprintFromTimes(mission1, timelo, timehi):
+
+def makeFootprintFromTimes_InstantaneousOnly(mission1, timelo, timehi):
     # Let's make a footprint that bounds all debris generated between lo and hi with a boundary that's <= thresh
 
-    # Explosions at tfailSec = 0 is NOT allowed.  Must be strictly > zero.
-    # For now, I'm saying that with deltaTFail = 5, a tfailSec = 20 represents the debris
-    #   generated during the statetime period from t = 15 UP TO 20sec.
-    
     # Unpack some things
-    # debrisPickleFolder          = mission1['debrisPickleFolder']
-    # footprintVectorFolder       = mission1['footprintVectorFolder']
     GeneratedFilesFolder        = mission1['GeneratedFilesFolder']
     failProfile                 = mission1['failProfile']
     failProfileSeconds          = mission1['failProfileSeconds']
-    # deltaXY                     = mission1['deltaXY']
-    # deltaZ                      = mission1['deltaZ']
     [yyyy, mm, dd, hour, min]   = mission1['ExportDate']
-    # ExportDate                  = mission1['ExportDateDT']
-
     deltaTFail                  = mission1['deltaTFail']
-    # thresh                      = mission1['thresh']
-    # h1                          = mission1['h1']
-    # h2                          = mission1['h2']
+    pFail = mission1['pFail']
 
     # Will take a min on this later, so it will get set to the max nodes available
     numNodesEnvelopes = 100
     if mission1.has_key('numNodesEnvelopes'):
         # Unless we're capping the nodes at something even less
         numNodesEnvelopes = mission1['numNodesEnvelopes']
-    
-    pFail = mission1['pFail']
-    # reactionTimeMinutes = mission1['reactionTimeMinutes']
-    
-    numGridsHere = int(np.round((timehi - timelo)/deltaTFail) + 1)
+
+    # Incoming times should ideally nest with deltaTFail 
+    # Will form the envelope that corresponds to failures [timelo, timehi)
+    # e.g. [100, 105) = failures from 100,101,102,103,104
+    if (timehi - timelo) % deltaTFail != 0:
+        print "ERROR: Make your incoming timesteps nest!"
+        sys.exit()
+
+    # Find out how many debris data files there are for these times
+    # Already enforced their nesting with mod, so this should be safe
+    numGridsHere = int(np.round((timehi - timelo)/deltaTFail)) # TODO: Fix this when removing overlapping times
+
+
+    # # Actually, this method isn't valid for anything other than instantaneous, so make sure!
+    # if numGridsHere > 1:
+    #     print "ERROR: This function is only valid for instantaneous!  No merging timesteps allowed"
+    #     sys.exit()
+    # It is okay to merge timesteps, say if we're getting health updates every five seconds but the compact
+    #  envelope *nominally* evolves every 60 seconds.
 
     # Figure out which failure times are worth propagating (i.e. they have a nonzero probability of happening)
     timeRange = []
     pFailThisTimestepVec = []
-    lastIndices = []
     for ix in range(numGridsHere):
-        tfailSec = timelo + ix*deltaTFail
-        
-        # failProfileSeconds likely has a smaller timestep than deltaTFail, so will need find the failProfileSeconds
-        #  that fall within the range [tfailSec - deltaTFail, tfailSec).  This is using the probability of all the times
-        #  previous to tfailSec (by deltaTFail) up to but-not-including tfailSec to approximate the probability of failing at tfailSec
-        indices = np.where((failProfileSeconds >= (tfailSec - deltaTFail)) & (failProfileSeconds < tfailSec))[0]
-        pFailThisTimestep = np.sum(failProfile[indices])
+        sublo = timelo + ix*deltaTFail
+        subhi = sublo + deltaTFail
+        indices = np.where((failProfileSeconds >= sublo) & (failProfileSeconds < subhi))[0]
+        pFailThisTimestep = np.sum(failProfile[indices]) * pFail
 
-        # If pFailThisTimestep < thresh, then the expected number of strikes for this event will surely be less than thresh
         if pFailThisTimestep > 0.:
-            timeRange.append(tfailSec)
-            pFailThisTimestepVec.append(pFailThisTimestep * pFail)
-            lastIndices = indices
+            timeRange.append(sublo)
+            pFailThisTimestepVec.append(pFailThisTimestep)
 
     print 'times are ' + str(timeRange)
     print 'probs are ' + str(pFailThisTimestepVec)
-    print 'lastIndices are ' + str(lastIndices)
 
-
-    # Make sure you can do one
-    # TODO: Don't even bother with this if you're only using one node
-    print 'DOING A TEST RUN BEFORE PARALLEL'
-    try:
-        testIX = -1     # Look at the highest time
-
-        print 'timeRange = {0}'.format(timeRange)
-        print '{0} - {1}, {2}'.format(timelo, timehi, numGridsHere)
-
-        # Make sure that there are no cout statements that'll trip up the parallel methods
-        # print '     THERE SHOULD BE NOTHING BETWEEN THIS LINE'
-        # EV_strike, outfileStr = genFootprint(mission1, timeRange[testIX], pFailThisTimestepVec[testIX])
-        # print '     AND THIS LINE'
-
-
-
-        # # Print out the footprint generated by this test run
-        # GEFileName = GeneratedFilesFolder + 'PythonGE_' + str(timeRange[testIX]) + '.kml'
-        # debugFootprint = ceb.PyFootprint(outfileStr, True)
-        # debugFootprint.ExportGoogleEarth(GEFileName, yyyy, mm, dd, hour, min)
-        # print 'GEfile = ' + GEFileName
-    except:
-        if len(timeRange) == 0:
-            # The probabilty of anything happening here is zero
-            EV_strike = 0.
-        else:
-            raise
-    # print 'EV_strike = ' + str(EV_strike)
-
+    # genFootprint should not be worried about pFail!!!
 
     jobs = []   # Holds the results of the envelope creation
     if numNodesEnvelopes == 1:
-        # This means we're running into memory issues with pp, so don't use it
+        # This means we're running into memory or malloc issues with pp, so don't use it
         jobs = [genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) for ix in range(len(timeRange))]
     else:
         # Use the specified number of nodes in parallel
@@ -427,6 +402,165 @@ def makeFootprintFromTimes(mission1, timelo, timehi):
     return np.max(vals), totalFootPrint
 
 
+
+
+
+
+# def makeFootprintFromTimes(mission1, timelo, timehi):
+#     # Let's make a footprint that bounds all debris generated between lo and hi with a boundary that's <= thresh
+
+#     # Explosions at tfailSec = 0 is NOT allowed.  Must be strictly > zero.
+#     # For now, I'm saying that with deltaTFail = 5, a tfailSec = 20 represents the debris
+#     #   generated during the statetime period from t = 15 UP TO 20sec.
+    
+#     # Unpack some things
+#     # debrisPickleFolder          = mission1['debrisPickleFolder']
+#     # footprintVectorFolder       = mission1['footprintVectorFolder']
+#     GeneratedFilesFolder        = mission1['GeneratedFilesFolder']
+#     failProfile                 = mission1['failProfile']
+#     failProfileSeconds          = mission1['failProfileSeconds']
+#     # deltaXY                     = mission1['deltaXY']
+#     # deltaZ                      = mission1['deltaZ']
+#     [yyyy, mm, dd, hour, min]   = mission1['ExportDate']
+#     # ExportDate                  = mission1['ExportDateDT']
+
+#     deltaTFail                  = mission1['deltaTFail']
+#     # thresh                      = mission1['thresh']
+#     # h1                          = mission1['h1']
+#     # h2                          = mission1['h2']
+
+#     # Will take a min on this later, so it will get set to the max nodes available
+#     numNodesEnvelopes = 100
+#     if mission1.has_key('numNodesEnvelopes'):
+#         # Unless we're capping the nodes at something even less
+#         numNodesEnvelopes = mission1['numNodesEnvelopes']
+    
+#     pFail = mission1['pFail']
+#     # reactionTimeMinutes = mission1['reactionTimeMinutes']
+    
+#     numGridsHere = int(np.round((timehi - timelo)/deltaTFail) + 1)
+
+#     # Figure out which failure times are worth propagating (i.e. they have a nonzero probability of happening)
+#     timeRange = []
+#     pFailThisTimestepVec = []
+#     lastIndices = []
+#     for ix in range(numGridsHere):
+#         tfailSec = timelo + ix*deltaTFail
+        
+#         # failProfileSeconds likely has a smaller timestep than deltaTFail, so will need find the failProfileSeconds
+#         #  that fall within the range [tfailSec - deltaTFail, tfailSec).  This is using the probability of all the times
+#         #  previous to tfailSec (by deltaTFail) up to but-not-including tfailSec to approximate the probability of failing at tfailSec
+#         indices = np.where((failProfileSeconds >= (tfailSec - deltaTFail)) & (failProfileSeconds < tfailSec))[0]
+#         pFailThisTimestep = np.sum(failProfile[indices])
+
+#         # If pFailThisTimestep < thresh, then the expected number of strikes for this event will surely be less than thresh
+#         if pFailThisTimestep > 0.:
+#             timeRange.append(tfailSec)
+#             pFailThisTimestepVec.append(pFailThisTimestep * pFail)
+#             lastIndices = indices
+
+#     print 'times are ' + str(timeRange)
+#     print 'probs are ' + str(pFailThisTimestepVec)
+#     print 'lastIndices are ' + str(lastIndices)
+
+
+#     # Make sure you can do one
+#     # TODO: Don't even bother with this if you're only using one node
+#     print 'DOING A TEST RUN BEFORE PARALLEL'
+#     try:
+#         testIX = -1     # Look at the highest time
+
+#         print 'timeRange = {0}'.format(timeRange)
+#         print '{0} - {1}, {2}'.format(timelo, timehi, numGridsHere)
+
+#         # Make sure that there are no cout statements that'll trip up the parallel methods
+#         # print '     THERE SHOULD BE NOTHING BETWEEN THIS LINE'
+#         # EV_strike, outfileStr = genFootprint(mission1, timeRange[testIX], pFailThisTimestepVec[testIX])
+#         # print '     AND THIS LINE'
+
+
+
+#         # # Print out the footprint generated by this test run
+#         # GEFileName = GeneratedFilesFolder + 'PythonGE_' + str(timeRange[testIX]) + '.kml'
+#         # debugFootprint = ceb.PyFootprint(outfileStr, True)
+#         # debugFootprint.ExportGoogleEarth(GEFileName, yyyy, mm, dd, hour, min)
+#         # print 'GEfile = ' + GEFileName
+#     except:
+#         if len(timeRange) == 0:
+#             # The probabilty of anything happening here is zero
+#             EV_strike = 0.
+#         else:
+#             raise
+#     # print 'EV_strike = ' + str(EV_strike)
+
+
+#     jobs = []   # Holds the results of the envelope creation
+#     if numNodesEnvelopes == 1:
+#         # This means we're running into memory issues with pp, so don't use it
+#         jobs = [genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) for ix in range(len(timeRange))]
+#     else:
+#         # Use the specified number of nodes in parallel
+#         # Now that we know which times to propagate, do them in parallel
+#         import pp
+#         job_server = pp.Server()
+#         numPossibleNodes = job_server.get_ncpus()
+#         job_server.set_ncpus(np.min((numPossibleNodes, numNodesEnvelopes)))
+#         print 'number of cpus = ' + str(job_server.get_ncpus())
+
+#         # Create all of the footprints in parallel
+#         print 'Youre about to submit jobs in parallel.  BE AWARE that cout statements will cause python to malloc error here.  Dont know why.'
+#         print 'So if you get a malloc error, be suspicious that you hit an error which triggered a cout'
+#         jobs = [job_server.submit(genFootprint, \
+#                                   args=(mission1, timeRange[ix], pFailThisTimestepVec[ix]), \
+#                                   callback=finished002 \
+#                                   ) for ix in range(len(timeRange))]
+#         job_server.wait()
+#         job_server.print_stats()
+#         job_server.destroy()    #Hopefully, this will close the server and we won't get errors about too many open files
+
+
+#     vals        = []    # Holds the EV_Strike values
+#     fileNames   = []    # Holds the filenames of the footprint vector .dat files
+#     if numNodesEnvelopes == 1:
+#         # This is a list of tuples
+#         for job in jobs:
+#             print job
+#             vals.append(job[0])
+#             fileNames.append(job[1])
+#     else:
+#         # This is a function returned from pp
+#         for job in jobs:
+#             print job()
+#             vals.append(job()[0])
+#             fileNames.append(job()[1])
+
+
+#     try:
+#         # Need to open up all the footprints and merge them
+#         print 'Merging Footprints'
+#         totalFootPrint = ceb.PyFootprint(fileNames[0], True)
+#         print fileNames[0]
+
+#         for curFile in fileNames[1:]:
+#             curFootPrint = ceb.PyFootprint(curFile, True)
+#             totalFootPrint.MergeFootprintVectors(curFootPrint)  # merge the new footprint into the old one
+#                                                                 #   The points will need to be smoothed eventually
+
+#     except IndexError:
+#         if (len(timeRange) == 0):
+#             # There were no non-zero probability events
+#             vals = 0.
+#             totalFootPrint = []
+#         else:
+#             raise
+#     except:
+#         raise
+
+#     # totalFootPrint.ProjectAllPointsDown()
+
+#     return np.max(vals), totalFootPrint
+
+
 def finished002(val):
 #    print "done with something"
     print "done with " + val[1]
@@ -437,6 +571,8 @@ def genFootprint(curMission, tfailSec, curPFail):
         a footprint around the debris that would be created from this failure.  Writes footprint to
         file and returns the danger metric and the name of the file."""
 
+    print "tfailSec {0}, curPFail {1}".format(tfailSec, curPFail)
+
     ExportDateDT            = curMission['ExportDateDT']
     # reactionTimeMinutes     = curMission['reactionTimeMinutes']       # Where did this go?
     deltaXY                 = curMission['deltaXY']
@@ -446,7 +582,6 @@ def genFootprint(curMission, tfailSec, curPFail):
     debrisPickleFolder      = curMission['debrisPickleFolder']
     footprintVectorFolder   = curMission['footprintVectorFolder']
     thresh                  = curMission['thresh']
-    useAircraftDensityMap   = curMission['useAircraftDensityMap']       # Do we use a uniform or the MIT density map?
     cumulative              = curMission['cumulative']
     whichProbability        = curMission['whichProbability']
 
@@ -526,34 +661,36 @@ def genFootprint(curMission, tfailSec, curPFail):
     # print 'tfailsec = ' + str(tfailSec)
     # return -1, './GeneratedFiles/footprintVectorFolder/fpVec_20.0.dat'
 
-    # Get the lat/lons of the filled cells
-    print 'createEmptyAircraftDensityMap'
-    latlonArray = curSkyGrid.createEmptyAircraftDensityMap()
+    # TODO: Move this ac density map stuff to a graveyard.
+    # # Get the lat/lons of the filled cells
+    # print 'createEmptyAircraftDensityMap'
+    # latlonArray = curSkyGrid.createEmptyAircraftDensityMap()
 
-    if useAircraftDensityMap:
-        # With those lat/lons, find the probAircraft for each cell
-        from AircraftDensityMap import AircraftDensityMap as ADM
-        density = ADM()
-        densityArray = density.getDensity(latlonArray, ExportDateDT)
-        print 'THIS IS PROBABLY A DENSITY AND NOT A PROBABILITY.  FIX THIS!!!'
-        sys.exit()
+    # Using density maps are just not a good idea.  
+    # if useAircraftDensityMap:
+    #     # With those lat/lons, find the probAircraft for each cell
+    #     from AircraftDensityMap import AircraftDensityMap as ADM
+    #     density = ADM()
+    #     densityArray = density.getDensity(latlonArray, ExportDateDT)
+    #     print 'THIS IS PROBABLY A DENSITY AND NOT A PROBABILITY.  FIX THIS!!!'
+    #     sys.exit()
 
-        # Send that information back into C++
-        curSkyGrid.populateAircraftDensityMap(densityArray, len(densityArray))
-    else:
-        fourNM2 = 13.72                     #// 4 (n.m.)^2 * (1.852 km/nm)^2 = 13.72 km^2
-        aircraftDensity = 1./fourNM2        #// [prob/km^2] Paul Wilde's assumed aircraft density (1 every 4nm^2)
-        cellArea = deltaXY*deltaXY
-        probOfAirplaneInCell = aircraftDensity * cellArea;
+    #     # Send that information back into C++
+    #     curSkyGrid.populateAircraftDensityMap(densityArray, len(densityArray))
+    # else:
+    #     fourNM2 = 13.72                     #// 4 (n.m.)^2 * (1.852 km/nm)^2 = 13.72 km^2
+    #     aircraftDensity = 1./fourNM2        #// [prob/km^2] Paul Wilde's assumed aircraft density (1 every 4nm^2)
+    #     cellArea = deltaXY*deltaXY
+    #     probOfAirplaneInCell = aircraftDensity * cellArea;
 
-        import numpy as np
-        # Send that information back into C++
-        print 'populateAircraftDensityMap'
-        curSkyGrid.populateAircraftDensityMap(np.array([probOfAirplaneInCell]), -1)
+    #     import numpy as np
+    #     # Send that information back into C++
+    #     print 'populateAircraftDensityMap'
+    #     curSkyGrid.populateAircraftDensityMap(np.array([probOfAirplaneInCell]), -1)
 
     # After uploading the density map, we have to generate the hazard probabilities
     print 'generateHazardProbabilities'
-    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList, curPFail)
+    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
 
 
     # Now apply the current definition of 'cumulative' for the chosen type of probability
@@ -571,10 +708,12 @@ def genFootprint(curMission, tfailSec, curPFail):
         #   to alter the curMission here because if it's shared memory than that could potentially mess up other
         #   calculations that are happening in parallel threads.  Wait until whole thing is over and then do it.
         print 'generateAllPoints_CumulativeFAA'
-        EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, newDeltaXY, newDeltaZ)
+        EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, curPFail)
 
     elif cumulative == 'TJC':
-        EV_strike = curSkyGrid.generateAllPoints_CumulativeTJC(thresh, whichProbability)
+        # EV_strike = curSkyGrid.generateAllPoints_CumulativeTJC(thresh, whichProbability)
+        print "ERROR: TJC Cumulative no longer exists"
+        sys.exit()
 
 
 
@@ -906,7 +1045,7 @@ def GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples):
 
 ### CURRENTLY IN USE (Called by Columbia.py)
 def GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSamples, angleLow, angleHi, windMagCoeff):
-
+    """Appears to take in an atmoprofile, disregards the standardDev values, and instead uniformly distributes the directional variation uniformly between angleLow and Hi."""
     # To read in
     import pickle
     [altitudeList,densityMeanList,uMeanList,vMeanList,wMeanList,densitySDList,uSDList,vSDList,wSDList,nlist] \
@@ -918,8 +1057,14 @@ def GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSampl
     thetagStorage = []    #This is a constant for a given time of launch and failure
     tfailStorage = []
 
+    # print np.where(altitudeList < 11)[0]
+    # print altitudeList[np.where(altitudeList < 11)[0]]
+    # # print zip(altitudeList[:,0],densityMeanList[:,0])
+    # for ix in range(len(altitudeList)):
+    #     print "{0}, {1}".format(altitudeList[ix], densityMeanList[ix])
+
     # This index is around 10m
-    around10mIX = np.where(altitudeList < 11)[0][0,0]
+    around10mIX = np.where(altitudeList < 11)[0][0]
 
     # Generate the wind profiles first
     for windIX in range(numWindSamples):
@@ -1444,11 +1589,11 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
     # Use the passed-in values
     lowerBreakLimit = lowerTime
     upperBreakLimit = upperTime
-    # Unless the time range is not specified, then explode everywhere
-    if (len(lowerTime) == 0) and (len(upperTime) == 0):
-        # Set the times to explode to coincide with the nominal profile
-        lowerBreakLimit = profiles['tfailStorage'][0][0][0] #Assuming first trajectory is representative
-        upperBreakLimit = profiles['tfailStorage'][0][0][-1]
+    # # Unless the time range is not specified, then explode everywhere
+    # if (len(lowerTime) == 0) and (len(upperTime) == 0):
+    #     # Set the times to explode to coincide with the nominal profile
+    #     lowerBreakLimit = profiles['tfailStorage'][0][0][0] #Assuming first trajectory is representative
+    #     upperBreakLimit = profiles['tfailStorage'][0][0][-1]
 
 
     deltaTFail = curMission['deltaTFail']
@@ -1479,11 +1624,11 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
                               args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
                                                  profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
                               depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
-                              modules=('numpy as np','debrisReader as DR', 'orbitTools', 'debrisPropagation as dp'), \
+                              modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
                               callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
 
-    print "This will fail because the modules like debrisReader are now inside a package.  \
-            Must include package info or put all of these modules in the root package. 1447"
+    # print "This will fail because the modules like debrisReader are now inside a package.  \
+            # Must include package info or put all of these modules in the root package. 1447"
     # sys.exit()
 
     job_server.wait()
@@ -2092,7 +2237,7 @@ def LoadPrecomputed(mission):
     inputFile = open(mission['pathToMissionFiles'] + mission['precomputedParamFile'], 'r')
 
     stateVecProfile = []
-    import orbitTools as ot
+    from FriscoLegacy import orbitTools as ot
 
     isLATLON    = False
     isSTATEVEC  = False

@@ -21,4 +21,38 @@ mv libFrisco.a ../../build/DebrisProp/
 mv orbitProp.so debrisPropagation.so ../../build/DebrisProp/
 
 rm *.o *.mod *.so
-#rm *.o *.mod
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
