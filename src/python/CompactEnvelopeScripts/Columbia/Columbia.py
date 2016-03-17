@@ -14,12 +14,13 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain   			= False  # State Vector
 freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = False
+freshDebris             = True
 debug                   = False
 
 plotColumbiaGround      = True
 calcIndividualHazard    = True
 makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
+                                    # ASH grid must be pretty coarse for this to work, but why?
 
 import os
 import sys
@@ -339,7 +340,7 @@ if calcIndividualHazard:
 
     # Read in the aircraft information
     # input = open('HighRiskOutput.txt', 'r')
-    input = open('HighRiskOutputInterp.txt', 'r')
+    input = open('HighRiskETMSInterp.txt', 'r')
     acid2typeMap = dict()
     curTrackTime = 0
 
@@ -375,6 +376,13 @@ if calcIndividualHazard:
 
                 aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
     input.close()
+
+    # Want to know the latest time that AC are in the air
+    maxAircraftTrackTime = 0
+    for (curTrack, acName) in aircraftRecord.itervalues():
+        maxAircraftTrackTime = max(curTrack[-1][0],maxAircraftTrackTime)
+        # print acName, (curMaxTime - secondsFromMidnightUTC)/curMission['all_points_delta_t']
+
 
 
     # ============ Now load the debris, grid it, and ASH it ============
@@ -464,6 +472,7 @@ if calcIndividualHazard:
 
     # ============ End of Risk Calculation =====================
 
+    plotRisk = False
 
     '''
     This is for making animations.  It's long and convoluted, sorry.
@@ -511,41 +520,53 @@ if calcIndividualHazard:
     lowAlt      = altIX2plot * curMission['deltaZ']
     highAlt     = (altIX2plot+1) * curMission['deltaZ']
 
-    # ASH the probabilities around
-    print "ASHING"
-    curSkyGrid.generateASH(curMission['h1'], curMission['h2'])
+    if plotRisk:
+        # ASH the probabilities around
+        print "ASHING"
+        curSkyGrid.generateASH(curMission['h1'], curMission['h2'])
 
     # numDebrisTimeSteps will each be all_points_delta_t long
     numDebrisTimeSteps = curSkyGrid.getNumRange()
     print "numDebrisTimeSteps = {0}".format(numDebrisTimeSteps)
 
+    # maxAcTimeStep = np.ceil((maxAircraftTrackTime - secondsFromMidnightUTC) / curMission['all_points_delta_t'])
+    maxAcTimeStep = np.ceil((50.*60. / curMission['all_points_delta_t'])) # By 45 minutes, all AC have left the frame
+
     figCounter = 1
     images = []
     for tx in range(numDebrisTimeSteps):
-        # Get the individual probability of impact grid
-        probGrid = curSkyGrid.SendGridToPython(tx)
-        if len(probGrid) == 0:
-            continue    # Debris hasn't made it to the NAS yet or there are no planes in the area of the debris
 
-        # The indices that correspond to the lowest alt level
-        altitudeLevels = np.unique(probGrid[:,0])
-        if len(altitudeLevels) < (altIX2plot+1):
-            continue    # no probabilities to plot here.  move on
-        altIX = (probGrid[:,0] == altitudeLevels[altIX2plot])
-        altGrid = probGrid[altIX,:]
+        if not plotRisk:
+            if tx >= maxAcTimeStep:
+                # If you're not plotting the risk, then cut the animations once the AC data runs out.
+                break
 
-        # Find the limits of the current grid in order to interpolate over them
-        minLat = np.min(altGrid[:,2])
-        maxLat = np.max(altGrid[:,2])
-        minLon = np.min(altGrid[:,1])
-        maxLon = np.max(altGrid[:,1])
+        if plotRisk:
+            # Get the individual probability of impact grid
+            probGrid = curSkyGrid.SendGridToPython(tx)
+            if len(probGrid) == 0:
+                print "No debris in NAS at time {0}".format(tx)
+                continue    # Debris hasn't made it to the NAS yet or there are no planes in the area of the debris
 
-        # This is the mesh to interpolate over based on above limits
-        lonVec = np.linspace(minLon,maxLon,100)
-        latVec = np.linspace(minLat,maxLat,100)
+            # The indices that correspond to the lowest alt level
+            altitudeLevels = np.unique(probGrid[:,0])
+            if len(altitudeLevels) < (altIX2plot+1):
+                continue    # no probabilities to plot here.  move on
+            altIX = (probGrid[:,0] == altitudeLevels[altIX2plot])
+            altGrid = probGrid[altIX,:]
 
-        # probInterp = griddata((altGrid[:,1], altGrid[:,2]), altGrid[:,3], (lonVec[None,:], latVec[:,None]), method='cubic')
-        probInterp = griddata((altGrid[:,1], altGrid[:,2]), altGrid[:,3], (lonVec[None,:], latVec[:,None]), method='linear')
+            # Find the limits of the current grid in order to interpolate over them
+            minLat = np.min(altGrid[:,2])
+            maxLat = np.max(altGrid[:,2])
+            minLon = np.min(altGrid[:,1])
+            maxLon = np.max(altGrid[:,1])
+
+            # This is the mesh to interpolate over based on above limits
+            lonVec = np.linspace(minLon,maxLon,100)
+            latVec = np.linspace(minLat,maxLat,100)
+
+            # probInterp = griddata((altGrid[:,1], altGrid[:,2]), altGrid[:,3], (lonVec[None,:], latVec[:,None]), method='cubic')
+            probInterp = griddata((altGrid[:,1], altGrid[:,2]), altGrid[:,3], (lonVec[None,:], latVec[:,None]), method='linear')
 
         print 'tx = {0} with a timestep of {1}'.format(tx, curMission['all_points_delta_t'])
 
@@ -564,51 +585,53 @@ if calcIndividualHazard:
 
         plt.clf()
         gs = gridspec.GridSpec(1, 2,width_ratios=[15,1])
-        lowerBoundExponent = -4
-        upperBoundExponent = 0
 
-        # do the 2nd subplot, the pseudo colorbar, first
-        ax2 = plt.subplot(gs[1])
-        # np.logspace gives you logarithmically spaced levels -
-        # this, however, is not what you want in your colorbar
-        #
-        # you want equally spaced labels for each exponential group:
-        #
-        levls = np.array([])
-        for lix in range(lowerBoundExponent, upperBoundExponent):
-            levls = np.concatenate((levls, np.linspace(10**lix,10**(lix+1),10)))
+        if plotRisk:
+            lowerBoundExponent = -4
+            upperBoundExponent = 0
 
-        # levls = np.linspace(1,10,10)
-        # levls = np.concatenate((levls[:-1],np.linspace(10,100,10)))
-        # levls = np.concatenate((levls[:-1],np.linspace(100,1000,10)))
-        # levls = np.concatenate((levls[:-1],np.linspace(1000,10000,10)))
+            # do the 2nd subplot, the pseudo colorbar, first
+            ax2 = plt.subplot(gs[1])
+            # np.logspace gives you logarithmically spaced levels -
+            # this, however, is not what you want in your colorbar
+            #
+            # you want equally spaced labels for each exponential group:
+            #
+            levls = np.array([])
+            for lix in range(lowerBoundExponent, upperBoundExponent):
+                levls = np.concatenate((levls, np.linspace(10**lix,10**(lix+1),10)))
 
-        #
-        # simple x,y setup for a contourf plot to serve as colorbar
-        #
-        XC = [np.zeros(len(levls)), np.ones(len(levls))]
-        YC = [levls, levls]
-        CM = ax2.contourf(XC,YC,YC, levels=levls, norm = LogNorm())
-        # log y-scale
-        ax2.set_yscale('log')
-        # y-labels on the right
-        ax2.yaxis.tick_right()
-        # no x-ticks
-        ax2.set_xticks([])
+            # levls = np.linspace(1,10,10)
+            # levls = np.concatenate((levls[:-1],np.linspace(10,100,10)))
+            # levls = np.concatenate((levls[:-1],np.linspace(100,1000,10)))
+            # levls = np.concatenate((levls[:-1],np.linspace(1000,10000,10)))
+
+            #
+            # simple x,y setup for a contourf plot to serve as colorbar
+            #
+            XC = [np.zeros(len(levls)), np.ones(len(levls))]
+            YC = [levls, levls]
+            CM = ax2.contourf(XC,YC,YC, levels=levls, norm = LogNorm())
+            # log y-scale
+            ax2.set_yscale('log')
+            # y-labels on the right
+            ax2.yaxis.tick_right()
+            # no x-ticks
+            ax2.set_xticks([])
 
 
 
         ax1 = plt.subplot(gs[0])
         ax1.imshow(debrisField,extent=corners)   # Hopefully this will wipe the old
-        # plt.contour(lonVec,latVec,probInterp,15,linewidths=0.5,colors='k')
-        # cbarTicks = np.linspace(0, 1, 11, endpoint=True)
-        # cbarTicks = np.log10(np.logspace(1e-5, 1, endpoint=True))
-        cbarTicks = np.logspace(-4,0)
 
-
-        ax1.contourf(lonVec,latVec,probInterp, cbarTicks, cmap=plt.cm.jet, norm=LogNorm(), vmin=0., vmax=1.)
-        # ax1.colorbar(ticks=cbarTicks)
-        # plt.colorbar(ticks=cbarTicks, spacing='proportional')
+        if plotRisk:
+            # plt.contour(lonVec,latVec,probInterp,15,linewidths=0.5,colors='k')
+            # cbarTicks = np.linspace(0, 1, 11, endpoint=True)
+            # cbarTicks = np.log10(np.logspace(1e-5, 1, endpoint=True))
+            cbarTicks = np.logspace(-4,0)
+            ax1.contourf(lonVec,latVec,probInterp, cbarTicks, cmap=plt.cm.jet, norm=LogNorm(), vmin=0., vmax=1.)
+            # ax1.colorbar(ticks=cbarTicks)
+            # plt.colorbar(ticks=cbarTicks, spacing='proportional')
 
         # print 'cbarTicks = ' + str(cbarTicks)
         plt.title("tx = {0:04d}, dt = {1} sec, altRange = [{2}, {3}]km".format(tx, curMission['all_points_delta_t'], lowAlt, highAlt))
@@ -657,16 +680,17 @@ if calcIndividualHazard:
         # plt.contour(xi,yi,zi,15,linewidths=0.5,colors='k')
         # plt.contourf(lonVec,latVec,probInterp,15,cmap=plt.cm.jet)
 
-    im_ani = animation.ArtistAnimation(fig1, images, interval=1, repeat_delay=1, blit=True)
+    # im_ani = animation.ArtistAnimation(fig1, images, interval=1, repeat_delay=1, blit=True)
 
-    # im_ani = animation.Animation(fig1, images, blit=True)
-    # im_ani.save('GeneratedFiles/basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+    # # im_ani = animation.Animation(fig1, images, blit=True)
+    # # im_ani.save('GeneratedFiles/basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 
-    im_ani.save('doesntmatter.mp4', clear_temp=False)
-    from subprocess import call
-    call(["ffmpeg -y -r 5 -i _tmp%04d.png -b:v 1800k {0}Contours.mp4".format(curMission['GeneratedFilesFolder'])], shell=True)
+    # im_ani.save('doesntmatter.mp4', clear_temp=False)
+
+    from subprocess import check_call
+    check_call(["ffmpeg -y -r 5 -i {0}_tmp%04d.png -b:v 1800k {0}Contours.mp4".format(curMission['GeneratedFilesFolder'])], shell=True)
     # call(["ffmpeg -y -r 5 -i _tmp%04d.png -b:v 1800k ../../GeneratedFiles/Contours.mp4"], shell=True)
-    call(["mv _tmp*.png MoviePngs/"], shell=True)
+    check_call(["mv {0}_tmp*.png {0}MoviePngs/".format(curMission['GeneratedFilesFolder'])], shell=True)
 
 
 
