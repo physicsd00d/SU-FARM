@@ -44,6 +44,8 @@ using std::max;
 #define YREF 0.
 #define ZREF 0.
 
+#define FT_2_KM 0.0003048
+
 class SkyGrid: public PointCloud{
 private:
     double xBinLength, yBinLength, zBinHeight;  //[km]
@@ -181,6 +183,9 @@ public:
     vector<double> ProbNoConsequence(map<int, binData> &probBeta, vector<int> numberOfPiecesMean,
                                      double cellVolume, double d_Airplane_top,
                                      double d_Airplane_front, double aircraftSpeed, double delta_t);
+    
+    vector<double> AircraftVulnerabilityModel_Wilde(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
+                                                             double d_Airplane_top /*km*/, double delta_t);
     
     // Debugging Functions (Matlab)
     void GoMatlab(string fileName, vector<Point> tempVec);

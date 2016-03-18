@@ -1671,82 +1671,26 @@ vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<in
                                           double cellVolume, double d_Airplane_top,
                                           double d_Airplane_front, double aircraftSpeed, double delta_t){
     
-    double ft_2_km = 0.0003048;
-    
-    // ========== This is roughly how Wilde computes the probabilities =============
+    // The three consquences.
     double probNoStrike         = 1.;
     double probNoCasualty       = 1.;
     double probNoCatastrophe    = 1.;
-    
-    // Use these for a little bit of error checking
-    double maxProb = 1.;
-    double minProb = 0.;
-    double maxSweptVolume = cellVolume;
     
     for (map<int, binData>::iterator it_ID = probBeta.begin(); it_ID != probBeta.end(); ++it_ID){
         int curID = it_ID->first;
         binData PD = (it_ID->second);
         
-        // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
-        // Keep in mind that as the grid gets finer, probDebrisHere can get bigger than 1 or arbitrarily large because we're dividing by such a
-        // small number.
+        // Get probability of consequence for a single piece of debris from groupd curID
+        vector<double> probStrCasCat = AircraftVulnerabilityModel_Wilde(PD, aircraftSpeed /* km/s */, d_Airplane_front /*km*/,
+                                                                        d_Airplane_top /*km*/, delta_t);
         
-        //double probDebrisInCell     = PD.probDebris;
-        //double probDensityOfDebris  = 1. / cellVolume;    //Swept volume of debris / cellVolume
-        
-        double probDensity = PD.probDebris / cellVolume;
-        
-        // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
-        // This calculation is from Wilde_AVM.  The projected area is a function of mass, not debris area, for pieces under 300g.
-        double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
-        double A_Proj = pow(d_Airplane_front, 2)*sin(theta) + pow(d_Airplane_top, 2)*cos(theta);
-        double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));  // Assumes aircraft and debris velocities are perpendicular.
-        
-        double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
-        double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
-        
-        // NOTE:  WHERE DID THESE VALUES COME FROM???  This is not what's in Wilde's AVM paper.
-        if (PD.avgMass < 0.001){
-            // Throw out pieces that are less than 1g.  They pose no danger
-            A_Casualty      = 0.;
-            A_Catastrope    = 0.;
-            A_Proj          = 0.;
-        }
-        else if (PD.avgMass < 0.300){
-            // If the mass is below 300g, these areas are modeled as a function of the piece's mass
-            A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(ft_2_km,2);
-            A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(ft_2_km,2);
-        }
-        
-        // Prob density integrated over swept volume of airplane
-        //                        double probOfSingleStrike   = probDebrisInCell * probDensityOfDebris * A_Proj * V_impact * delta_t;         // Pure Probability
-        double probOfSingleStrike   = probDensity * A_Proj * V_impact * delta_t;         // Pure Probability
-        double probOfCasualty       = probDensity * A_Casualty * V_impact * delta_t;
-        double probOfCatastrophe    = probDensity * A_Catastrope * V_impact * delta_t;
-
-        // Make sure nothing is obviously wrong.
-        if (probDensity > maxProb){
-            printf("ERROR: probDensity %E > %E maxProb\n",probOfSingleStrike, maxProb);
-            exit(-90);
-        } else if (probOfSingleStrike > maxProb){
-            printf("ERROR: probOfSingleStrike %E > %E maxProb\n",probOfSingleStrike, maxProb);
-            exit(-90);
-        } else if (probOfSingleStrike < minProb){
-            printf("ERROR: probOfSingleStrike %E > %E minProb\n",probOfSingleStrike, minProb);
-            exit(-90);
-        } else if (A_Proj * V_impact * delta_t > maxSweptVolume){
-            printf("ERROR: Vswept %E > %E maxSweptVolume\n", A_Proj * V_impact * delta_t, maxSweptVolume);
-            exit(-90);
-        }
-        
-        // How different are the projected areas anyways?
-        // printf("Proj %E  --  Cas %E  --  Cat %E\n", A_Proj, A_Casualty, A_Catastrope);
-        
+        // Calculate the probability of not being struck by any of the expectedNumPiecesHere from curID
         double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
-        double probOfNoStrikeFromCurID      = pow(1. - probOfSingleStrike, expectedNumPiecesHere);
-        double probOfNoCasualtyFromCurID    = pow(1. - probOfCasualty, expectedNumPiecesHere);
-        double probOfNoCatastropheFromCurID = pow(1. - probOfCatastrophe, expectedNumPiecesHere);
+        double probOfNoStrikeFromCurID      = pow(1. - probStrCasCat[0], expectedNumPiecesHere);
+        double probOfNoCasualtyFromCurID    = pow(1. - probStrCasCat[1], expectedNumPiecesHere);
+        double probOfNoCatastropheFromCurID = pow(1. - probStrCasCat[2], expectedNumPiecesHere);
         
+        // Multiply by the probability of not getting struck by all the other curIDs
         probNoStrike        *= probOfNoStrikeFromCurID;
         probNoCasualty      *= probOfNoCasualtyFromCurID;
         probNoCatastrophe   *= probOfNoCatastropheFromCurID;
@@ -1754,18 +1698,75 @@ vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<in
     }
     
     // Package up the answers
-    vector<double> ans;
-    ans.assign(3, 0.);
-    
+    vector<double> ans(3, 0.);
     ans[0] = probNoStrike;
     ans[1] = probNoCasualty;
     ans[2] = probNoCatastrophe;
-    
     return ans;
 }
 
-
-
+// This function returns a vector containing [probOfSingleStrike, probOfCasualty, probOfCatastrophe]
+vector<double> SkyGrid::AircraftVulnerabilityModel_Wilde(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
+                                                         double d_Airplane_top /*km*/, double delta_t){
+    
+    // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
+    // Keep in mind that as the grid gets finer, probDebrisHere can get bigger than 1 or arbitrarily large because we're dividing by such a
+    // small number.
+    
+    double cellVolume = xBinLength*yBinLength*zBinHeight;
+    double probDensity = PD.probDebris / cellVolume;  // Prob that debris is in cell / cellVolume
+    
+    // Equation takes mass in grams, outputs ft^2, so need to convert to km^2
+    // This calculation is from Wilde_AVM.  The projected area is a function of mass, not debris area, for pieces under 300g.
+    double theta = atan2(aircraftSpeed, PD.avgVel);  // Sure hope velocity is in km/s
+    double A_Proj = pow(d_Airplane_front, 2)*sin(theta) + pow(d_Airplane_top, 2)*cos(theta);
+    double V_impact = sqrt(pow(aircraftSpeed, 2) + pow(PD.avgVel,2));  // Assumes aircraft and debris velocities are perpendicular.
+    
+    double A_Casualty   = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);   // This is the case for pieces over 300g
+    double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
+    
+    // NOTE:  WHERE DID THESE VALUES COME FROM???  This is not what's in Wilde's AVM paper.
+    if (PD.avgMass < 0.001){
+        // Throw out pieces that are less than 1g.  They pose no danger
+        A_Casualty      = 0.;
+        A_Catastrope    = 0.;
+        A_Proj          = 0.;
+    }
+    else if (PD.avgMass < 0.300){
+        // If the mass is below 300g, these areas are modeled as a function of the piece's mass
+        A_Casualty      = ((0.0085*pow(PD.avgMass * 1e3,2) + 8.5*(PD.avgMass * 1e3) + 200)) * pow(FT_2_KM,2);
+        A_Catastrope    = (0.025 * pow(PD.avgMass * 1e3,2) + 4*(PD.avgMass * 1e3)) * pow(FT_2_KM,2);
+    }
+    
+    // Prob density integrated over swept volume of airplane
+    //                        double probOfSingleStrike   = probDebrisInCell * probDensityOfDebris * A_Proj * V_impact * delta_t;         // Pure Probability
+    double probOfSingleStrike   = probDensity * A_Proj * V_impact * delta_t;         // Pure Probability
+    double probOfCasualty       = probDensity * A_Casualty * V_impact * delta_t;
+    double probOfCatastrophe    = probDensity * A_Catastrope * V_impact * delta_t;
+    
+    // Make sure nothing is obviously wrong.
+    if (probDensity > 1.){
+        printf("ERROR: probDensity %E > %E maxProb\n",probOfSingleStrike, 1.);
+        exit(-90);
+    } else if (probOfSingleStrike > 1.){
+        printf("ERROR: probOfSingleStrike %E > %E maxProb\n",probOfSingleStrike, 1.);
+        exit(-90);
+    } else if (probOfSingleStrike < 0.){
+        printf("ERROR: probOfSingleStrike %E > %E minProb\n",probOfSingleStrike, 0.);
+        exit(-90);
+    } else if (A_Proj * V_impact * delta_t > cellVolume){
+        printf("ERROR: Vswept %E > %E maxSweptVolume\n", A_Proj * V_impact * delta_t, cellVolume);
+        exit(-90);
+    }
+    
+    // Pack up the return values
+    vector<double> ans(3,0.);
+    ans[0] = probOfSingleStrike;
+    ans[1] = probOfCasualty;
+    ans[2] = probOfCatastrophe;
+    return ans;
+    
+}
 
 
 
