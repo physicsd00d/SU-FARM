@@ -107,7 +107,7 @@ void SkyGrid::GridTheSky(){
             // If z is negative, place it on the ground, if z is too high, ignore it
             bool zgood = true;
             if (curPoint.get_z() > NASkm) {
-                zindex = -2;
+                zindex = ABOVE_NAS_IX;
                 xindex = 0;
                 yindex = 0;
                 Vx = 0.;
@@ -116,7 +116,7 @@ void SkyGrid::GridTheSky(){
                 thisMass = 0.;
                 thisArea = 0.;
             } else if (curPoint.get_z() < 0) {
-                zindex = -1;
+                zindex = LANDED_IX;
                 xindex = 0;
                 yindex = 0;
                 Vx = 0.;
@@ -1379,6 +1379,7 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
 //        int maxy = -1e9;
         for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
             int zindex = it_z->first;
+            
 //
 //            // For each z-level, find the first (min) xval
 //            it_x = ProbabilityMapDebIX[tx][zindex].begin();
@@ -1399,7 +1400,10 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
 //        
 //        cout << "minx,max = " << minx << ", " << maxx << endl;
             
-            
+            // Shouldn't be any valid debris in the indices below zero
+            if (zindex < 0){
+                continue;
+            }
         
             for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
                 int xindex = it_x->first;
@@ -1411,8 +1415,16 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
                     for (it_ID = ProbabilityMapDebIX[tx][zindex][xindex][yindex].begin(); it_ID != ProbabilityMapDebIX[tx][zindex][xindex][yindex].end(); ++it_ID){
                         int curID = it_ID->first;
 
-                        binData PD = (it_ID->second);
+                        // Skip the storage index
+                        if (curID == STORE_IX) {
+                            continue;
+                        }
+
+
+//                        binData PD = (it_ID->second);
                         double probDebrisHere = ((it_ID->second).probDebris);
+
+                        //printf("[%d][%d][%d][%d] = %e\n", zindex, xindex, yindex, curID, probDebrisHere);
 
                         curProb += probDebrisHere;
 
@@ -1420,15 +1432,18 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
 
                     }
                     
-                    double lowerleftX = XREF + xindex*xBinLength;   // Note that xindex is most likely negative
-                    double lowerleftY = YREF + yindex*yBinLength;   // Note that yindex may be positive or negative
-                    double lowerleftZ = ZREF + zindex*zBinHeight;
-                    tempPt.set_xyz(lowerleftX + 0.5*xBinLength, lowerleftY + 0.5*yBinLength, lowerleftZ);
-                    
-                    double centerLat = tempPt.get_gdLatDeg();
-                    double centerLon = tempPt.get_lonDeg();
+                    // If curProb less than zero, then the only reason you got here was the STORE_IX, so skip adding this pt.
+                    if (curProb > 0.){
+                        double lowerleftX = XREF + xindex*xBinLength;   // Note that xindex is most likely negative
+                        double lowerleftY = YREF + yindex*yBinLength;   // Note that yindex may be positive or negative
+                        double lowerleftZ = ZREF + zindex*zBinHeight;
+                        tempPt.set_xyz(lowerleftX + 0.5*xBinLength, lowerleftY + 0.5*yBinLength, lowerleftZ);
+                        
+                        double centerLat = tempPt.get_gdLatDeg();
+                        double centerLon = tempPt.get_lonDeg();
 
-                    GridAsVector[lowerleftZ][centerLon][centerLat] = curProb;
+                        GridAsVector[lowerleftZ][centerLon][centerLat] = curProb;
+                    }
 
                     // =========== End of the ACTA method ===========================================
 

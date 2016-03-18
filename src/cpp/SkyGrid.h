@@ -37,7 +37,9 @@ using std::max;
 #define PROB_CASUALTY    1002
 #define PROB_CATASTROPHE 1003
 
-#define STORE_IX -666
+#define STORE_IX -666       // This is the curID index that gets used to store hazard probabilities after they're generated
+#define ABOVE_NAS_IX -2
+#define LANDED_IX -1
 
 
 #define XREF 0.
