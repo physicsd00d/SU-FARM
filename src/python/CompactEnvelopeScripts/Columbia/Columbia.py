@@ -13,8 +13,8 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain   			= False  # State Vector
-freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = False
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = True
 debug                   = False
 
 plotColumbiaGround      = True
@@ -95,8 +95,10 @@ curMission['loverd'] = initVec.loverd
 
 # These hold files that need to be read in
 curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-curMission['debrisCatFile']           = 'testFileDistributed.txt'
+# curMission['debrisCatFile']           = 'testFileDistributed.txt'
 # curMission['debrisCatFile']           = 'debugDistributed.txt'
+curMission['debrisCatFile']           = 'debugColumbiaMarch16.txt'
+
 curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
 
 
@@ -113,10 +115,10 @@ Set parameters related to:
 # # Parameters for the ASH
 NASkm = 18.289
 
-curMission['deltaXY']                   = .5    #km
-curMission['deltaZ']                    = NASkm/4.   #km
-curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
-curMission['h2']                        = 3.
+curMission['deltaXY']                   = 1.    #km
+curMission['deltaZ']                    = NASkm/6.   #km
+curMission['h1']                        = 10.    # Smoothing parameters for the ASH.  Should be >= deltaXY
+curMission['h2']                        = 10.
 
 # Parameters for the safety architecture of the NAS
 curMission['reactionTimeMinutes']       = -5    # The number of minutes that the NAS needs to safely handle a sudden debris event.
@@ -143,7 +145,7 @@ curMission['numPiecesPerSample']      = [10]      # The number of pieces to cons
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 
-curMission['numNodes']                  = 1
+curMission['numNodes']                  = 2
 curMission['numNodesEnvelopes']         = -1 	# This should not get used.
 curMission['NASkm']                     = NASkm
 
@@ -718,6 +720,10 @@ if calcIndividualHazard:
 
 
 ### Going to make some changes to SkyGrid, but these numbers shouldn't change!
+# curMission['deltaXY']                   = .5    #km
+# curMission['deltaZ']                    = NASkm/4.   #km
+# curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
+# curMission['h2']                        = 3.
 # E120 = 0.000117191951219
 # MD82 = 0.00161827291763
 # B733 = 0.000948470675794

@@ -37,20 +37,56 @@ from FriscoLegacy import orbitTools
 # -.46 deg
 # No WINDS and standard 1976 atmosphere
 
-# This is what Francisco had as his parameters
+# # This is what Francisco had as his parameters
+# planetModel = 0
+# latitude = 32.95608
+# longitude = -99.04132
+# altitude = 61193.781
+# Vmag = 5396.788
+# FPA = -0.46              # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
+# # FPA = -1.5              # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
+# beta = -19.3            # angle from East vector
+# thetagRef = 0.0
+# inertial = 0
+# loverd = 0.04
+# cloption = 1      # if 1, then ignore loverd
+
+
+# This is getting close to matching group 1...
+# # NO WIND.  Tweaking to bring into better alignment with my better-calibrated debris field image.
+# # Actually, should really get the debris model to be more dispersed first.  Come back to this...
+# planetModel = 0
+# # latitude = 32.95608   - 0.08
+# # longitude = -99.04132 + 0.5
+# latitude = 32.95608   
+# longitude = -99.04132 + 0.25
+# altitude = 61193.781
+# Vmag = 5396.788
+# FPA = -0.46     -1.       # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
+# # FPA = -1.5              # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
+# beta = -19.3   -0.5         # angle from East vector
+# thetagRef = 0.0
+# inertial = 0
+# loverd = 0.15
+# cloption = 0      # if 1, then ignore loverd
+
+
+# NO WIND.  Tweaking to bring into better alignment with my better-calibrated debris field image.
+# Actually, should really get the debris model to be more dispersed first.  Come back to this...
 planetModel = 0
-latitude = 32.95608
-longitude = -99.04132
+# latitude = 32.95608   - 0.08
+# longitude = -99.04132 + 0.5
+latitude = 32.95608   
+longitude = -99.04132 + 0.25
 altitude = 61193.781
 Vmag = 5396.788
-FPA = -0.46              # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
+FPA = -0.46     -1.5        # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
 # FPA = -1.5              # flight path angle -1.5 when assuming winds. -.46 if no winds assumed
-beta = -19.3            # angle from East vector
+beta = -19.3   -0.5         # angle from East vector
 thetagRef = 0.0
 inertial = 0
-loverd = 0.04
-cloption = 1      # if 1, then ignore loverd
-
+loverd = 0.15
+cloption = 0      # if 1, then ignore loverd
 
 
 # ===== THESE WORK REASONABLY WELL.  A GOOD START BUT ROOM FOR IMPROVEMENT =====

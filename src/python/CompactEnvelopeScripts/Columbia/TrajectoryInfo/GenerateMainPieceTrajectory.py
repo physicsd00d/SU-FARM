@@ -44,10 +44,15 @@ def Generate(curMission):
 
 	dt = 1 # time interval for trajectory calculation
 
-	# ignoring the wind profile
-	uListCol = 0.0*np.array(uMeanList)
-	vListCol = 0.0*np.array(vMeanList)
-	wListCol = 0.0*np.array(wMeanList)
+	if curMission['noWind']:
+		# ignoring the wind profile
+		uListCol = 0.0*np.array(uMeanList)
+		vListCol = 0.0*np.array(vMeanList)
+		wListCol = 0.0*np.array(wMeanList)
+	else:
+		uListCol = np.array(uMeanList)
+		vListCol = np.array(vMeanList)
+		wListCol = np.array(wMeanList)
 
 
 	# propagate main piece of debris all the way to the ground. Check RSAT/source/TrajectoryPropagation/sourceCode/debrisPropAllTime.f90 for more info
