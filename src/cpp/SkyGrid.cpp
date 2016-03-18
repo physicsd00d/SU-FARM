@@ -1664,12 +1664,17 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
     return probabilityOfImpactRecord;
 }
 
+#define LARSON 1
+#define RCC321 2
+#define WILDE  3
 
 // Take the probability data for a given x,y,z,t cell and calculate the probabilities of no conequences
 //  for an aircraft in that cell over all ballistic coefficient categories (curID)
 vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<int> numberOfPiecesMean,
                                           double cellVolume, double d_Airplane_top,
                                           double d_Airplane_front, double aircraftSpeed, double delta_t){
+    // THIS SHOULD BECOME AN INPUT
+    int whichAVM = RCC321;
     
     // The three consquences.
     double probNoStrike         = 1.;
@@ -1681,8 +1686,14 @@ vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<in
         binData PD = (it_ID->second);
         
         // Get probability of consequence for a single piece of debris from groupd curID
-        vector<double> probStrCasCat = AircraftVulnerabilityModel_Wilde(PD, aircraftSpeed /* km/s */, d_Airplane_front /*km*/,
+        vector<double> probStrCasCat;
+        if (whichAVM == RCC321){
+            probStrCasCat = AircraftVulnerabilityModel_RCC321(PD, aircraftSpeed /* km/s */, d_Airplane_front /*km*/,
                                                                         d_Airplane_top /*km*/, delta_t);
+        } else if(whichAVM == LARSON){
+            probStrCasCat = AircraftVulnerabilityModel_Larson(PD, aircraftSpeed /* km/s */, d_Airplane_front /*km*/,
+                                                              d_Airplane_top /*km*/, delta_t);
+        }
         
         // Calculate the probability of not being struck by any of the expectedNumPiecesHere from curID
         double expectedNumPiecesHere        = numberOfPiecesMean[curID];      // This is the number of debris from this debIX in the catalog
@@ -1706,7 +1717,7 @@ vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<in
 }
 
 // This function returns a vector containing [probOfSingleStrike, probOfCasualty, probOfCatastrophe]
-vector<double> SkyGrid::AircraftVulnerabilityModel_Wilde(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
+vector<double> SkyGrid::AircraftVulnerabilityModel_RCC321(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
                                                          double d_Airplane_top /*km*/, double delta_t){
     
     // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
@@ -1726,6 +1737,8 @@ vector<double> SkyGrid::AircraftVulnerabilityModel_Wilde(binData &PD, double air
     double A_Catastrope = pow( sqrt(A_Proj) + sqrt(PD.avgArea) ,2);
     
     // NOTE:  WHERE DID THESE VALUES COME FROM???  This is not what's in Wilde's AVM paper.
+    // These values are from page 6-27 in RCC 321 07 Supplement
+    // I made a small edit, which is that RCC calls for all debris down to 0.05g, and here i'm cutting off at 1g
     if (PD.avgMass < 0.001){
         // Throw out pieces that are less than 1g.  They pose no danger
         A_Casualty      = 0.;
@@ -1769,6 +1782,52 @@ vector<double> SkyGrid::AircraftVulnerabilityModel_Wilde(binData &PD, double air
 }
 
 
+
+// This function returns a vector containing [probOfSingleStrike, probOfCasualty, probOfCatastrophe]
+// This formulation comes from Modeling of Risk to Aircraft from Space Vehicle Debris by Carbon and Larson
+// NOTE: This vulnerability model only produces results for probOfSingleStrike, others will be set to negative
+vector<double> SkyGrid::AircraftVulnerabilityModel_Larson(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
+                                                          double d_Airplane_top /*km*/, double delta_t){
+    
+    // Assuming that if we know there is debris in this cell, the location of that debris is uniformly likely to be anywhere in the volume.
+    // Keep in mind that as the grid gets finer, probDebrisHere can get bigger than 1 or arbitrarily large because we're dividing by such a
+    // small number.
+    
+    double cellVolume = xBinLength*yBinLength*zBinHeight;
+    double probDensity = PD.probDebris / cellVolume;  // Prob that debris is in cell / cellVolume
+    
+    
+    double A_top    = pow(d_Airplane_top    + sqrt(PD.avgArea),2);
+    double A_front  = pow(d_Airplane_front  + sqrt(PD.avgArea),2);
+    
+    // Prob density integrated over swept volume of airplane
+    double probOfSingleStrike   = probDensity * (A_front*aircraftSpeed + A_top*PD.avgVel) * delta_t;         // Pure Probability
+    double probOfCasualty       = -1.;
+    double probOfCatastrophe    = -1.;
+    
+    // Make sure nothing is obviously wrong.
+    if (probDensity > 1.){
+        printf("ERROR: probDensity %E > %E maxProb\n",probOfSingleStrike, 1.);
+        exit(-90);
+    } else if (probOfSingleStrike > 1.){
+        printf("ERROR: probOfSingleStrike %E > %E maxProb\n",probOfSingleStrike, 1.);
+        exit(-90);
+    } else if (probOfSingleStrike < 0.){
+        printf("ERROR: probOfSingleStrike %E > %E minProb\n",probOfSingleStrike, 0.);
+        exit(-90);
+    } else if ((A_front*aircraftSpeed + A_top*PD.avgVel) * delta_t > cellVolume){
+        printf("ERROR: Vswept %E > %E maxSweptVolume\n", (A_front*aircraftSpeed + A_top*PD.avgVel) * delta_t, cellVolume);
+        exit(-90);
+    }
+    
+    // Pack up the return values
+    vector<double> ans(3,0.);
+    ans[0] = probOfSingleStrike;
+    ans[1] = probOfCasualty;
+    ans[2] = probOfCatastrophe;
+    return ans;
+    
+}
 
 
 

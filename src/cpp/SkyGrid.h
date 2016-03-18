@@ -184,9 +184,10 @@ public:
                                      double cellVolume, double d_Airplane_top,
                                      double d_Airplane_front, double aircraftSpeed, double delta_t);
     
-    vector<double> AircraftVulnerabilityModel_Wilde(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
+    vector<double> AircraftVulnerabilityModel_RCC321(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
                                                              double d_Airplane_top /*km*/, double delta_t);
-    
+    vector<double> AircraftVulnerabilityModel_Larson(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
+                                                     double d_Airplane_top /*km*/, double delta_t);
     // Debugging Functions (Matlab)
     void GoMatlab(string fileName, vector<Point> tempVec);
     void DumpGridToMatlab(char *fileName);
