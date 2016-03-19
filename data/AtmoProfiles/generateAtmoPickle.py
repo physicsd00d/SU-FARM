@@ -1,10 +1,14 @@
+import sys
 
+# Error check
+if len(sys.argv) != 2:
+    print "ERROR: Only one argument allowed.  Must pass in .txt file containing atmo data"
+    sys.exit()
 
-# import os
-# import sys
-# sys.path.append(friscoFiles)
-# sys.path.append(debrisPropPATH)
-# sys.path.append(tjcFiles)
+atmoFile = sys.argv[1]
+baseName = atmoFile.split('.')[0]
+pickleName = baseName + ".pkl"
+
 from Simulation import TJC
 
 # Note: You have to import all the frisco stuff because TJC demands to know about it.
@@ -23,8 +27,8 @@ from Simulation import TJC
 # atmoFile = 'SpaceportAmerica.txt'
 # pickleName = 'SpaceportAmerica.pkl'
 
-atmoFile = 'WestTexas.txt'
-pickleName = 'WestTexas.pkl'
+# atmoFile = 'WestTexas.txt'
+# pickleName = 'WestTexas.pkl'
 
 atmoFolder = './'
 TJC.createAtmoPickle(atmoFolder, atmoFile, pickleName)
