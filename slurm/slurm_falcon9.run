@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=Lynx
+#SBATCH --job-name=Falcon
 #SBATCH --nodes=1
 # #SBATCH --ntasks-per-node=12
 #SBATCH --cpus-per-task=12
