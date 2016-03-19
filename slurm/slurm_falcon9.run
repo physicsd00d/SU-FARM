@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=Lynx
+#SBATCH --nodes=1
+# #SBATCH --ntasks-per-node=12
+#SBATCH --cpus-per-task=12
+#SBATCH --output=slurm.out
+#SBATCH --error=slurm.err
+
+# Slurm will not allow you to run one instance that uses multiple nodes
+# srun -n1 -c12 /opt/Python/bin/python falcon9.py > SU2.out
+PYTHONPATH="/ADL/tcolvin/sw:$PYTHONPATH"
+export PYTHONPATH
+srun -n1 -c12 python ../src/python/CompactEnvelopeScripts/Falcon9/falcon9.py > OUTPUT$1.txt &
