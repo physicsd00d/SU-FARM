@@ -12,9 +12,6 @@ If you want to use valgrind to debug, compile with -g for debug symbols then cal
 valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9.py
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
- # 346  salloc -n12 --nodelist=ADL-node7 bash &
- #  347  sinfo
- #  348  squeue
 
 '''These are the most-likely-to-be-changed parameters'''
 freshWind   = False
@@ -28,24 +25,10 @@ addStageReentry = False
 import os
 import sys
 
-# # Points to the binaries for propagating trajectories
-# debrisPropPATH = '../../../Prop3Dof/FriscoDebris/'
-# # Points to the files that I've written
-
-# # Build directory
-# buildDir = "../../../../build/"
+# Points to the root of the package so I can run this script from right here
 rootDir =   os.path.abspath("../../../../") + "/"
-outputDir = rootDir + "outputs/"
-tempDir =   rootDir + "temp/"
-
-# tjcFiles = '../../' # This is where the TJC.py file resides.
-
-# sys.path.append(friscoFiles)
-# sys.path.append(debrisPropPATH)
-# sys.path.append(os.path.abspath(buildDir))
-# sys.path.append(os.path.abspath(tjcFiles))
-
-
+outputDir = rootDir + "outputs/" # Where to store results, gitignored
+tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
 
 '''
@@ -61,9 +44,6 @@ from Simulation import LaunchSites
 from Simulation import LaunchProviders
 
 from copy import deepcopy
-
-
-
 
 
 # These parameters get injected into the final footprint name
@@ -87,9 +67,7 @@ PROB_CATASTROPHE    = 1003
 # ============= Define the Mission ====================== #
 This section is rather convoluted and should be cleaned up.
 '''
-# from ReadMission import readInput
-
-# Initialize the mission
+# If you do a propagation, then you need to worry about dtval!
 propagationParamFile = 'nominalParam_new.txt'   # Points to thrust profile for doing propagations
 precomputedParamFile = []                       # Points to file with precomputed profile for nominal trajectory
 pathToMissionFiles = './'                       # Kind of a holdover from a previous file structure
@@ -110,9 +88,9 @@ curMission['loverd']    = 0.
 
 
 # These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
-curMission['atmospherePickle'] = rootDir + "data/AtmoProfiles/Cape.pkl"
+curMission['debrisCatPath']     = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatFile']     = 'Halcon9_1stNEW.txt'
+curMission['atmospherePickle']  = rootDir + "data/AtmoProfiles/Cape.pkl"
 
 
 
@@ -140,10 +118,6 @@ curMission['thresh']                    = 1e-7  # This is the probability thresh
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
 curMission['cumulative']                = 'FAA' # The definition for 'cumulative' that we wish to use.
                                                 # Options are: FAA, TJC
-                                                # Note that if FAA is chosen, the grid will be coarsened to reflect how the FAA calculates
-                                                #   hazard areas.  The values of deltaXY and deltaZ will be updated at the appropriate time
-                                                #   but they WILL change.
-
 curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
 
 # The different time steps within the mission
@@ -151,13 +125,11 @@ curMission['deltaT']                  = 1.      # Seconds, this is the time reso
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-
 curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
 #  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
-
 curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
 curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
@@ -166,7 +138,6 @@ curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT
 curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
-
 
 
 '''
@@ -178,8 +149,6 @@ from failProfile import failProfile, failProfileSeconds   # This should go in th
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
 curMission['pFail'] = 0.02    # Probability that vehicle will fail somewhere
-
-
 
 
 '''
@@ -195,8 +164,6 @@ curMission['launchAlt'] = 0.   #km
 curMission['initialUTC'] = 156.84861111111113 # (i think) This number could be anything, as long as it's consistent
 # curMission['launchAzimuth'] = 169.    #degrees, this is the heading angle of the SSA runway.  Measured with Google Earth
 curMission['launchAzimuth'] = 47.8      #degrees, this is what it looks like on Google Earth
-
-
 
 '''
 OUTPUT options
@@ -223,14 +190,6 @@ curMission['ExportDateDT'] = ExportDate
 # #
 #
 '''
-
-# # Precompute some Atmosphere and Trajectory profiles
-# freshWind   = False
-# freshDebris = False
-# debug       = False
-#
-# doMain      = True
-# addStageReentry = True
 
 if debug:
     # Change a few values
@@ -269,10 +228,8 @@ else:
 
 
 if freshDebris:
-    # t_lo = .0
     t_lo = 0.
     t_hi = 180.
-    # t_hi = 180.
 
     TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
 
@@ -281,7 +238,7 @@ if freshDebris:
 # maxTime = 180.
 # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
 # print "tProactive = {0}\n".format(tProactive)
-# TJC.PlotNominalTrajectories(profiles, curMission, 180.)
+# TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
 # sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
@@ -300,13 +257,7 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 # mission1 = curMission
 # timelo = 0
 # timehi = 10
-
-
 # sys.exit()
-
-
-
-
 
 
 if debug and (not doMain):

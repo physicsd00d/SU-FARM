@@ -1,6 +1,6 @@
 '''
 #
-This file creates an envelope for a Lynx MarkII launch and reentry
+This file creates an envelope for a SpaceX Falcon9 launch
 #
 '''
 
@@ -14,12 +14,12 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
-debug       = False
+freshWind   = False
+freshDebris = False
+debug       = True
 
 doMain      = True
-# addStageReentry = False
+addStageReentry = False
 
 
 import os
@@ -43,12 +43,12 @@ import datetime as dt
 from Simulation import LaunchSites
 from Simulation import LaunchProviders
 
-# from copy import deepcopy
+from copy import deepcopy
 
 
 # These parameters get injected into the final footprint name
-vehicleName     = LaunchProviders.LynxMII
-launchLocation  = LaunchSites.America
+vehicleName     = LaunchProviders.Falcon9
+launchLocation  = LaunchSites.Cape
 vehicleNotes    = ''
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
@@ -68,9 +68,9 @@ PROB_CATASTROPHE    = 1003
 This section is rather convoluted and should be cleaned up.
 '''
 # If you do a propagation, then you need to worry about dtval!
-propagationParamFile = []                   # Points to thrust profile for doing propagations
-precomputedParamFile = 'HTHL_Abridged.txt'  # Points to file with precomputed profile for nominal trajectory
-pathToMissionFiles = './'                   # Kind of a holdover from a previous file structure
+propagationParamFile = 'nominalParam_new.txt'   # Points to thrust profile for doing propagations
+precomputedParamFile = []                       # Points to file with precomputed profile for nominal trajectory
+pathToMissionFiles = './'                       # Kind of a holdover from a previous file structure
 
 # Planet info
 omegaE = 7.2921158494529352e-05             # rad/s
@@ -87,10 +87,10 @@ curMission['useLoverD'] = False
 curMission['loverd']    = 0.
 
 
-# # These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-curMission['debrisCatFile']           = 'LynxDebrisCatalog.txt'
-curMission['atmospherePickle']  = rootDir + "data/AtmoProfiles/SpaceportAmerica.pkl"
+# These hold files that need to be read in
+curMission['debrisCatPath']     = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatFile']     = 'Halcon9_1stNEW.txt'
+curMission['atmospherePickle']  = rootDir + "data/AtmoProfiles/Cape.pkl"
 
 
 
@@ -106,7 +106,7 @@ Set parameters related to:
 # # Parameters for the ASH
 NASkm = 18.289
 
-curMission['deltaXY']                   = .5    #km
+curMission['deltaXY']                   = 0.5    #km
 curMission['deltaZ']                    = NASkm/4.   #km
 curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
 curMission['h2']                        = 3.
@@ -148,7 +148,7 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-curMission['pFail'] = 0.02     # Probability that vehicle will fail somewhere
+curMission['pFail'] = 0.02    # Probability that vehicle will fail somewhere
 
 
 '''
@@ -163,7 +163,7 @@ curMission['launchAlt'] = 0.   #km
 # Not updated, also not sure i need these
 curMission['initialUTC'] = 156.84861111111113 # (i think) This number could be anything, as long as it's consistent
 # curMission['launchAzimuth'] = 169.    #degrees, this is the heading angle of the SSA runway.  Measured with Google Earth
-curMission['launchAzimuth'] = 0.    #degrees, this is what it looks like on Google Earth
+curMission['launchAzimuth'] = 47.8      #degrees, this is what it looks like on Google Earth
 
 '''
 OUTPUT options
@@ -201,13 +201,13 @@ if debug:
 profiles = []
 if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
-    
+
     numTrajSamples = 1
     numWindSamples = 60
-    
+
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
-    
+
     atmStorage, stateVecStorage, thetagStorage, tfailStorage = TJC.GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples)
     profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage, tfailStorage = tfailStorage,
                     numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
@@ -216,7 +216,7 @@ if (freshWind):
     output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')
     pickle.dump(profiles,output)
     output.close()
-    
+
     # tfail = 10.
     # TJC.MonteCarlo_until_tfail(curMission, profiles, tfail)
     # TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail*1.0)
@@ -228,14 +228,14 @@ else:
 
 
 if freshDebris:
-    t_lo = .0
-    t_hi = 180. #520.
+    t_lo = 0.
+    t_hi = 180.
 
     TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
 
 # # ## Find the time until the airspace can become reactive
-# minTime = 280.
-# maxTime = 320.
+# minTime = 120.
+# maxTime = 180.
 # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
 # print "tProactive = {0}\n".format(tProactive)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
@@ -253,7 +253,7 @@ if doMain:
     # print "tProactive = {0}\n".format(tProactive)
 
     footprintStart = 0.
-    footprintUntil = 180. #520.
+    footprintUntil = 180.
 
     footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
 
@@ -264,4 +264,64 @@ if doMain:
     # outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
 
+
+
+if addStageReentry:
+    '''# Prototype handling the first stage reentry'''
+
+    # Specify the time of the staging
+    tStage = 175
+
+    curMission['debrisPickleFolder']      = curMission['GeneratedFilesFolder']  + 'debrisPickleFolder'
+
+    firstStageMission = deepcopy(curMission)
+    firstStageMission['debrisPickleFolder'] = curMission['GeneratedFilesFolder']  + 'firstStagePickleFolder'
+    firstStageMission['debrisCatFile'] = 'firstStage.txt'
+    firstStageMission['reactionTimeMinutes'] = -1
+    firstStageMission['numPiecesPerSample'] = 1
+    firstStageMission['thresh'] = 0.
+    coeffIX = []
+
+    mpc = TJC.MonteCarlo_at_tfail(firstStageMission, coeffIX, tStage, firstStageMission['numPiecesPerSample'], profiles)
+    debrisPickleFolder = firstStageMission['debrisPickleFolder']
+
+    # print 'COMMENTED OUT WRITING TO FILE FOR DEBUGGING PURPOSES'
+    # Make sure that the output directory exists
+    folderPath = os.path.abspath(debrisPickleFolder)
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    output = open(folderPath + '/mpc_' + str(tStage) + '.pkl', 'wb')
+    pickle.dump(mpc,output,2)
+    output.close()
+
+    curPFail = 1.
+    EV_strike, outfileStr = TJC.genFootprint(firstStageMission, tStage, curPFail)
+    firstStageFootprint = ceb.PyFootprint(outfileStr, True)
+
+    firstStageFootprint.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
+
+    # Just to be safe(?), set the params we need in order to translate / rotate
+    firstStageFootprint.SetAzimuthDeg(firstStageMission['launchAzimuth'])
+    firstStageFootprint.SetLaunchLatDeg(firstStageMission['launchLat'])
+    firstStageFootprint.SetLaunchLonDeg(firstStageMission['launchLon'])
+
+    vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, "firstStage")
+    outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
+    firstStageFootprint.StoreFootprintAsVector(outfileStr)
+
+    # ''' Now make a GE animation of the first stage spread'''
+    # myTraj = ceb.PyTrajectory()
+    # secondsFromLaunch = tStage
+    # myTraj.loadDebrisTrajectory(mpc, secondsFromLaunch, firstStageMission)
+    #
+    # outFileName = curMission['GeneratedFilesFolder'] + "firstStage.kml"
+    # myTraj.ExportGoogleEarth(outFileName, ExportDate)
+
+
+    '''Now Merge with main footprint'''
+    totalFootprint = ceb.PyFootprint(mainFootprintFile, True)
+    totalFootprint.MergeFootprintVectors(firstStageFootprint)
+    totalFootprint.StoreFootprintAsVector(totalFootprintFile)
+    totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
