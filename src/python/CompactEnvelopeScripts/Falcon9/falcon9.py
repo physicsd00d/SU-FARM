@@ -25,8 +25,9 @@ addStageReentry = False
 import os
 import sys
 
-# Points to the root of the package so I can run this script from right here
-rootDir =   os.path.abspath("../../../../") + "/"
+# Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
+curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
+rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
@@ -70,7 +71,7 @@ This section is rather convoluted and should be cleaned up.
 # If you do a propagation, then you need to worry about dtval!
 propagationParamFile = 'nominalParam_new.txt'   # Points to thrust profile for doing propagations
 precomputedParamFile = []                       # Points to file with precomputed profile for nominal trajectory
-pathToMissionFiles = './'                       # Kind of a holdover from a previous file structure
+pathToMissionFiles = curFilePath                # Kind of a holdover from a previous file structure
 
 # Planet info
 omegaE = 7.2921158494529352e-05             # rad/s

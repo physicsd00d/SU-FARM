@@ -25,8 +25,9 @@ doMain      = True
 import os
 import sys
 
-# Points to the root of the package so I can run this script from right here
-rootDir =   os.path.abspath("../../../../") + "/"
+# Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
+curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
+rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
@@ -70,7 +71,7 @@ This section is rather convoluted and should be cleaned up.
 # If you do a propagation, then you need to worry about dtval!
 propagationParamFile = []                   # Points to thrust profile for doing propagations
 precomputedParamFile = 'HTHL_Abridged.txt'  # Points to file with precomputed profile for nominal trajectory
-pathToMissionFiles = './'                   # Kind of a holdover from a previous file structure
+pathToMissionFiles = curFilePath            # Kind of a holdover from a previous file structure
 
 # Planet info
 omegaE = 7.2921158494529352e-05             # rad/s
@@ -229,7 +230,7 @@ else:
 
 if freshDebris:
     t_lo = .0
-    t_hi = 180. #520.
+    t_hi = 120. #520.
 
     TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
 
@@ -253,7 +254,7 @@ if doMain:
     # print "tProactive = {0}\n".format(tProactive)
 
     footprintStart = 0.
-    footprintUntil = 180. #520.
+    footprintUntil = 120. #520.
 
     footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
 
