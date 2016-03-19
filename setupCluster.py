@@ -10,6 +10,9 @@
 # Looks helpful
 # http://stackoverflow.com/questions/33738885/python-setuptools-not-including-c-standard-library-headers
 #
+# 346  salloc -n12 --nodelist=ADL-node7 bash &
+#  347  sinfo
+#  348  squeue, scancel, htop
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 import sys, os, copy
 import numpy # Do this so you can get the include directory
