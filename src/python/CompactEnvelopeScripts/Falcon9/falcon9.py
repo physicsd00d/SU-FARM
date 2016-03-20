@@ -14,9 +14,9 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = False
-freshDebris = False
-debug       = True
+freshWind   = True
+freshDebris = True
+debug       = False
 
 doMain      = True
 addStageReentry = False
