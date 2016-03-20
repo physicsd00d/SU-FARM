@@ -1629,18 +1629,33 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
         # timeVec = np.arange(tfail*1.0,-deltaTFail,-deltaTFail)        #curTime is in seconds
         # timeVec = np.arange(tfail*1.0,0,-deltaTFail)        #curTime is in seconds
 
-        jobs = [job_server.submit(MonteCarlo_Distributed_Reentry_and_Record_CAIB, \
-                                  args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
-                                                     profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
-                                  depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
-                                  modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
-                                  callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
-
-        job_server.wait()
-        job_server.print_stats()
-        for job in jobs:
-            print job()
+        # I think maybe this is just too big.  Split up the parallelization
+        for tfail in timeVec:
+            jobs = [job_server.submit(MonteCarlo_Distributed_Reentry_and_Record_CAIB, \
+                                      args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
+                                                         profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
+                                      depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
+                                      modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
+                                      callback=finishedDistributed) for windIX in range(numWindSamples)]  
+            job_server.wait()
+            job_server.print_stats()
+            for job in jobs:
+                print job()
         job_server.destroy()
+
+
+        # jobs = [job_server.submit(MonteCarlo_Distributed_Reentry_and_Record_CAIB, \
+        #                           args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
+        #                                              profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
+        #                           depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
+        #                           modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
+        #                           callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
+
+        # job_server.wait()
+        # job_server.print_stats()
+        # for job in jobs:
+        #     print job()
+        # job_server.destroy()
 
 def finishedDistributed(val):
     print 'done: windIX = {0}, tfail = {1}'.format(val[0], val[1])

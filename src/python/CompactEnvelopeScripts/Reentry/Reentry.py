@@ -137,8 +137,7 @@ curMission['numPiecesPerSample']      = [1]      # The number of pieces to consi
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 
-curMission['numNodes']                  = 1  # WARNING!  PP sucks and isn't releasing old threads so if you use multiple nodes, you'll chew
-                                                            # through all your memory pretty quickly.  Using 1 avoids using pp at all.
+curMission['numNodes']                  = 2  
 curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
