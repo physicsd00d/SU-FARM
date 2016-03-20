@@ -1,0 +1,61 @@
+#   Fmax [N]            ISP [sec]              m0 [kg]            num_steps           num_stages
+        -270000.           250.000000          9525.000000                  -79                    1
+
+# Stage Struct Masses
+          1500.000000   
+
+# Stage Propellant Masses
+         7300.000000 
+
+# Stage ISPs
+          250.000000           
+
+# Stage Fmax
+        -270000.000000         
+
+# Staging Times
+            0.000000           
+
+# Payload Mass
+          725.000000 
+
+#  lat [deg]           long [deg]             alt [km]
+	32.989948		-106.975451 		15.24
+
+#  Vx [m/s] (Up)	Vy [m/s] (East)		Vz [m/s] (North)	#In local frame
+	0.0			0.0			60.0
+
+#        Day                Month                 Year                Hours              Minutes                Timezone Offset
+                  20                    5                 2012                    0                   23                    5
+
+# Num Pts for NX NY NZ
+10	2	10
+
+# [t,acc] Acceleration in g's NX (front to back)
+0.000	0.009
+4.839	0.117
+5.645	2.429
+8.065	2.472
+16.935	2.299
+27.419	2.537
+39.516	3.185
+47.581	3.012
+62.097	3.034
+62.903	-0.034
+
+# [t,acc] Acc in g's NY seems to be zero (left to zero) (need at least two points for interpolation)
+0.00	0.00
+1.00	0.00
+
+# [t,acc] Acc in g's NZ (Used to calc pitching model and to calc mass loss) (up and down)
+0.000	0.009
+2.419	0.614
+12.097	2.796
+25.000	2.645
+27.419	0.938
+29.032	0.160
+32.258	-0.077
+38.710	-0.077
+61.290	-0.012
+255.645	0.009
+
