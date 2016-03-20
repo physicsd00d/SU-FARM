@@ -1372,7 +1372,7 @@ def MonteCarlo_at_tfail(curMission, coeffIX, tfail, numPiecesPerSample, profiles
     debrisCatalogFilePATH = curMission['debrisCatPath']
     dt = curMission['deltaT']
     
-    ndtinterval = 5*3600/dt     # is the upper bound for how long you think the debris propagation will run (5hrs)
+    ndtinterval = 1*3600/dt     # is the upper bound for how long you think the debris propagation will run (5hrs)
     tLaunchDesired = 0.         # Delay in seconds of launch from nominal time
     
     # Unpack the profiles
@@ -1610,32 +1610,37 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
 
 
     # Do the parallel
-    import pp
-    job_server = pp.Server()
-    job_server.set_ncpus(curMission['numNodes'])
-    print 'number of cpus = ' + str(job_server.get_ncpus())
+    jobs = []   # Holds the results of the envelope creation
+    if curMission['numNodes'] == 1:
+        # This means we're running into memory or malloc issues with pp, so don't use it
+        # jobs = [genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) for ix in range(len(timeRange))]
+        jobs = [\
+                MonteCarlo_Distributed_Reentry_and_Record_CAIB(curMission, catalogList, coeffIX, numPiecesPerSample, \
+                                                     profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX) \
+                for windIX in range(numWindSamples) for tfail in timeVec]
+    else:
+        import pp
+        job_server = pp.Server()
+        job_server.set_ncpus(curMission['numNodes'])
+        print 'number of cpus = ' + str(job_server.get_ncpus())
 
-    # by placing -deltaTFail as the lower limit, we will include time = zero
-    # timeVec = np.arange(thigh*1.0,tlow-deltaTFail,-deltaTFail)        #curTime is in seconds
-    # timeVec = np.arange(tfail*1.0,-deltaTFail,-deltaTFail)        #curTime is in seconds
-    # timeVec = np.arange(tfail*1.0,0,-deltaTFail)        #curTime is in seconds
+        # by placing -deltaTFail as the lower limit, we will include time = zero
+        # timeVec = np.arange(thigh*1.0,tlow-deltaTFail,-deltaTFail)        #curTime is in seconds
+        # timeVec = np.arange(tfail*1.0,-deltaTFail,-deltaTFail)        #curTime is in seconds
+        # timeVec = np.arange(tfail*1.0,0,-deltaTFail)        #curTime is in seconds
 
-    jobs = [job_server.submit(MonteCarlo_Distributed_Reentry_and_Record_CAIB, \
-                              args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
-                                                 profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
-                              depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
-                              modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
-                              callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
+        jobs = [job_server.submit(MonteCarlo_Distributed_Reentry_and_Record_CAIB, \
+                                  args=(curMission, catalogList, coeffIX, numPiecesPerSample, \
+                                                     profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX), \
+                                  depfuncs=(MonteCarlo_Distributed_Reentry_CAIB,), \
+                                  modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
+                                  callback=finishedDistributed) for windIX in range(numWindSamples) for tfail in timeVec]
 
-    # print "This will fail because the modules like debrisReader are now inside a package.  \
-            # Must include package info or put all of these modules in the root package. 1447"
-    # sys.exit()
-
-    job_server.wait()
-    job_server.print_stats()
-    for job in jobs:
-        print job()
-
+        job_server.wait()
+        job_server.print_stats()
+        for job in jobs:
+            print job()
+        job_server.destroy()
 
 def finishedDistributed(val):
     print 'done: windIX = {0}, tfail = {1}'.format(val[0], val[1])
@@ -1649,8 +1654,6 @@ def MonteCarlo_Distributed_Reentry_and_Record_CAIB(curMission, catalogList, coef
 
     cur_mpc = MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPiecesPerSample,
                                                  profiles, lowerBreakLimit, upperBreakLimit, tfail, windIX)
-
-    debrisPickleFolder = curMission['debrisPickleFolder']
 
     # # print 'COMMENTED OUT WRITING TO FILE FOR DEBUGGING PURPOSES'
     # # Make sure that the output directory exists
@@ -1680,7 +1683,7 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
         cloption = 0
     loverd = curMission['loverd']
 
-    ndtinterval = 5*3600/dt     # is the upper bound for how long you think the debris propagation will run (5hrs)
+    ndtinterval = 1*3600/dt     # is the upper bound for how long you think the debris propagation will run (1hrs)
     tLaunchDesired = 0.         # Delay in seconds of launch from nominal time
 
     # Unpack the profiles
@@ -1844,6 +1847,7 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
                     if altitudeFinal>0:
                         print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
 
+                    print "numFinalSteps = {0}".format(numFinalSteps)
                     # Saves the stuff I care about
                     # For some reason, those extra parentheses are necessary to avoid errors when concatenating the first (empty) array
                     # debrisStorage = np.concatenate(( debrisStorage,  debrisResults.flatten() ))
@@ -1887,8 +1891,6 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
                launchLat = curMission['launchLat'], launchLon = curMission['launchLon'], launchAzimuth = curMission['launchAzimuth'],
                debrisID = debrisID, arefMeanList = arefMean, numberOfPiecesMeanList = numberOfPiecesMeanList,
                debrisMass = debrisMass, debrisArea = debrisArea, sizeFlatPointArray = sizeKeeping)
-
-
 
     return mpc
 
