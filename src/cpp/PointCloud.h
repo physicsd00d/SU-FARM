@@ -119,6 +119,7 @@ public:
     virtual int identifyYourself();
     virtual double getZBinHeight();
     vector<vector<Point> > getAllPoints();
+    map <int, int> getTotalNumPointsPassedInPerID();
     
 //    void assemble_all_points_debris(void *thisthing);
 //    void assemble_all_points_debris_double(void **thisthing);

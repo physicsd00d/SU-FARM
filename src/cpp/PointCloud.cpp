@@ -467,6 +467,10 @@ vector<vector<Point> > PointCloud::getAllPoints(){
     return all_points_total;
 }
 
+map<int,int>  PointCloud::getTotalNumPointsPassedInPerID(){
+    return totalNumPointsPassedInPerID;
+}
+
 void PointCloud::PrintAllPoints(){
     
     cout << "Printing up to first five points at each timestep\n\n";

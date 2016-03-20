@@ -62,7 +62,77 @@ SkyGrid::SkyGrid(PointCloud *newCloud, double xBinLength_in, double yBinLength_i
     
     return;
 }
- 
+
+
+void SkyGrid::PythonDebrisIntoGrid(PointCloud *in){
+    
+    // Check that you can still use it
+    if (isProbability){
+        cout << "ERROR, youre trying to use PythonDebrisIntoGrid after converting to probabilities\n\n";
+        exit(-13);
+    }
+    
+    //    double inTstepMinutes  = in->getDeltaT();
+    double inTstepSeconds  = in->getDeltaT();
+    double inInitialUTC    = in->getInitialUTC();
+    //    int inNumRange         = in->getPointsRange();
+    
+    //    double curTstepMinutes  = getDeltaT();
+    double curTstepSeconds  = getDeltaT();
+    double curInitialUTC    = getInitialUTC();
+    //    int curNumRange         = Grid.size();
+    
+    // Checks that the timestep sizes are the same
+    double deltaTsec = 0;
+    if (inTstepSeconds != curTstepSeconds){
+        cout << "ERROR!!  TIMESTEPS DON'T MATCH!!!  RETURNING FROM FUNCTION WITHOUT DOING ANYTHING!!!!!";
+        exit(-10);
+    } else {
+        deltaTsec = curTstepSeconds;
+    }
+    
+    //    // Check the time range of the new points, may need to extend the time vector in either direction
+    //	double curFinalUTC = curInitialUTC + curTstepMinutes*curNumRange/(60*24);
+    //	double inFinalUTC = inInitialUTC + inTstepMinutes * inNumRange/(60.*24.);
+    
+    // Determines if the incoming points overstep the time bounds in either direction
+    bool isLeading = (inInitialUTC < curInitialUTC);
+    
+    //    // As long as this is not zero, the grid will be recalculated.
+    //    int leadingTimeSteps = 0;
+    
+    if (isLeading){
+        cout << "For debugging reasons, i'm going to exit the program if there are any leading timesteps...sorry....\n";
+        exit(-12);
+    }
+    
+    // NEED TO WORRY ABOUT IF THE INCOMING POINTS START ***AFTER*** THE CURRENT POINTS
+    int incomingOffset = max((int) round((inInitialUTC - curInitialUTC)*24*3600./deltaTsec), 0);
+    if (incomingOffset != 0){
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~         icomingOffset = " << incomingOffset << endl;
+        exit(-9);
+    }
+    
+    // Must update totalNumPointsPassedInPerID to include the newly-passed-in points
+    // This only gets used for calculating normalizations when ASHing
+    map<int,int> fresh = in->getTotalNumPointsPassedInPerID();
+    for (map<int,int>::iterator idIter = fresh.begin(); idIter != fresh.end(); ++idIter) {
+        int curID = idIter->first;
+        int numHere = idIter->second;
+        
+        totalNumPointsPassedInPerID[curID] += numHere;
+    }
+    
+    // Copy the allPoints from the incoming cloud to the current cloud
+    //    FOR SAFETY: Should probably make sure that I've already copied over the other incoming values that I would want to keep
+    all_points_total = in->getAllPoints();
+    
+    GridTheSky();
+    
+    return;
+}
+
+
   
 // Functions for probabilistically handling footprints 
 void SkyGrid::GridTheSky(){
@@ -209,63 +279,6 @@ void SkyGrid::GridTheSky(){
 
 
 
-void SkyGrid::PythonDebrisIntoGrid(PointCloud *in){
-    
-    // Check that you can still use it
-    if (isProbability){
-        cout << "ERROR, youre trying to use PythonDebrisIntoGrid after converting to probabilities\n\n";
-        exit(-13);
-    }
-    
-//    double inTstepMinutes  = in->getDeltaT();
-    double inTstepSeconds  = in->getDeltaT();
-    double inInitialUTC    = in->getInitialUTC();
-//    int inNumRange         = in->getPointsRange();
-    
-//    double curTstepMinutes  = getDeltaT();
-    double curTstepSeconds  = getDeltaT();
-    double curInitialUTC    = getInitialUTC();
-//    int curNumRange         = Grid.size();
-    
-    // Checks that the timestep sizes are the same
-    double deltaTsec = 0;
-    if (inTstepSeconds != curTstepSeconds){
-        cout << "ERROR!!  TIMESTEPS DON'T MATCH!!!  RETURNING FROM FUNCTION WITHOUT DOING ANYTHING!!!!!";
-        exit(-10);
-    } else {
-        deltaTsec = curTstepSeconds;
-    }
-    
-//    // Check the time range of the new points, may need to extend the time vector in either direction
-//	double curFinalUTC = curInitialUTC + curTstepMinutes*curNumRange/(60*24);
-//	double inFinalUTC = inInitialUTC + inTstepMinutes * inNumRange/(60.*24.);
-    
-    // Determines if the incoming points overstep the time bounds in either direction
-    bool isLeading = (inInitialUTC < curInitialUTC);
-    
-//    // As long as this is not zero, the grid will be recalculated.
-//    int leadingTimeSteps = 0;
-    
-    if (isLeading){
-        cout << "For debugging reasons, i'm going to exit the program if there are any leading timesteps...sorry....\n";
-        exit(-12);
-    }
-    
-    // NEED TO WORRY ABOUT IF THE INCOMING POINTS START ***AFTER*** THE CURRENT POINTS
-    int incomingOffset = max((int) round((inInitialUTC - curInitialUTC)*24*3600./deltaTsec), 0);
-    if (incomingOffset != 0){
-        cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~         icomingOffset = " << incomingOffset << endl;
-        exit(-9);
-    }
-
-    // Copy the allPoints from the incoming cloud to the current cloud
-    //    FOR SAFETY: Should probably make sure that I've already copied over the other incoming values that I would want to keep
-    all_points_total = in->getAllPoints();
-    
-    GridTheSky();
-    
-    return;
-}
 
 
 // This is used for ordering the probabilities in the histograms
