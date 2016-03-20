@@ -238,7 +238,7 @@ else:
 
 if freshDebris:
     t_lo = .0
-    t_hi = 120. #420.
+    t_hi = 420.
 
     TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
 
@@ -262,7 +262,7 @@ if doMain:
     # print "tProactive = {0}\n".format(tProactive)
 
     footprintStart = 0.
-    footprintUntil = 120. #520.
+    footprintUntil = 420.
 
     footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
 
