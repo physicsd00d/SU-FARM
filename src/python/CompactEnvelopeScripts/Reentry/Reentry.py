@@ -267,6 +267,7 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 
 if doMain:
 
+    curMission['numWindProfiles'] = len(profiles['atmStorage'])  # Reentry files need this curMission entry
     # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles)
     # print "tProactive = {0}\n".format(tProactive)
 
