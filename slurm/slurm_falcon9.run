@@ -10,4 +10,7 @@
 # srun -n1 -c12 /opt/Python/bin/python falcon9.py > SU2.out
 PYTHONPATH="/ADL/tcolvin/sw:$PYTHONPATH"
 export PYTHONPATH
-srun -n1 -c12 python ../src/python/CompactEnvelopeScripts/Falcon9/falcon9.py > OUTPUT$1.txt &
+
+NAME="Falcon"
+SCRIPT="../src/python/CompactEnvelopeScripts/Falcon9/falcon9.py"
+srun -n1 -c12 --job-name="$NAME" python $SCRIPT > OUTPUT_$NAME$1.txt &

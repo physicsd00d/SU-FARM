@@ -11,6 +11,6 @@
 PYTHONPATH="/ADL/tcolvin/sw:$PYTHONPATH"
 export PYTHONPATH
 
-NAME="Lynx"
-SCRIPT="../src/python/CompactEnvelopeScripts/Lynx/Lynx.py"
+NAME="SS2"
+SCRIPT="../src/python/CompactEnvelopeScripts/SS2/SS2.py"
 srun -n1 -c12 --job-name="$NAME" python $SCRIPT > OUTPUT_$NAME$1.txt &
