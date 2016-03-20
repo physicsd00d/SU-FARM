@@ -25,9 +25,10 @@ makeAnimation           = True     # Turn this off if using a small all_pts_delt
 import os
 import sys
 
-rootDir =   os.path.abspath("../../../../") + "/"
-outputDir = rootDir + "outputs/"
-tempDir =   rootDir + "temp/"
+curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
+rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
+outputDir = rootDir + "outputs/" # Where to store results, gitignored
+tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
 
 '''
@@ -54,7 +55,7 @@ from Simulation import LaunchProviders
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Reentry
 launchLocation  = LaunchSites.OK    # NOTE: even though it says 'launch', in this context it really means 'landing'
-vehicleNotes    = ''
+vehicleNotes    = 'Columbia'
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -75,7 +76,7 @@ from TrajectoryInfo import initVec
 # Initialize the mission
 propagationParamFile = []                   # Points to thrust profile for doing propagations
 precomputedParamFile = 'ColumbiaMainPieceTrajectory.txt'  # Points to file with precomputed profile for nominal trajectory
-pathToMissionFiles = './'                   # Kind of a holdover from a previous file structure
+pathToMissionFiles = curFilePath            # Kind of a holdover from a previous file structure
 
 # Planet info
 omegaE = 7.2921158494529352e-05             # rad/s
@@ -98,7 +99,6 @@ curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'Debr
 # curMission['debrisCatFile']           = 'testFileDistributed.txt'
 # curMission['debrisCatFile']           = 'debugDistributed.txt'
 curMission['debrisCatFile']           = 'debugColumbiaMarch16.txt'
-
 curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
 
 
