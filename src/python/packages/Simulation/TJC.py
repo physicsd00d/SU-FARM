@@ -1847,7 +1847,7 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
                     if altitudeFinal>0:
                         print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
 
-                    print "numFinalSteps = {0}".format(numFinalSteps)
+                    # print "numFinalSteps = {0}".format(numFinalSteps)
                     # Saves the stuff I care about
                     # For some reason, those extra parentheses are necessary to avoid errors when concatenating the first (empty) array
                     # debrisStorage = np.concatenate(( debrisStorage,  debrisResults.flatten() ))
