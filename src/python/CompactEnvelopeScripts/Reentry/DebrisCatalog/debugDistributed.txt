@@ -1,0 +1,30 @@
+units SI
+begin
+velocity  666.0
+time   0
+#numPieces     weightIndividual         weightTotal    aref                     beta                     impulseVel          CD        CL        
+100            [  2.206,  55.42]         2881.4        [0.01255,  2.128]        [  86.81,  146.5]          0.0                      0.6      0.04
+end
+
+begin
+velocity  666.0
+time   5
+#numPieces     weightIndividual         weightTotal    aref                     beta                     impulseVel          CD        CL        
+100            [  2.206,  55.42]         2881.4        [0.01255,  2.128]        [  86.81,  146.5]          0.0                      0.6      0.04
+end
+
+begin
+velocity  666.0
+time   10
+#numPieces     weightIndividual         weightTotal    aref                     beta                     impulseVel          CD        CL        
+50             [0.0004581,0.01151]      0.29912        [0.0001564, 0.1571]      [ 0.2441,  2.441]          0.0                      0.6      0.04
+#100            [  0.755,  18.96]         985.93        [0.007247,  1.295]       [  48.82,  86.81]          0.0                      0.6      0.04
+#300            [  2.206,  55.42]         8644.1        [0.01255,  2.128]        [  86.81,  146.5]          0.0                      0.6      0.04
+end
+
+begin
+velocity  666.0
+time   45
+#numPieces     weightIndividual         weightTotal    aref                     beta                     impulseVel          CD        CL
+100            [  2.206,  55.42]         2881.4        [0.01255,  2.128]        [  86.81,  146.5]          0.0                      0.6      0.04
+end
