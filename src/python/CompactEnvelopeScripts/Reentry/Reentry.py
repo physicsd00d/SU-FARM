@@ -13,8 +13,8 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = False
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = True
 doMain                  = True
 
 import os
@@ -90,8 +90,9 @@ curMission['loverd'] = initVec.loverd
 
 # These hold files that need to be read in
 curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-# curMission['debrisCatFile']           = 'testFileDistributed.txt'
-curMission['debrisCatFile']           = 'debugDistributed.txt'
+curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
+#curMission['debrisCatFile']           = 'testFileDistributed.txt'
+#curMission['debrisCatFile']           = 'debugDistributed.txt'
 curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
 
 
@@ -133,13 +134,13 @@ curMission['deltaTFail']              = 1.     # Seconds, this is how often we e
 curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
-curMission['numPiecesPerSample']      = [1]      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = [10]      # The number of pieces to consider within each debris group
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
 curMission['numNodes']                  = 10  
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodesEnvelopes']         = 6
 curMission['NASkm']                     = NASkm
 
 
@@ -151,7 +152,7 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-curMission['pFail'] = 0.02    # Probability that vehicle will fail somewhere
+curMission['pFail'] = 0.1    # Probability that vehicle will fail somewhere
 
 
 
@@ -229,7 +230,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
     
     numTrajSamples = 1      # If you change this to anything other than 1, it might break.  Look at numDebrisPerIXSimulated to start.
-    numWindSamples = 30
+    numWindSamples = 3      # You can increase this, but it will make envelopes smaller.  3 is good enough to replicate paper.
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
@@ -259,6 +260,14 @@ if freshDebris:
                          # If you set them both to [], then will explode at all times
     TJC.MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, curMission['numPiecesPerSample'],
                                                     lowerBreakLimit, upperBreakLimit, profiles)
+
+# ## Find the time until the airspace can become reactive
+#minTime = 0.
+#maxTime = 180.
+#tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
+#print "tProactive = {0}\n".format(tProactive)
+#TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
+#sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
