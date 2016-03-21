@@ -599,7 +599,7 @@ def genFootprint(curMission, tfailSec, curPFail):
 
         for windIX in range(curMission['numWindProfiles']):
             inFileName = '{0}/mpc_{1}_{2}.pkl'.format(curMission['debrisPickleFolder'], windIX, int(tfailSec))
-            print inFileName
+            # print inFileName
 
             input = open(inFileName, 'rb')
             cur_mpc = pickle.load(input)
@@ -1371,8 +1371,9 @@ def MonteCarlo_at_tfail(curMission, coeffIX, tfail, numPiecesPerSample, profiles
     debrisCatalogFile = curMission['debrisCatPath'] + curMission['debrisCatFile']
     debrisCatalogFilePATH = curMission['debrisCatPath']
     dt = curMission['deltaT']
+    ndtinterval = curMission['debrisTimeLimitSec']/dt
     
-    ndtinterval = 1*3600/dt     # is the upper bound for how long you think the debris propagation will run (5hrs)
+    # ndtinterval = 1*3600/dt     # is the upper bound for how long you think the debris propagation will run (5hrs)
     tLaunchDesired = 0.         # Delay in seconds of launch from nominal time
     
     # Unpack the profiles
@@ -1692,13 +1693,15 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
 
     debrisCatalogFilePATH = curMission['debrisCatPath']
     dt = curMission['deltaT']
+    ndtinterval = curMission['debrisTimeLimitSec']/dt
 
     cloption = 1
     if curMission['useLoverD'] == True:
         cloption = 0
     loverd = curMission['loverd']
 
-    ndtinterval = 1*3600/dt     # is the upper bound for how long you think the debris propagation will run (1hrs)
+    # ndtinterval = 1*3600/dt     # is the upper bound for how long you think the debris propagation will run (1hrs)
+    # ndtinterval = 6*60/dt     # is the upper bound for how long you think the debris propagation will run (1hrs)
     tLaunchDesired = 0.         # Delay in seconds of launch from nominal time
 
     # Unpack the profiles
@@ -2692,6 +2695,8 @@ def getStateVector(curMission, atmProfile, Toffset, ThrustOffsetAngDeg):
     # Note that curMission['dateList'] appears to be unused
     # dtinterval      = curMission['dtval']
     dtinterval      = curMission['deltaT']
+    ndtinterval     = curMission['debrisTimeLimitSec']/dtinterval
+
 
     cloption = 1
     if curMission['useLoverD'] == True:
@@ -2786,7 +2791,7 @@ def getStateVector(curMission, atmProfile, Toffset, ThrustOffsetAngDeg):
         Tlist = np.array([Tx,Ty,Tz]).T#np.concatenate([[Tx],[Ty],[Tz]],axis=1)
         
         
-        ndtinterval = int(np.ceil(2*timeVec[-1]/dtinterval))
+        # ndtinterval = int(np.ceil(2*timeVec[-1]/dtinterval))
         ntime = len(timeVec)
         #finalconditions,derivVals = op.propagate(initialstate,mass,mf,sref,minfcd,cd,cloption,minfcl,cl,loverd,atmosoption,altitudeList,densitylist,ulist,vlist,wlist,Tlist,timeVec,isp,geoptions,fileGE,planetModel,dtinterval,ndtinterval,thetag,1,ncd=len(minfcd),ncl=len(minfcl),ntime=ntime,nlist=len(altitudeList))
         

@@ -1228,11 +1228,8 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
         for (it_time=GridMapDebIX.begin(); it_time!=GridMapDebIX.end(); ++it_time) {
             int tx = it_time->first;
             
-//            cout << "ash2 tx = " << tx << "/" << GridMapDebIX.size() << endl;
-            
             for (it_ID = GridMapDebIX[tx].begin(); it_ID != GridMapDebIX[tx].end(); ++it_ID){
                 int curID = it_ID->first;
-                
                 double normFactor = ((double) totalNumPointsPassedInPerID[curID]) * h1 * h2;
                 
                 for (it_z = GridMapDebIX[tx][curID].begin(); it_z != GridMapDebIX[tx][curID].end(); ++it_z){
@@ -1313,11 +1310,15 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
                         int curID = it_ID->first;
                         
                         checkSum[curID] += ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris;
+//                        printf("CheckSum[%d][%d],[%d][%d][%d] = %E \n", tx, curID, zindex, xindex, yindex, checkSum[curID] );
                         
                         //double curProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris;
-                        //if ((tx == 0) && (curID == 0)) {
-                        //    printf("CheckSum[%d][%d],[%d][%d][%d] = %E \n", tx, curID, zindex, xindex, yindex, checkSum[curID] );
-                        //}
+//                        if ((tx == 0) && (curID == 0)) {
+//                        if ((tx == 574)) {
+//                        if (tx == 275) {
+//                            printf("CheckSum[%d][%d],[%d][%d][%d] = %E \n", tx, curID, zindex, xindex, yindex, checkSum[curID] );
+//                            printf("    totalPoints = %d\n", totalNumPtsAtStepMapDebIX[tx][curID]);
+//                        }
                         
                     } } } }
         

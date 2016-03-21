@@ -8,7 +8,7 @@ import numpy as np
 # % going on for the first 8.5 minutes, after which i assume if you haven't
 # % failed by then then you won't fail at all and will land smoothly.
 
-# For SS2, action happens for about 7 minutes, that's 420 seconds.
+# Actual trajectory here flies until 442, but lets just say that the last 22 seconds have zero probability of explosive failure
 lastTime = 420      # If this is not a multiple deltaTfail, you'll be in trouble
 time = np.linspace(0,lastTime,lastTime+1)
 

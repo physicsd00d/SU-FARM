@@ -136,8 +136,9 @@ curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the tim
 curMission['numPiecesPerSample']      = [1]      # The number of pieces to consider within each debris group
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
+curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
-curMission['numNodes']                  = 2  
+curMission['numNodes']                  = 4  
 curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
@@ -287,4 +288,29 @@ if doMain:
 
 
 
+
+# ## Debug
+# import pickle
+# inFileName = '/Volumes/Storage/Research/SU-FARM/temp/Reentry_OK/debrisPickleFolder/mpc_0_419.pkl'
+# input = open(inFileName, 'rb')
+# good_mpc = pickle.load(input)
+# input.close()
+
+# inFileName = '/Volumes/Storage/Research/SU-FARM/temp/Reentry_OK/debrisPickleFolder/mpc_1_419.pkl'
+# input = open(inFileName, 'rb')
+# bad_mpc = pickle.load(input)
+# input.close()
+
+# curID = 3
+# fpArray = bad_mpc['flatPointArray']
+# numTimeSteps = bad_mpc['numTimeSteps']
+# elemLen = bad_mpc['sizeFlatPointArray']
+
+# fpArray[numTimeSteps.cumsum()[curID-1]*elemLen:].reshape((numTimeSteps[3],elemLen))
+# # It landed...must not be properly handling landed points?
+# # * Check what pointcloud does with negative-z points
+# # * Check what skygrid does
+# # * Or could be problem with how I handle the last tstep, not a negative-z problem.
+
+# # Found it.  I have to update the maxtimesteps for each curID to reflect the maximum across all previously passed in pointclouds that had the same curID.
 

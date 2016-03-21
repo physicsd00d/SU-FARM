@@ -535,24 +535,30 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
     double tstepSeconds = all_points_delta_t;
     double m_2_km = 1e-3;
 
-    // Find the maximum number of timesteps for each debris class as well.  Wait why?
-    map<int, int> maxStepsPerID;
-
     // First count up how many debris tracks there are for each class and find the max timesteps
     for (int ix = 0; ix < pointIdArray.size(); ix++) {
         int curID = pointIdArray[ix];
         totalNumPointsPassedInPerID[curID] += 1;
-        maxStepsPerID[curID] = std::max(maxStepsPerID[curID], numTimeSteps[ix]);
+        //maxStepsPerID[curID] = std::max(maxStepsPerID[curID], numTimeSteps[ix]);
     }
+    // There is an issue when chaining multiple point clouds together into a single skygrid which is that
+    //  for any given curID, the maximum time step seen for that ID will be different between the
+    //  the different clouds.  These MUST all be identical otherwise the probabilities will get messed up.
+    // HACK: Let all curIDs be propagated out to maxTime and choose maxTime to be consistent across all clouds.
+    // This is a hack because 1.) it does not address the eventual issue of merging skygrids from different tfails
+    //   and 2.) it seems like what should REALLY happen is that maxTime = reactionTime.
+    // In the case of anticipating different tfails, maybe prepend points back to start of launch...
+//    for (vector<int>::iterator idIter = pointIdArray.begin(); idIter)
+    
 
-    // Print stuff too if you want.
-    for (std::map<int, int>::iterator it = totalNumPointsPassedInPerID.begin();
-         it !=totalNumPointsPassedInPerID.end(); ++it){
-        int curID = it->first;
-        int numThisID = it->second;
-//        printf("curID %d has %d pieces\n", curID, numThisID);
-//        printf("curID %d has %d pieces and max timesteps %d\n", curID, numThisID, maxStepsPerID[curID]);
-    }
+//    // Print stuff too if you want.
+//    for (std::map<int, int>::iterator it = totalNumPointsPassedInPerID.begin();
+//         it !=totalNumPointsPassedInPerID.end(); ++it){
+//        int curID = it->first;
+//        int numThisID = it->second;
+////        printf("curID %d has %d pieces\n", curID, numThisID);
+////        printf("curID %d has %d pieces and max timesteps %d\n", curID, numThisID, maxStepsPerID[curID]);
+//    }
     
     // Check to make sure the pointCloud timestep is not smaller than the propagated timestep
     if (tstepSeconds < deltaTsec){
@@ -599,7 +605,8 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 	for (int pc = 0; pc < numPieces; pc++) {
         int curID = pointIdArray[pc];
         int numCurrTimeSteps = numTimeSteps[pc];
-        int numMaxSteps = maxStepsPerID[curID];
+//        int numMaxSteps = maxStepsPerID[curID];
+        int numMaxSteps = maxTime;
         double curMass = massArray[pc];
         double curArea = areaArray[pc] * pow(m_2_km,2);
         
@@ -613,6 +620,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
             double Vy_km_s = 0.;
             double Vz_km_s = 0.;
             
+            // While there is data for these time steps, use it
             if (tstep < numCurrTimeSteps){
                 // First parse the flatPointArray to get the information about this current data point
                 gdlat = flatPointArray[timePointCounter] * PI/180.;
@@ -656,6 +664,8 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
                 temp_pt.Vz_km_s = Vz_km_s;
                 temp_pt.mass_kg = curMass;
                 temp_pt.area_km2 = curArea;
+                
+                //printf("[%d][%d]-[%d][%d] = (%f,%f,%f)\n",pc, tstep, binTimeStep, time_steps_out, gdlat, lon, curAlt);
                 
 				total_points_at[binTimeStep].push_back(temp_pt);   } }
     

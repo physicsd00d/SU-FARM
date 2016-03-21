@@ -323,9 +323,10 @@ cdef class PyPointCloud:
         reactionTimeMinutes     = curMission['reactionTimeMinutes']
         debrisDeltaT            = curMission['deltaT']  # Should be the deltaT for the debris propagations, not the envelopes!
         NASkm                   = curMission['NASkm']
+        debrisMaxTime           = curMission['debrisTimeLimitSec']  # used to be pcd['maxTime'], but want this time consistent across all clouds
         
         self.thisptr = new PointCloud(pcd['flatPointArray'],    pcd['debrisID'],        pcd['numPieces'],       pcd['numTimeSteps'],
-                                      pcd['maxTime'],           pcd['deltaTsec'],
+                                      debrisMaxTime,            pcd['deltaTsec'],
                                       pcd['UTC'],               debrisDeltaT,     secondsFromLaunch,
                                       pcd['launchLat'],         pcd['launchLon'],       pcd['launchAzimuth'],
                                       pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeMinutes,    NASkm)

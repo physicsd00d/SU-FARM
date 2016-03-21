@@ -65,6 +65,10 @@ protected:
     
     map<int, int> totalNumPointsPassedInPerID;  //totalNumPointsPassedInPerID[beta / ID] = numHere
     
+    // Find the maximum number of timesteps for each debris class as well.
+    // Expand all points with same ID to have this many timesteps.  Ensures easy normalization checks on the distributions.
+    map<int, int> maxStepsPerID;
+    
     double NASkm;
     
 //    void assemble_all_points_debris(void *flatPointArray, void *pointIdArray_in, void *massArray_in, void *areaArray_in,
