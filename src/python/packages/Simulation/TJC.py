@@ -877,7 +877,14 @@ def FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime
         tfail += deltaTFail
         # mpc = MonteCarlo_at_tfail(curMission, coeffIX, tfail, numPiecesPerSample, profiles)
 
-        input = open(debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl', 'rb')
+	if curMission['isReentry'] == True:
+	    # Hack, just looking at first wind profile for now.
+	    inFileName = debrisPickleFolder + '/mpc_0_' + str(int(tfail)) + '.pkl'
+	else:
+	    inFileName = debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl'
+
+#        input = open(debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl', 'rb')
+        input = open(inFileName)
         mpc = pickle.load(input)
         input.close()
 
