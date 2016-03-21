@@ -137,8 +137,8 @@ curMission['numPiecesPerSample']      = 1      # The number of pieces to conside
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
-curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 4
 curMission['NASkm']                     = NASkm
 
 
