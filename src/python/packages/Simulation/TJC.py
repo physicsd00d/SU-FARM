@@ -357,7 +357,6 @@ def makeFootprintFromTimes_InstantaneousOnly(mission1, timelo, timehi):
                                   ) for ix in range(len(timeRange))]
         job_server.wait()
         job_server.print_stats()
-        job_server.destroy()    #Hopefully, this will close the server and we won't get errors about too many open files
 
 
     vals        = []    # Holds the EV_Strike values
@@ -374,7 +373,7 @@ def makeFootprintFromTimes_InstantaneousOnly(mission1, timelo, timehi):
             print job()
             vals.append(job()[0])
             fileNames.append(job()[1])
-
+        #job_server.destroy()    #Hopefully, this will close the server and we won't get errors about too many open files
 
     try:
         # Need to open up all the footprints and merge them

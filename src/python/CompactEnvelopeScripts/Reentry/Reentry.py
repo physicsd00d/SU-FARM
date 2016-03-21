@@ -13,8 +13,8 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = True
+freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = False
 doMain                  = True
 
 import os
@@ -138,7 +138,7 @@ curMission['numPiecesPerSample']      = [1]      # The number of pieces to consi
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
-curMission['numNodes']                  = 4  
+curMission['numNodes']                  = 10  
 curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
