@@ -49,7 +49,7 @@ from Simulation import LaunchProviders
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Reentry
 launchLocation  = LaunchSites.OK    # NOTE: even though it says 'launch', in this context it really means 'landing'
-vehicleNotes    = ''
+vehicleNotes    = 'space2015'
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -139,8 +139,8 @@ curMission['numPiecesPerSample']      = [10]      # The number of pieces to cons
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
-curMission['numNodes']                  = 10  
-curMission['numNodesEnvelopes']         = 6
+curMission['numNodes']                  = 4  
+curMission['numNodesEnvelopes']         = 4
 curMission['NASkm']                     = NASkm
 
 
