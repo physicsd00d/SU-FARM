@@ -11,6 +11,9 @@
 PYTHONPATH="/ADL/tcolvin/sw:$PYTHONPATH"
 export PYTHONPATH
 
-NAME="Lynx"
-SCRIPT="../src/python/CompactEnvelopeScripts/Lynx/Lynx.py"
-srun -n1 -c12 --job-name="$NAME" python $SCRIPT > OUTPUT_$NAME$1.txt &
+OUTPUTDIR="Output"
+NAME="$1"
+COMMENT="_$2"
+SCRIPT="../src/python/CompactEnvelopeScripts/$NAME/$NAME.py"
+#echo "$OUTPUTDIR/$NAME$COMMENT.txt"
+srun -n1 -c12 --job-name="$NAME" python $SCRIPT > "$OUTPUTDIR/$NAME$COMMENT.txt" &
