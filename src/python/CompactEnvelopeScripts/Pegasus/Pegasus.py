@@ -52,7 +52,7 @@ from copy import deepcopy
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Pegasus
 launchLocation  = LaunchSites.PegMARS
-vehicleNotes    = 'workInProgress'
+vehicleNotes    = 'space2015'
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -135,12 +135,12 @@ curMission['deltaTFail']              = 1.0     # Seconds, this is how often we 
 #  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
 curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
-curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
-curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 4
 curMission['NASkm']                     = NASkm
 
 
@@ -200,7 +200,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
     
     numTrajSamples = 1
-    numWindSamples = 10
+    numWindSamples = 60
     
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
