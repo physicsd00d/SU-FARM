@@ -208,8 +208,8 @@ public:
 
     // ----------- Functions involved in footprint merges ---------------
 	void append_to_existing_footprint(string newPointsFile);
-	void append_to_existing_footprint(vector<vector<Point> > &total_points_at, double InitialUTC, double tstepMinutes,
-                                      double launchLat, double launchLon, double launchAzimuth);
+//	void append_to_existing_footprint(vector<vector<Point> > &total_points_at, double InitialUTC, double tstepMinutes,
+//                                      double launchLat, double launchLon, double launchAzimuth);
 //	void MergeFootprintVectors(string FP2, string FPOut);
     void MergeFootprintVectors(Footprint3D &incomingFP);
     void MergeFootprintVectors(Footprint3D *incomingFP);    // Cython deals in pointers, not the actual objects themselves
@@ -226,7 +226,6 @@ public:
 
     double ChopTimeAt(double seconds);
     void ShiftFootprintByMinutes(int shiftHowManyMinutes);
-    
     void SlideFootprintBySeconds(int howManySeconds);
 
     

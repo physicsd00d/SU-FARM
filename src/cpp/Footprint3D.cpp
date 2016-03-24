@@ -349,17 +349,6 @@ Footprint3D::Footprint3D(PointCloud *incomingGrid, double bin_size_in = -1) {
 }
 
 
-//Footprint3D::Footprint3D(const Footprint3D &incomingFP) {
-//    //footprint_UTC;       // PHASE THIS OUT
-//    
-//	footprint_delta_t = ;           //minutes
-//	footprint_num_range;
-//    
-//    UTC_Initial;
-//	UTC_Final;
-//    
-//}
-
 Footprint3D& Footprint3D::operator=( const Footprint3D& rhs ) {
     bin_size = rhs.bin_size;
 	num_bins = rhs.num_bins;
@@ -965,6 +954,7 @@ void Footprint3D::make_facet_files(string folderName, int startTimeSeconds, int 
 }
 
 
+// TODO: No longer using minutes, but this could be useful in seconds.
 string convert_min_to_time(int total_min) {
 	int hours = (INTxx) floor(((double) total_min)/60.0);
 	int min = total_min%60;
@@ -2874,12 +2864,6 @@ void Footprint3D::exportGoogleEarth(char *googleEarthFile, int yyyy, int mm, int
         
         // Allocate the shape container
         kmldom::MultiGeometryPtr multiGeometry(factory->CreateMultiGeometry());
-        
-        //let's just assume for the moment that every timestep is 10 minutes long
-        
-        //		int start_time = base_time + t*delta_time;		// in minutes
-        //		if (t == 0) { start_time = base_time - offsetTimeMinutes;}			//update start_time if on first SUA
-        //		int stop_time = base_time + (t+1)*delta_time;
 		
 		int curr_num_bins = (INTxx) footprint_storage3D[t].size();
 		for (int z=0; z < curr_num_bins; z++){
