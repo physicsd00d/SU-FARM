@@ -1,0 +1,11 @@
+# Sample Yearly Mission Profile 
+# Allowable TimeZones:     GMT     EST  CST     MST     PST
+# Allowable Vehicles:        Falcon9    DeltaV 
+# Allowable LaunchSites:    Cape    MARS    Cecil    OK    CamTX    Corn    Vanden  Odyssey Atoll 
+# Upcoming Variables: 
+#
+#
+# Date		NominalTime	TimeZone	Vehicle		LaunchSite		Azimuth[deg]	DelayAllowed[min]    TypeOfSUA
+2018-01-12  16:00       UTC         SS2         America         0.              0
+2018-01-12  16:20       UTC         Pegasus     PegMARS2        134.            0
+2018-01-12  20:15       UTC         LynxMII     Midland         127.            0

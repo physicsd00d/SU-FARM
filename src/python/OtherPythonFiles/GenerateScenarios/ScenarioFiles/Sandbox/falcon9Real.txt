@@ -1,0 +1,10 @@
+# Sample Yearly Mission Profile
+# Allowable TimeZones:     GMT     EST     PST
+# Allowable Vehicles:        Falcon9    DeltaV
+# Allowable LaunchSites:    Cape, MARS, Cecil, OK, CamTX, Corn, Vanden, Odyssey, Atoll, FrntRnge
+# Upcoming Variables:
+#
+# TODO - put together 2012 and 2013 in NAS!!!
+#
+# Date		NominalTime	TimeZone	Vehicle		LaunchSite		Azimuth[deg]	DelayAllowed[min]    TypeOfSUA
+2013-03-01	15:10		GMT			Falcon9		Cape		    44.  			0

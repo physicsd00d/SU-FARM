@@ -1,0 +1,18 @@
+# Sample Yearly Mission Profile 
+# Allowable TimeZones:     GMT     EST  CST     MST     PST
+# Allowable Vehicles:        Falcon9    DeltaV 
+# Allowable LaunchSites:    Cape    MARS    Cecil    OK    CamTX    Corn    Vanden  Odyssey Atoll 
+# Upcoming Variables: 
+#
+#
+# Date		NominalTime	TimeZone	Vehicle		LaunchSite		Azimuth[deg]	DelayAllowed[min]    TypeOfSUA
+2025-08-31  16:00       UTC         SS2         America         0.              0
+2025-08-31  18:10       UTC         Falcon9     Vanden          180.            0
+2025-08-31  16:10       UTC         Reentry     Houston         230.            0
+2025-08-31  18:35       UTC         LynxMII     Mojave          38.             0
+2025-08-31  20:45       UTC         SS2         FrntRnge        144.            0
+2025-08-31  21:00       UTC         SS2         America         0.              0
+2025-08-31  22:00       UTC         Sound       WSandsN         0.              0
+2025-08-31  22:35       UTC         LynxMII     Midland         0.              0
+
+
