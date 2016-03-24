@@ -137,8 +137,8 @@ curMission['numPiecesPerSample']      = 10      # The number of pieces to consid
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 
-curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 4
+curMission['numNodes']                  = 2 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 2
 curMission['NASkm']                     = NASkm
 
 
@@ -205,7 +205,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
 
     numTrajSamples = 1
-    numWindSamples = 60
+    numWindSamples = 120
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
