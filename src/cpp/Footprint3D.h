@@ -200,8 +200,8 @@ public:
 	void store_footprint_as_points();                       // Don't think I need this anymore, but keep just in case
     
     // These should get moved to Architecture
-	void make_facet_files(string folderName, int startTimeSeconds, int offsetTimeSeconds, int tstepMinutes);    //last argument depreciated and unused
-	void make_facet_files(char *folderName, int startTimeSeconds, int offsetTimeSeconds, int tstepMinutes);
+	void make_facet_files(string folderName, int startTimeSeconds, int offsetTimeSeconds, int obsolete);    //last argument depreciated and unused
+	void make_facet_files(char  *folderName, int startTimeSeconds, int offsetTimeSeconds, int obsolete);
     void exportGoogleEarth(char *googleEarthFile);     // HAS HARDCODED DATE!!!!
     void exportGoogleEarth(char *googleEarthFile, int yyyy, int mm, int dd, int hour, int min);
 

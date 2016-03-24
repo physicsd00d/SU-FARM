@@ -11,7 +11,7 @@ tempDir =   rootDir + "temp/"   # temp files here, gitignored
 footprintLibrary    = outputDir + "footprintLibrary/"
 KMLFolder           = outputDir + "KMLs/"
 FacetFolder         = outputDir + "FacetFiles/"
-offsetMinutes = 0.     # Use this if you want to tweak the timing just a little bit.  
+offsetSeconds = 0.     # Use this if you want to tweak the timing just a little bit.  
 
 # from Simulation import LaunchSites
 # from Simulation import LaunchProviders
@@ -187,12 +187,12 @@ for elem in scenarioNameList:
 
             obsolete = -1.
             # minutessFromMidnight = now.hour*60. + now.minute
-            # curFootprint.MakeFacetFiles(facetFolderName,minutessFromMidnight,offsetMinutes,obsolete)
+            # curFootprint.MakeFacetFiles(facetFolderName,minutessFromMidnight,offsetSeconds,obsolete)
 
             # secondsFromMidnight = now.hour*3600. + now.minute*60.
             secondsFromMidnight = int((now - midnight).total_seconds())
             print "secondsFromMidnight = {0}".format(secondsFromMidnight)
-            curFootprint.MakeFacetFiles(facetFolderName,secondsFromMidnight,offsetMinutes,obsolete)
+            curFootprint.MakeFacetFiles(facetFolderName,secondsFromMidnight,offsetSeconds,obsolete)
 
             curFootprint.ExportGoogleEarth(GEFileName, now.year , now.month, now.day, now.hour, now.minute)
 

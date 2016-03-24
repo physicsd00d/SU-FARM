@@ -695,22 +695,19 @@ int Footprint3D::load_footprint_as_vector(string footprintFileName) {
 }
 
 
-void Footprint3D::make_facet_files(char *folderName, int startTimeSeconds, int offsetTimeSeconds, int tstepMinutes){
+void Footprint3D::make_facet_files(char *folderName, int startTimeSeconds, int offsetTimeSeconds, int obsolete){
     string folderNameStr(folderName);
-    make_facet_files( folderNameStr,  startTimeSeconds,  offsetTimeSeconds,  tstepMinutes);
+    make_facet_files( folderNameStr,  startTimeSeconds,  offsetTimeSeconds,  obsolete);
     return;
 }
 
-// I don't know why i have tstepMinutes in here...bypass that in favor of footprint_delta_t
-void Footprint3D::make_facet_files(string folderName, int startTimeSeconds, int offsetTimeSeconds, int tstepMinutes){
-	int base_time = startTimeSeconds;	//min
-//	int delta_time = tstepMinutes;
+void Footprint3D::make_facet_files(string folderName, int startTimeSeconds, int offsetTimeSeconds, int obsolete){
+	int base_time = startTimeSeconds - offsetTimeSeconds;	// The time when the space mission begins.  Might not have an envelope if debris is high enough.
 	int delta_time = footprint_delta_t;
-	
 
 	// Use this one for generating stuff that will run on the iMac at Ames
-//	string pathToPreferenceFiles = "/Users/tcolvin1/Documents/workspace3p6/facet/user/preferences/";
-//	string pathToPreferenceFiles = "ToCopy/";
+    //	string pathToPreferenceFiles = "/Users/tcolvin1/Documents/workspace3p6/facet/user/preferences/";
+    //	string pathToPreferenceFiles = "ToCopy/";
     
     // We're going to create a folder (myFolder) and place it in the "work" directory of the FACET code tree.
     // Facet/user/work/ScenarioName/VehicleMissionName/ will contain all the files needed to run a specific instance
@@ -745,10 +742,7 @@ void Footprint3D::make_facet_files(string folderName, int startTimeSeconds, int 
 	int counter = 0;
 	// t = timestep, z = z_bin, h = hull, i = a point
 	for (int t = 0; t < footprint_num_range; t++) {
-		//let's just assume for the moment that every timestep is 10 minutes long
-		
-		int start_time = base_time + t*delta_time;		// in minutes
-		if (t == 0) { start_time = base_time - offsetTimeSeconds;}			//update start_time if on first SUA
+		int start_time = base_time + t*delta_time;
 		int stop_time = base_time + (t+1)*delta_time;
 		
 		int curr_num_bins = (INTxx) footprint_storage3D[t].size();

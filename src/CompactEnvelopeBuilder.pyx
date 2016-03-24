@@ -455,9 +455,9 @@ cdef class PyFootprint:
     def ChopTimeAt(self, double seconds):
         return self.thisptr.ChopTimeAt(seconds)
         
-    def MakeFacetFiles(self, folderName, int startTimeMinutes, int offsetTimeMinutes, int tstepMinutes):
+    def MakeFacetFiles(self, folderName, int startTimeSeconds, int offsetTimeSeconds, int obsolete):
         print folderName
-        self.thisptr.make_facet_files(folderName, startTimeMinutes, offsetTimeMinutes, tstepMinutes)
+        self.thisptr.make_facet_files(folderName, startTimeSeconds, offsetTimeSeconds, obsolete)
 
     def SlideFootprintBySeconds(self, howManySeconds):
         self.thisptr.SlideFootprintBySeconds(howManySeconds)
