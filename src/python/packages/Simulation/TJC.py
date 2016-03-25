@@ -1513,8 +1513,8 @@ def MonteCarlo_at_tfail(curMission, coeffIX, tfail, numPiecesPerSample, profiles
                     debrisResults = debrisResults[0:(numFinalSteps)*sizeResults].reshape(numFinalSteps,sizeResults)[:,:sizeKeeping]
                     
                     altitudeFinal = debrisResults[-1,2]
-                    if altitudeFinal>0:
-                        print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
+                    # if altitudeFinal>0:
+                    #     print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
                                         
                     # Saves the stuff I care about
                     # For some reason, those extra parentheses are necessary to avoid errors when concatenating the first (empty) array
@@ -1868,8 +1868,8 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
                     debrisResults = debrisResults[0:(numFinalSteps)*sizeResults].reshape(numFinalSteps,sizeResults)[:,:sizeKeeping]
 
                     altitudeFinal = debrisResults[-1,2]
-                    if altitudeFinal>0:
-                        print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
+                    # if altitudeFinal>0:
+                    #     print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
 
                     # print "numFinalSteps = {0}".format(numFinalSteps)
                     # Saves the stuff I care about
