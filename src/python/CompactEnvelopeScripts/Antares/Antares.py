@@ -30,6 +30,7 @@ curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
+debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
 '''
@@ -89,9 +90,11 @@ curMission['loverd']    = 0.
 
 
 # These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+# curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
 # curMission['debrisCatFile']           = 'testAntaresCatalog.txt'
-curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
+# curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
+curMission['debrisCatPath']           = debrisPath + 'Falcon9/'
+curMission['debrisCatFile']           = 'Falcon9_FTS.txt'
 curMission['atmospherePickle'] = rootDir + "data/AtmoProfiles/WallopsOverOcean.pkl"
 
 
@@ -198,7 +201,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
 
     numTrajSamples = 1
-    numWindSamples = 60
+    numWindSamples = 6
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
