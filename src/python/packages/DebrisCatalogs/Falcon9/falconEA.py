@@ -111,7 +111,7 @@ aRef = [134.1,
 315]
 
 CD = np.ones_like(numPieces)*1.
-CL = np.ones_like(numPieces)*1.
+CL = np.ones_like(numPieces)*0.1
 
 # If the failing ballistic coefficients are falling in a tight range
 #   Then need to change CD to adjust.  If in a wide range, then just
