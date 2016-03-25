@@ -16,17 +16,18 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''These are the most-likely-to-be-changed parameters'''
 freshWind   = False
 freshDebris = False
-debug       = True
+debug       = False
 
-doMain      = True
+doMain      = False
 addStageReentry = False
 
 
 import os
 import sys
 
-# Points to the root of the package so I can run this script from right here
-rootDir =   os.path.abspath("../../../../") + "/"
+# Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
+curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
+rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
@@ -49,7 +50,7 @@ from copy import deepcopy
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Falcon9
 launchLocation  = LaunchSites.Cape
-vehicleNotes    = ''
+vehicleNotes    = 'space2015'
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -70,7 +71,7 @@ This section is rather convoluted and should be cleaned up.
 # If you do a propagation, then you need to worry about dtval!
 propagationParamFile = 'nominalParam_new.txt'   # Points to thrust profile for doing propagations
 precomputedParamFile = []                       # Points to file with precomputed profile for nominal trajectory
-pathToMissionFiles = './'                       # Kind of a holdover from a previous file structure
+pathToMissionFiles = curFilePath                # Kind of a holdover from a previous file structure
 
 # Planet info
 omegaE = 7.2921158494529352e-05             # rad/s
@@ -132,11 +133,13 @@ curMission['deltaTFail']              = 1.0     # Seconds, this is how often we 
 #  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
 curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
-curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
+curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
+curMission['healthMonitoringLatency'] = 5.      # Seconds
 
-curMission['numNodes']                  = 1 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 2
 curMission['NASkm']                     = NASkm
 
 
@@ -203,7 +206,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
 
     numTrajSamples = 1
-    numWindSamples = 60
+    numWindSamples = 2
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
@@ -247,93 +250,88 @@ vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, vehicleNotes
 mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
-# ============ DEBUGGING STUFF ==================
-# sys.exit()
 
-# genFootprint = TJC.genFootprint
-# import numpy as np
+### Prototyping the use of non-zero health monitoring.
 
-# # Inputs
-# mission1 = curMission
-# timelo = 0
-# timehi = 10
-# sys.exit()
+# Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
 
+# This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
+# genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
+# So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
+# TODO: Change PointCloud to incorporate f + delta_R + delta_H
 
-if debug and (not doMain):
-    import numpy as np
-    makeFootprintFromTimes_InstantaneousOnly = TJC.makeFootprintFromTimes_InstantaneousOnly
-
-    # footprintStart, footprintUntil = 100., 105. 
-    # footprintTotal = []
-
-    # for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
-    #     timelo = footprintStart + ix*footprintIntervals
-    #     timehi = np.min( (footprintStart + (ix+1)*footprintIntervals, footprintUntil) )
-
-    #     print 'TIMES: From {0} to {1}'.format(timelo, timehi)
-    #     EVstrike, curFootPrint = makeFootprintFromTimes(curMission, timelo, timehi)
-    #     print 'EV =  ' + str(EVstrike)
+# Flow should go like this.  Knowing delta_R and delta_H ahead of time
+# time = 0
+# SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
+# SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
+#
+# time = 1
+# SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
+# SkyGrid for P_I(x, f=1 | t <= f=1 + delta_H) to be used once the health update comes in
 
 
-    # genFootprint = TJC.genFootprint
-    # timeRange = [100.0, 105.0]
-    # pFailThisTimestepVec = [0.0001681301366752, 0.00021334138336011999]
-    # ix = 0
-    # curVal, curFootPrintFile = genFootprint(curMission, timeRange[ix], pFailThisTimestepVec[ix])
-    # footprintTotal = ceb.PyFootprint(curFootPrintFile, True)
-    # footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
 
-    PyPointCloud = ceb.PyPointCloud
-    PySkyGrid = ceb.PySkyGrid
+# footprintTotal = []
 
-    deltaXY                 = curMission['deltaXY']
-    deltaZ                  = curMission['deltaZ']
-    h1                      = curMission['h1']
-    h2                      = curMission['h2']
-    debrisPickleFolder      = curMission['debrisPickleFolder']
+# for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
+#     timelo = footprintStart + ix*footprintIntervals
+#     timehi = np.min( (footprintStart + (ix+1)*footprintIntervals, footprintUntil) )
 
-    tfailSec = 100.
-    inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-    input = open(inFileName, 'rb')
-    cur_mpc = pickle.load(input)
-    input.close()
+#     print 'TIMES: From {0} to {1}'.format(timelo, timehi)
+#     EVstrike, curFootPrint = makeFootprintFromTimes_InstantaneousOnly(curMission, timelo, timehi)
+#     print 'EV =  ' + str(EVstrike)
 
-    TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail=100., cutoffNAS = False)
+#     # Now take that footprint and...
+#     # Smooth it out to a single timestep
 
-    arefMeanList = cur_mpc['arefMeanList']
-    numberOfPiecesMeanList = cur_mpc['numberOfPiecesMeanList']
+#     # This is what the footprint will look like if there was an "error" in generating it
+#     if curFootPrint == []:
+#         print "\n\n===========\nEMPTY FOOTPRINT!!!\n==============\n\n"
+#         continue
 
-    # This is [total number of pieces simulated within this mpc] / [number of debris categories in this mpc]
-    # TODO: If all_points_delta_t != debrisDeltaT, then we'll be double-counting here.
-    # numDebrisPerIXSimulated = cur_mpc['numPieces']/len(numberOfPiecesMeanList)
+#     numRange = curFootPrint.getNumRange()
+#     curFootPrint.SmoothedOut(numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
 
-    # Package them up into a PointCLoud
-    # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
-    curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
+#     numRange = curFootPrint.getNumRange()
+#     FPDeltaT = curFootPrint.getDeltaT()
 
-    # Place the cloud into a Grid
-    curSkyGrid    = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
+#     # Resize the deltaT to be only the length of the interval
+#     #   So if we're making an envelope at each second, then the footprint should be chopped at 1 second
+#     #   If we're combining times, like every 5 seconds or every minute, then it should be 5s or 60s
+#     curFootPrint.ChopTimeAt(footprintIntervals)
+
+#     # Translate the footprint forward to tfailSec
+#     if timelo > 0:
+#         curFootPrint.SlideFootprintBySeconds(timelo)
+
+#     # Merge it with the others
+#     if ix == 0:
+#         footprintTotal = curFootPrint
+#     else:
+#         print '\n\nMERGE'
+#         footprintTotal.MergeFootprintVectors(curFootPrint)
 
 
-    print 'ASHING'
-    curSkyGrid.generateASH(h1, h2)
+#     # # Print to GE
+#     # debugFolder = 'GeneratedFiles/Sandbox/'
+#     # vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, timelo, timehi)
+#     # curFootPrint.ExportGoogleEarth(debugFolder + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
-    print 'generateHazardProbabilities'
-    curPFail = 1.
-    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)  # remove pFail in TJC when this works
+#     # # Fprint.SmoothedOut(footprintIntervals)
+#     #
+#     # # Fprint.SmoothedOut()
+#     # curFootPrint.ExportGoogleEarth('GeneratedFiles/PythonGE_' + str(timelo) + 'To'
+#     #                                       + str(timehi) + 'FootprintSMOOTH.kml', yyyy, mm, dd, hour, min)
 
+# footprintTotal.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
 
-    whichProbability        = curMission['whichProbability']
-    thresh                  = curMission['thresh']
-    newDeltaXY   = -1      #//[km]  These don't even get used.
-    newDeltaZ    = -1
-    print 'generateAllPoints_CumulativeFAA'
-    EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, curPFail)
+# # Just to be safe(?), set the params we need in order to translate / rotate
+# footprintTotal.SetAzimuthDeg(curMission['launchAzimuth'])
+# footprintTotal.SetLaunchLatDeg(curMission['launchLat'])
+# footprintTotal.SetLaunchLonDeg(curMission['launchLon'])
 
-    sys.exit()
-# ============ DEBUGGING STUFF ==================
+# return footprintTotal
 
 
 
@@ -343,6 +341,32 @@ if debug and (not doMain):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# tfailSec = 100.
+# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+# input = open(inFileName, 'rb')
+# cur_mpc = pickle.load(input)
+# input.close()
+
+# TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail=100., cutoffNAS = False)
 
 
 if doMain:
@@ -362,7 +386,6 @@ if doMain:
     # outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
 
-    # sys.exit()
 
 
 if addStageReentry:
@@ -425,23 +448,5 @@ if addStageReentry:
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
 
-
-# Gonna make a few changes.  Match this
-# StoreFootprintAsVector
-# (0.0, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_1.0.dat')
-# (2.186262579755342e-11, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_2.0.dat')
-# (4.727746156737436e-13, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_3.0.dat')
-# (3.808736648987429e-12, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_4.0.dat')
-# (4.185821338608514e-12, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_5.0.dat')
-# (3.1280756438857586e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_6.0.dat')
-# (5.4377846324668e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_7.0.dat')
-# (5.7704690421333385e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_8.0.dat')
-# (6.019996737953345e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_9.0.dat')
-# (7.698497774434498e-14, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_10.0.dat')
-# (3.576020939636407e-14, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_11.0.dat')
-# (2.3254035319395172e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_12.0.dat')
-# (3.1055387634380695e-12, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_13.0.dat')
-# (6.096703844904762e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_14.0.dat')
-# (7.783041672976858e-08, '/Volumes/Storage/Research/SU-FARM/temp/Falcon9_Cape/footprintVectorFolder/fpVec_15.0.dat')
 
 

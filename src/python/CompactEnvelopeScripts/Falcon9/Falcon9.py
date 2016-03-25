@@ -136,6 +136,7 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
+curMission['healthMonitoringLatency'] = 5.      # Seconds
 
 curMission['numNodes']                  = 2 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 2

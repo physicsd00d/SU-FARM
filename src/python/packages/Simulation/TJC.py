@@ -1327,25 +1327,33 @@ def MonteCarlo_until_tfail(curMission, profiles, tlow, thigh):
     print 'DONE TESTING'
 
     # Do the parallel
-    import pp
-    job_server = pp.Server()
-    job_server.set_ncpus(curMission['numNodes'])
-    print 'number of cpus = ' + str(job_server.get_ncpus())
+    # Do the parallel
+    jobs = []   # Holds the results of the envelope creation
+    if curMission['numNodes'] == 1:
+        # This means we're running into memory or malloc issues with pp, so don't use it
+        # jobs = [genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) for ix in range(len(timeRange))]
+        jobs = [MonteCarlo_at_tfail_and_record(curMission, coeffIX, curTime, numPiecesPerSample, profiles) \
+                for curTime in timeVec]
+    else:
+        import pp
+        job_server = pp.Server()
+        job_server.set_ncpus(curMission['numNodes'])
+        print 'number of cpus = ' + str(job_server.get_ncpus())
 
-    jobs = [job_server.submit(MonteCarlo_at_tfail_and_record, \
-                              args=(curMission, coeffIX, curTime, numPiecesPerSample, profiles), \
-                              depfuncs=(MonteCarlo_at_tfail,), \
-                              modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
-                              callback=finished001) for curTime in timeVec]
+        jobs = [job_server.submit(MonteCarlo_at_tfail_and_record, \
+                                  args=(curMission, coeffIX, curTime, numPiecesPerSample, profiles), \
+                                  depfuncs=(MonteCarlo_at_tfail,), \
+                                  modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp'), \
+                                  callback=finished001) for curTime in timeVec]
 
-    print "This will fail because the modules like debrisReader are now inside a package.  \
-            Must include package info or put all of these modules in the root package. 1182 "
-    # sys.exit()
+        print "This will fail because the modules like debrisReader are now inside a package.  \
+                Must include package info or put all of these modules in the root package. 1182 "
+        # sys.exit()
 
-    job_server.wait()
-    job_server.print_stats()
-    for job in jobs:
-        print job()
+        job_server.wait()
+        job_server.print_stats()
+        for job in jobs:
+            print job()
 
 def finished001(val):
     print "done with " + str(val)
