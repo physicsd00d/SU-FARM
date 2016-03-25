@@ -1,7 +1,7 @@
 # Debris reader, format obtained from Space Shuttle debris catalog
 # The number of fields for this catalog is 6
 import numpy as np
-
+import sys
 
 
 
@@ -559,6 +559,8 @@ def generateDebris(catalogList,nSamplesList,debrisFilesPATH='None'):
         for indDebris in range(nSamples):
             validDebris = 0
 
+            countBad = 0
+            badThresh = 1000
             while validDebris==0:
                 
                 if weightrange==1:
@@ -587,6 +589,19 @@ def generateDebris(catalogList,nSamplesList,debrisFilesPATH='None'):
                 if ballisticMean<=ballCoeff[1] and ballisticMean>=ballCoeff[0]:
                     validDebris = 1
                     break
+
+                # Be prepared to quit the program if you've got a bad debris catalog!
+                if countBad > badThresh:
+                    # If you've made it here, then you've chosen a piece of debris that doesn't work.  Investigate:
+                    print "Invalid Piece for index {0}.  w: {1}, a: {2}, CD: {3}, b: {4} <= {5} <= {6}"\
+                            .format(index, weightTemp, arefTemp, CDaver, ballCoeff[0], ballisticMean, ballCoeff[1])
+                
+                if countBad > badThresh+20:
+                    print "Exiting..."
+                    sys.exit()
+
+                countBad += 1
+
             weightarray[indDebris] = weightTemp
             arefarray[indDebris] = arefTemp
 
