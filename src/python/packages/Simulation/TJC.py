@@ -435,7 +435,7 @@ def makeFootprintFromTimes_InstantaneousOnly(mission1, timelo, timehi):
 #         numNodesEnvelopes = mission1['numNodesEnvelopes']
     
 #     pFail = mission1['pFail']
-#     # reactionTimeMinutes = mission1['reactionTimeMinutes']
+#     # reactionTimeSeconds = mission1['reactionTimeSeconds']
     
 #     numGridsHere = int(np.round((timehi - timelo)/deltaTFail) + 1)
 
@@ -573,7 +573,7 @@ def genFootprint(curMission, tfailSec, curPFail):
     print "tfailSec {0}, curPFail {1}".format(tfailSec, curPFail)
 
     ExportDateDT            = curMission['ExportDateDT']
-    # reactionTimeMinutes     = curMission['reactionTimeMinutes']       # Where did this go?
+    # reactionTimeSeconds     = curMission['reactionTimeSeconds']       # Where did this go?
     deltaXY                 = curMission['deltaXY']
     deltaZ                  = curMission['deltaZ']
     h1                      = curMission['h1']
@@ -829,9 +829,8 @@ def PlotDebrisFromExplodeTime(mission, profiles, tfail, cutoffNAS = True):
     GEfile = GeneratedFilesFolder + '/GE_Debris_' + str(tfail) + '.kml'
     
     deltaT = mission['deltaT']
-    reactionTime = mission['reactionTimeMinutes']*60
 
-    maxTimeSteps = np.ceil(reactionTime/deltaT)
+    maxTimeSteps = np.ceil(mission['reactionTimeSeconds']/deltaT)
     data2GE.convertTJC(GEfile, cur_mpc['flatPointArray'], cur_mpc['numTimeSteps'], len(cur_mpc['numTimeSteps']), cutoffNAS, maxTimeSteps)
     # data2GE.convertTJC(GEfile, cur_mpc['flatPointArray'], cur_mpc['numTimeSteps'], len(cur_mpc['numTimeSteps']), cutoffNAS)
 

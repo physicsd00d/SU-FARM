@@ -81,44 +81,10 @@ PointCloud::PointCloud(PointCloud *myCloud){
 }
 
 
-//PointCloud::PointCloud(void *flatPointArray_in, void *pointIdArray, int numPieces, void *numTimeSteps_in, int maxTime, double deltaTsec,
-//                       double all_points_UTC_in, double all_points_delta_t_in, double timeOffsetSec,
-//                       double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in,
-//                       void *massArray, void *areaArray, double reactionTimeMinutes){
-//
-//    
-//    // Expected INCOMING units
-//    // flatPointArray = [deg][deg][m][m/s][m/s][m/s] (lat,lon,alt,Vx,Vy,Vz)
-//    // massArray [kg]
-//    // areaArray [m^2]
-//    // Will eventually convert everything to km and kg
-//    
-//    //First load up the timing info that we can
-//    all_points_UTC = all_points_UTC_in - timeOffsetSec/(24*3600.);
-//    all_points_delta_t = all_points_delta_t_in; //seconds
-//    
-//    // Assemble the points
-//    assemble_all_points_debris(flatPointArray_in, pointIdArray, massArray, areaArray, numPieces, numTimeSteps_in, maxTime, deltaTsec, timeOffsetSec, reactionTimeMinutes);
-//    
-//    // Now we know how big all_points_num_range is
-//    all_points_num_range = all_points_total.size();
-//    
-//    // Store the location info
-//    all_points_launchLat = all_points_launchLat_in;
-//    all_points_launchLon = all_points_launchLon_in;
-//    all_points_launchAzimuth = all_points_launchAzimuth_in;
-//    
-////    // Debug
-////    PrintAllPoints();
-//
-//    return;
-//}
-
-
 PointCloud::PointCloud(vector<double> flatPointArray_in, vector<int> pointIdArray, int numPieces, vector<int> numTimeSteps_in, int maxTime, double deltaTsec,
                        double all_points_UTC_in, double all_points_delta_t_in, double timeOffsetSec,
                        double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in,
-                       vector<double> massArray, vector<double> areaArray, double reactionTimeMinutes, double NASkm_in){
+                       vector<double> massArray, vector<double> areaArray, double reactionTimeSeconds, double NASkm_in){
     
 //    // Cast the void arrays once here so we don't have to do it all the time later
 //    double *flatPointArray = (double *) flatPointArray_in;
@@ -140,7 +106,7 @@ PointCloud::PointCloud(vector<double> flatPointArray_in, vector<int> pointIdArra
     all_points_delta_t = all_points_delta_t_in; //seconds
     
     // Assemble the points
-    assemble_all_points_debris(flatPointArray_in, pointIdArray, massArray, areaArray, numPieces, numTimeSteps_in, maxTime, deltaTsec, timeOffsetSec, reactionTimeMinutes);
+    assemble_all_points_debris(flatPointArray_in, pointIdArray, massArray, areaArray, numPieces, numTimeSteps_in, maxTime, deltaTsec, timeOffsetSec, reactionTimeSeconds);
     
     // Now we know how big all_points_num_range is
     all_points_num_range = all_points_total.size();
@@ -528,7 +494,7 @@ void PointCloud::PrintAllPoints(){
 //  and expand all debris in the class to have those timesteps by padding the end with underground values.
 void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vector<int> pointIdArray, vector<double> massArray,
                                             vector<double> areaArray, int numPieces, vector<int> numTimeSteps, int maxTime,
-                                            double deltaTsec, double timeOffsetSec, double reactionTimeMinutes) {
+                                            double deltaTsec, double timeOffsetSec, double reactionTimeSeconds) {
     // Francisco's code outputs Lat / Lon / Alt as Deg / Deg / M
     // My Point stuff wants units of Rad / Rad / Km
     
@@ -568,20 +534,19 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
     
     // Make these inputs!!!
     int elementsPerTimestep = 6;
-    //    double reactionTimeMinutes = 5.;
 
     // Could avoid this hassle by using maps or lists...
     double timeInFlight = (timeOffsetSec + maxTime - 0.);	//seconds (assuming debrisStateTimes starts at zero)
 	int time_steps_out = (INTxx) ceil(timeInFlight/tstepSeconds);
     
     bool useReactionTime;
-    if (reactionTimeMinutes < 0) {
+    if (reactionTimeSeconds < 0) {
         useReactionTime = false; }
     else {
         useReactionTime = true; }
     
     if (useReactionTime){
-        double timeInFlightCutoff = timeOffsetSec + reactionTimeMinutes*60.;    //seconds
+        double timeInFlightCutoff = timeOffsetSec + reactionTimeSeconds;    //seconds
         if (timeInFlightCutoff < timeInFlight) {
             //update this if we're cutting off sooner
             time_steps_out = (INTxx) ceil(timeInFlightCutoff/tstepSeconds);  } }
@@ -641,10 +606,6 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
             //      We want to know the total number of points that were the result of the monte carlo simulation.
             // totalNumPointsPassedInPerID[curID] += 1;
             
-//            // Don't load up points that are in the air after the reaction time.  They don't need to be protected against.
-//            //   If I'm doing this here, do i still need to chop later???
-//            if (useReactionTime && (deltaTsec*tstep > reactionTimeMinutes*60.)){
-//                continue; }
             
 //            cout << "(t,lat,lon,alt_km) = " << tstep*deltaTsec << " " << gdlat*180./PI << " " << lon*180./PI << " " << curAlt << endl;
             
@@ -678,7 +639,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 
 
 //void PointCloud::assemble_all_points_debris(void *flatPointArray_in, void *pointIdArray_in, void *massArray_in, void *areaArray_in,
-//                                            int numPieces, void *numTimeSteps_in, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeMinutes) {
+//                                            int numPieces, void *numTimeSteps_in, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeSeconds) {
 //    // Francisco's code outputs Lat / Lon / Alt as Deg / Deg / M
 //    // My Point stuff wants units of Rad / Rad / Km
 //    
@@ -695,8 +656,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 //
 //    // Make these inputs!!!
 //    int elementsPerTimestep = 6;
-////    double reactionTimeMinutes = 5.;
-//    
+//
 //    // Cast the void arrays once here so we don't have to do it all the time later
 //    double *flatPointArray = (double *) flatPointArray_in;
 //    int *numTimeSteps = (int *) numTimeSteps_in;
@@ -708,13 +668,13 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 //	int time_steps_out = (INTxx) ceil(timeInFlight/tstepSeconds);
 //    
 //    bool useReactionTime;
-//    if (reactionTimeMinutes < 0) {
+//    if (reactionTimeSeconds < 0) {
 //        useReactionTime = false; }
 //    else {
 //        useReactionTime = true; }
 //    
 //    if (useReactionTime){
-//        double timeInFlightCutoff = timeOffsetSec + reactionTimeMinutes*60.;    //seconds
+//        double timeInFlightCutoff = timeOffsetSec + reactionTimeSeconds;    //seconds
 //        if (timeInFlightCutoff < timeInFlight) {
 //            //update this if we're cutting off sooner
 //            time_steps_out = (INTxx) ceil(timeInFlightCutoff/tstepSeconds);  } }
@@ -756,7 +716,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
 //            
 //            // Don't load up points that are in the air after the reaction time.  They don't need to be protected against.
 //            //   If I'm doing this here, do i still need to chop later???
-//            if (useReactionTime && (deltaTsec*tstep > reactionTimeMinutes*60.)){
+//            if (useReactionTime && (deltaTsec*tstep > reactionTimeSeconds)){
 //                continue; }
 //            
 ////            cout << "(t,lat,lon,alt_km) = " << tstep*deltaTsec << " " << gdlat*180./PI << " " << lon*180./PI << " " << curAlt << endl;

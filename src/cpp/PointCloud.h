@@ -72,10 +72,10 @@ protected:
     double NASkm;
     
 //    void assemble_all_points_debris(void *flatPointArray, void *pointIdArray_in, void *massArray_in, void *areaArray_in,
-//                                    int numPieces, void *numTimeSteps, int maxTime, double deltaT, double timeOffsetSec, double reactionTimeMinutes);
+//                                    int numPieces, void *numTimeSteps, int maxTime, double deltaT, double timeOffsetSec, double reactionTimeSeconds);
     void assemble_all_points_debris(vector<double> flatPointArray_in, vector<int> pointIdArray_in, vector<double> massArray_in,
                                     vector<double> areaArray_in, int numPieces, vector<int> numTimeSteps_in, int maxTime,
-                                    double deltaTsec, double timeOffsetSec, double reactionTimeMinutes);
+                                    double deltaTsec, double timeOffsetSec, double reactionTimeSeconds);
 
 
 public:
@@ -85,11 +85,11 @@ public:
 //    PointCloud(void *flatPointArray, void *pointIdArray, int numPieces, void *numTimeSteps, int maxTime, double deltaT,
 //               double all_points_UTC, double all_points_delta_t, double timeOffsetSec,
 //               double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in,
-//               void *massArray, void *areaArray, double reactionTimeMinutes);
+//               void *massArray, void *areaArray, double reactionTimeSeconds);
     PointCloud(vector<double> flatPointArray_in, vector<int> pointIdArray, int numPieces, vector<int> numTimeSteps_in, int maxTime, double deltaTsec,
                double all_points_UTC_in, double all_points_delta_t_in, double timeOffsetSec,
                double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in,
-               vector<double> massArray, vector<double> areaArray, double reactionTimeMinutes, double NASkm);
+               vector<double> massArray, vector<double> areaArray, double reactionTimeSeconds, double NASkm);
     ~PointCloud();
     
     void PrintAllPoints();

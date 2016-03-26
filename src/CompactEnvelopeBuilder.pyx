@@ -297,15 +297,10 @@ cdef extern from "PointCloud.h":
 # cdef extern from "PointCloud.h" namespace "PointCloud":
     cdef cppclass PointCloud:
         PointCloud()
-#        PointCloud(void *flatPointArray_in, void *pointIdArray, int numPieces, void *numTimeSteps_in, int maxTime, double deltaTsec,
-#                   double all_points_UTC, double all_points_delta_t, double timeOffsetSec,
-#                   double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in,
-#                   void *massArray, void *areaArray, double reactionTimeMinutes)
-
         PointCloud(vector[double] flatPointArray_in, vector[int] pointIdArray, int numPieces, vector[int] numTimeSteps_in, int maxTime, double deltaTsec,
                    double all_points_UTC_in, double all_points_delta_t_in, double timeOffsetSec,
                    double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in,
-                   vector[double] massArray, vector[double] areaArray, double reactionTimeMinutes, double NASkm)
+                   vector[double] massArray, vector[double] areaArray, double reactionTimeSeconds, double NASkm)
     
     
         void ExportPointsToMatlab(char *fileName, double deltaZkm)
@@ -320,7 +315,7 @@ cdef class PyPointCloud:
     
     def __cinit__(self, dict pcd, double secondsFromLaunch, dict curMission):
         
-        reactionTimeMinutes     = curMission['reactionTimeMinutes']
+        reactionTimeSeconds     = curMission['reactionTimeSeconds']
         debrisDeltaT            = curMission['deltaT']  # Should be the deltaT for the debris propagations, not the envelopes!
         NASkm                   = curMission['NASkm']
         debrisMaxTime           = curMission['debrisTimeLimitSec']  # used to be pcd['maxTime'], but want this time consistent across all clouds
@@ -329,7 +324,7 @@ cdef class PyPointCloud:
                                       debrisMaxTime,            pcd['deltaTsec'],
                                       pcd['UTC'],               debrisDeltaT,     secondsFromLaunch,
                                       pcd['launchLat'],         pcd['launchLon'],       pcd['launchAzimuth'],
-                                      pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeMinutes,    NASkm)
+                                      pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeSeconds,    NASkm)
     
     def __dealloc__(self):
         del self.thisptr
@@ -479,7 +474,7 @@ cdef extern from "Trajectory.h":
         
         # These files read in the trajectories to plot
         void loadPrecomputedFile(string inFileName, bool isDegrees, bool isAltMeters)
-        void loadDebris(vector[double] flatPointArray, vector[int] pointIdArray, vector[int] numTimeSteps, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeMinutes)
+        void loadDebris(vector[double] flatPointArray, vector[int] pointIdArray, vector[int] numTimeSteps, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeSeconds)
 
         void setLaunchTime(int launch_year_in, int launch_month_in, int launch_day_in, int launch_hours_in, int launch_minutes_in, int launch_seconds_in)
         int write_to_google_earth_native(string basename, int printThisMany)
@@ -497,10 +492,10 @@ cdef class PyTrajectory:
         self.thisptr.loadPrecomputedFile(inFileName, isDegrees, isAltMeters)
     
     def loadDebrisTrajectory(self, dict pcd, double secondsFromLaunch, dict curMission):
-        reactionTimeMinutes     = curMission['reactionTimeMinutes']
+        reactionTimeSeconds     = curMission['reactionTimeSeconds']
         self.thisptr.loadDebris(pcd['flatPointArray'],    pcd['debrisID'],      pcd['numTimeSteps'],
                                 pcd['maxTime'],           pcd['deltaTsec'],
-                                secondsFromLaunch,        reactionTimeMinutes)
+                                secondsFromLaunch,        reactionTimeSeconds)
     
 
     def ExportGoogleEarth(self, outFileName, curDateTime):

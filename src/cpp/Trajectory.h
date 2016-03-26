@@ -339,7 +339,7 @@ public:
     void loadPrecomputedFile(string inFileName, bool isDegrees, bool isAltMeters);
     void Get_TimeLongLatAlt(string fileName, bool isAltMeters, bool isDegrees);
     
-    void loadDebris(vector<double> flatPointArray, vector<int> pointIdArray, vector<int> numTimeSteps, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeMinutes);
+    void loadDebris(vector<double> flatPointArray, vector<int> pointIdArray, vector<int> numTimeSteps, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeSeconds);
     
     vector<double> PrecomputedStateTimes;
     std::vector<std::vector<std::vector<double> > > PrecomputedLatLonAltStorage;    //rad, rad, km

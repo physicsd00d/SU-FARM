@@ -65,7 +65,7 @@ void Trajectory::loadPrecomputedFile(string inFileName, bool isDegrees, bool isA
  
  
  */
-void Trajectory::loadDebris(vector<double> flatPointArray, vector<int> pointIdArray, vector<int> numTimeSteps, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeMinutes){
+void Trajectory::loadDebris(vector<double> flatPointArray, vector<int> pointIdArray, vector<int> numTimeSteps, int maxTime, double deltaTsec, double timeOffsetSec, double reactionTimeSeconds){
 //    cout << "Debris trajectories from file " << inFileName << endl;
     StateDot_Option = PRECOMPUTED;
     
@@ -75,7 +75,7 @@ void Trajectory::loadDebris(vector<double> flatPointArray, vector<int> pointIdAr
     
 //    vector<double> flatPointArray, vector<int> pointIdArray, vector<double> massArray,
 //                                                vector<double> areaArray, int numPieces, vector<int> numTimeSteps, int maxTime,
-//                                                double deltaTsec, double timeOffsetSec, double reactionTimeMinutes) {
+//                                                double deltaTsec, double timeOffsetSec, double reactionTimeSeconds) {
     
 //    cout << "\n\nCHECK UNITS!!!\n";
 //    exit(-9);
@@ -90,13 +90,13 @@ void Trajectory::loadDebris(vector<double> flatPointArray, vector<int> pointIdAr
     int time_steps_out = (INTxx) ceil(timeInFlight/tstepSeconds);
     
     bool useReactionTime;
-    if (reactionTimeMinutes < 0) {
+    if (reactionTimeSeconds < 0) {
         useReactionTime = false; }
     else {
         useReactionTime = true; }
     
     if (useReactionTime){
-        double timeInFlightCutoff = timeOffsetSec + reactionTimeMinutes*60.;    //seconds
+        double timeInFlightCutoff = timeOffsetSec + reactionTimeSeconds;    //seconds
         if (timeInFlightCutoff < timeInFlight) {
             //update this if we're cutting off sooner
             time_steps_out = (INTxx) ceil(timeInFlightCutoff/tstepSeconds);  } }
