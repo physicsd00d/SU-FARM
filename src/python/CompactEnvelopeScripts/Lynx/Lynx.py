@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = False
-freshDebris = False
+freshWind   = True
+freshDebris = True
 debug       = False
 
 doMain      = True
@@ -126,7 +126,7 @@ curMission['deltaT']                  = 1.      # Seconds, this is the time reso
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-curMission['deltaTFail']              = 10.0     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
@@ -242,17 +242,6 @@ if freshDebris:
 # print "tProactive = {0}\n".format(tProactive)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
 # sys.exit()
-
-import numpy as np
-t_lo = .0
-t_hi = 180.
-deltaTFail = curMission['deltaTFail']
-timeVec = np.arange(t_hi*1.0,t_lo-deltaTFail,-deltaTFail)        #curTime is in seconds
-for curTime in timeVec:
-    TJC.PlotDebrisFromExplodeTime(curMission, profiles, curTime, cutoffNAS = True)
-sys.exit()
-
-
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
