@@ -18,7 +18,7 @@ freshWind   = False
 freshDebris = False
 debug       = False
 
-doMain      = False
+doMain      = True
 addStageReentry = False
 
 
@@ -113,7 +113,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -197,7 +197,7 @@ curMission['ExportDateDT'] = ExportDate
 if debug:
     # Change a few values
     curMission['debrisCatFile']           = 'Debug.txt'
-    curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+    curMission['reactionTimeSeconds']       = 5*60.     # The number of minutes that the NAS needs to safely handle a sudden debris event.
     curMission['numPiecesPerSample']      = 2      # The number of pieces to consider within each debris group
 
 
@@ -251,23 +251,54 @@ mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
 
-### Prototyping the use of non-zero health monitoring.
+# ### Prototyping the use of non-zero health monitoring.
 
-# Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
+# # Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
 
-# This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
-# genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
-# So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
-# TODO: Change PointCloud to incorporate f + delta_R + delta_H
+# # This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
+# # genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
+# # So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
+# # TODO: Change PointCloud to incorporate f + delta_R + delta_H
 
-# Flow should go like this.  Knowing delta_R and delta_H ahead of time
-# time = 0
-# SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
-# SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
+# delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
+# delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
+# # Flow should go like this.  Knowing delta_R and delta_H ahead of time
+# # time = 0
+# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
+# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
+# debrisPickleFolder      = curMission['debrisPickleFolder']
+# deltaXY                 = curMission['deltaXY']
+# deltaZ                  = curMission['deltaZ']
+# tfailSec = 0.
+
+# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+# input = open(inFileName, 'rb')
+# cur_mpc = pickle.load(input)
+# input.close()
+
+# arefMeanList = cur_mpc['arefMeanList']
+# numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
+
+# from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
+
+# # Package them up into a PointCLoud
+# # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
+# curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+# # Place the cloud into a Grid
+# curSkyGrid              = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
+
+
+
 #
 # time = 1
 # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
 # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_H) to be used once the health update comes in
+#
+
+
+
+
 
 
 
@@ -399,7 +430,7 @@ if addStageReentry:
     firstStageMission = deepcopy(curMission)
     firstStageMission['debrisPickleFolder'] = curMission['GeneratedFilesFolder']  + 'firstStagePickleFolder'
     firstStageMission['debrisCatFile'] = 'firstStage.txt'
-    firstStageMission['reactionTimeMinutes'] = -1
+    firstStageMission['reactionTimeSeconds'] = -1
     firstStageMission['numPiecesPerSample'] = 1
     firstStageMission['thresh'] = 0.
     coeffIX = []
