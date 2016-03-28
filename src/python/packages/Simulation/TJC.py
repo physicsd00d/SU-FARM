@@ -164,10 +164,23 @@ def createAtmoPickle(atmoFolder, atmoFile, pickleName):
 
 
 
+# Plot the all-time hazard area associated with explosion at tfailSec
+def PlotSubEnvelopes(curMission, tfailSec):
+    # Where are they located?  Then get it.
+    footprintVectorFolder = curMission['footprintVectorFolder']
+    infileStr = footprintVectorFolder + '/fpVec_' + str(tfailSec) + '.dat'
+    curFP = ceb.PyFootprint(infileStr, True)
 
+    # Where to store it?
+    # Make sure that the directory for holding the general Generated files exists
+    folderPath = os.path.abspath(curMission['GeneratedFilesFolder'] + 'fpVecPlots/')
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
 
-
-
+    # Then store it.
+    [yyyy, mm, dd, hour, min]   = curMission['ExportDate']
+    outfileStr = folderPath + 'fpVec_' + str(tfailSec) + '.kml'
+    curFP.ExportGoogleEarth(outfileStr, yyyy, mm, dd, hour, min)
 
 
 
@@ -810,10 +823,6 @@ def PlotNominalTrajectories(profiles, curMission, limitSec):
 ### CURRENTLY IN USE (Called by falcon9.py)
 def PlotDebrisFromExplodeTime(mission, profiles, tfail, cutoffNAS = True):
     # Plot some debris trajectories that have already been generated
-
-    # Figure out the appropriate timestep (nearestIX)
-    tfailStorage = profiles['tfailStorage']
-    nearestIX = (np.abs(tfailStorage[0][0]-tfail)).argmin() #Assuming first windprofile first trajectory is representative
 
     # open up the tProactive debris and plot it in GE
     #folder = 'testFolder'          # This will throw an error, should pass in mission1 and get debrisPickleFolder
