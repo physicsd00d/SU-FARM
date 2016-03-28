@@ -92,6 +92,9 @@ cdef extern from "SkyGrid.h":
         
 #        vector[vector[double]] SendGridToPython(int tx_desired)
         map[double, map[double, map[double,double]]] SendGridToPython(int tx_desired)
+        map[int, map[int, map[int,int] ] ] SendHistogramToPython(int betaID, int tx_desired)
+        map[int, map[int, map[int,double]]] SendASHToPython(int betaID, int tx_desired)
+
 
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
@@ -215,6 +218,16 @@ cdef class PySkyGrid:
                     tempGrid.append([zval, lonVal, latVal, probVal])
         probGrid = np.array(tempGrid)
         return probGrid
+
+    def SendHistogramToPython(self, int betaID, int tx_desired):
+        # map[double, map[double, map[double,int] ] ] 
+        histogram = <dict> self.thisptr.SendHistogramToPython(betaID, tx_desired)
+        return histogram
+
+    def SendASHToPython(self, int betaID, int tx_desired):
+        # map[double, map[double, map[double,int] ] ] 
+        ASH = <dict> self.thisptr.SendASHToPython(betaID, tx_desired)
+        return ASH
 
         
 #        # You have to tell Cython what to expect for the sub-iterators (so also defining curz for consistency)

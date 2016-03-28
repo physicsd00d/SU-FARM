@@ -1341,6 +1341,156 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
 
 
 
+map<int, map<int, map<int,double> > >SkyGrid::SendASHToPython(int betaID, int tx_desired){
+    
+    // The output
+    map<int, map<int, map<int,double> > > GridAsVector;   //[z][x][y]
+    
+    // Check the probabilities (Be safe and keep this in.  Don't be an asshole and delete such an important check)
+    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
+    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
+    map<int, map<int, map<int,binData> > >::iterator it_x;
+    map<int, map<int, binData> >::iterator it_y;
+    map<int, binData>::iterator it_ID;
+    
+    it_time = ProbabilityMapDebIX.find(tx_desired);
+    
+    if (it_time == ProbabilityMapDebIX.end()){
+        printf("tx = %d does not exist\n", tx_desired);
+    } else {
+        for (it_z = it_time->second.begin(); it_z != it_time->second.end(); ++it_z) {
+            int zindex = it_z->first;
+            
+            for (it_x = it_z->second.begin(); it_x != it_z->second.end(); ++it_x) {
+                int xindex = it_x->first;
+                
+                for (it_y = it_x->second.begin(); it_y != it_x->second.end(); ++it_y) {
+                    int yindex = it_y->first;
+                    
+                    it_ID = it_y->second.find(betaID);
+                    if (it_ID != it_y->second.end()){
+                        // This ID exists at this space-time
+                        
+//                        ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris
+                        binData curData = it_ID->second;
+                        GridAsVector[zindex][xindex][yindex] = curData.probDebris;
+                        
+                    }
+                }
+            }
+        }
+    }
+    
+    return GridAsVector;
+    
+}
+
+
+
+
+map<int, map<int, map<int,int> > >SkyGrid::SendHistogramToPython(int betaID, int tx_desired){
+
+    // The output
+    map<int, map<int, map<int,int> > > GridAsVector;   //[z][x][y]
+
+//    GridMapDebIX[tx][curID][zindex][xindex][yindex] = curData;
+    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
+    map<int, map<int, map<int, map<int,binData> > > >::iterator it_ID;
+    map<int, map<int, map<int,binData> > >::iterator it_z;
+    map<int, map<int, binData> >::iterator it_x;
+    map<int, binData>::iterator it_y;
+
+
+    // ==== Now jump into finding the probabilities ====
+
+
+//    // Return a map of probability datas (for each single point)
+//    vector<map<int,binData> > probabilityRecord;
+//    probabilityRecord.assign(numPts, map<int,binData>());
+    
+//    // Unpack the desired point
+//    int tx0         = floor((desiredPts[ix][0] - 0)/getDeltaT());
+//    int zindex0     = floor((desiredPts[ix][1] - ZREF)/zBinHeight);
+//    int xindex0     = floor((desiredPts[ix][2] - XREF)/xBinLength);
+//    int yindex0     = floor((desiredPts[ix][3] - YREF)/yBinLength);
+    
+    
+    // Look for iterator to desired timestep
+    it_time=GridMapDebIX.find(tx_desired);
+
+    // Does the time and the beta exist?
+    bool isGood = false;
+    if (it_time == GridMapDebIX.end()){
+        printf("tx = %d does not exist\n", tx_desired);
+    } else if (it_time->second.find(betaID) == it_time->second.end()) {
+        printf("beta = %d does not exist\n", betaID);
+    } else {
+        isGood = true;
+    }
+    
+    // Yes, it's in the grid.  But is betaID also in here too?
+    if (isGood) {
+        Point tempPt;
+        it_ID = it_time->second.find(betaID);  // I wonder if I can put this with it_time?
+        
+        for (it_z = it_ID->second.begin(); it_z != it_ID->second.end(); ++it_z) {
+            int zindex = it_z->first;
+            
+            for (it_x = it_z->second.begin(); it_x != it_z->second.end(); ++it_x) {
+                int xindex = it_x->first;
+                
+                for (it_y = it_x->second.begin(); it_y != it_x->second.end(); ++it_y) {
+                    int yindex = it_y->first;
+                    
+                    // double lowerleftX = XREF + xindex*xBinLength;   // Note that xindex is most likely negative
+                    // double lowerleftY = YREF + yindex*yBinLength;   // Note that yindex may be positive or negative
+                    // double lowerleftZ = ZREF + zindex*zBinHeight;
+                    // tempPt.set_xyz(lowerleftX + 0.5*xBinLength, lowerleftY + 0.5*yBinLength, lowerleftZ + 0.5*zBinHeight);
+
+                    // double centerLat = tempPt.get_gdLatDeg();
+                    // double centerLon = tempPt.get_lonDeg();
+                    
+                    binData curData = it_y->second;
+                    
+//                    // Get the binData for the current cell
+//                    binData curData = GridMapDebIX[tx][curID][zindex][xindex][yindex];
+//                    double countsHere = curData.probDebris;
+//                    
+//                    // Update the velocity info
+//                    curData.avgVel = ((countsHere*(curData.avgVel) + velNorm)/(countsHere + 1));
+//                    curData.maxVel = std::max(velNorm, curData.maxVel);
+//                    curData.minVel = std::min(velNorm, curData.minVel);
+//                    
+//                    // Update the mass info
+//                    curData.avgMass = ((countsHere*(curData.avgMass) + thisMass)/(countsHere + 1));
+//                    curData.maxMass = std::max(thisMass, curData.maxMass);
+//                    curData.minMass = std::min(thisMass, curData.minMass);
+//                    
+//                    // Update the area info
+//                    curData.avgArea = ((countsHere*(curData.avgArea) + thisArea)/(countsHere + 1));
+//                    curData.maxArea = std::max(thisArea, curData.maxArea);
+//                    curData.minArea = std::min(thisArea, curData.minArea);
+//                    
+//                    // Update the count
+//                    curData.probDebris += 1;
+//                
+//                    GridMapDebIX[tx][curID][zindex][xindex][yindex] = curData;
+
+                    GridAsVector[zindex][xindex][yindex] = curData.probDebris;
+                    // GridAsVector[lowerleftZ][centerLon][centerLat] = curData.probDebris;
+                }
+            }
+        }
+    }
+    
+    
+    return GridAsVector;
+    
+}
+
+
+
+
 
 
 
