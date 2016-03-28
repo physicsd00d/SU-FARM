@@ -18,7 +18,7 @@ freshWind   = False
 freshDebris = False
 debug       = False
 
-doMain      = True
+doMain      = False
 addStageReentry = False
 
 
@@ -251,42 +251,42 @@ mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
 
-# ### Prototyping the use of non-zero health monitoring.
+### Prototyping the use of non-zero health monitoring.
 
-# # Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
+# Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
 
-# # This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
-# # genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
-# # So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
-# # TODO: Change PointCloud to incorporate f + delta_R + delta_H
+# This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
+# genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
+# So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
+# TODO: Change PointCloud to incorporate f + delta_R + delta_H
 
-# delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
-# delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
-# # Flow should go like this.  Knowing delta_R and delta_H ahead of time
-# # time = 0
-# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
-# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
-# debrisPickleFolder      = curMission['debrisPickleFolder']
-# deltaXY                 = curMission['deltaXY']
-# deltaZ                  = curMission['deltaZ']
-# tfailSec = 0.
+delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
+delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
+# Flow should go like this.  Knowing delta_R and delta_H ahead of time
+# time = 0
+# SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
+# SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
+debrisPickleFolder      = curMission['debrisPickleFolder']
+deltaXY                 = curMission['deltaXY']
+deltaZ                  = curMission['deltaZ']
+tfailSec = 0.
 
-# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-# input = open(inFileName, 'rb')
-# cur_mpc = pickle.load(input)
-# input.close()
+inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+input = open(inFileName, 'rb')
+cur_mpc = pickle.load(input)
+input.close()
 
-# arefMeanList = cur_mpc['arefMeanList']
-# numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
+arefMeanList = cur_mpc['arefMeanList']
+numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
 
-# from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
+from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
 
-# # Package them up into a PointCLoud
-# # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
-# curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
+# Package them up into a PointCLoud
+# NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
+curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
 
-# # Place the cloud into a Grid
-# curSkyGrid              = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
+# Place the cloud into a Grid
+curSkyGrid              = PySkyGrid(curMission, curPointCloud)
 
 
 

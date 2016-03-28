@@ -571,7 +571,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
         int curID = pointIdArray[pc];
         int numCurrTimeSteps = numTimeSteps[pc];
 //        int numMaxSteps = maxStepsPerID[curID];
-        int numMaxSteps = maxTime;
+        int numMaxSteps = maxTime;          // TODO: Remove maxTime and just use timeStepsOut.  Should be maxTime = reaction + latency anways.
         double curMass = massArray[pc];
         double curArea = areaArray[pc] * pow(m_2_km,2);
         

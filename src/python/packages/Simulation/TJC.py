@@ -574,8 +574,6 @@ def genFootprint(curMission, tfailSec, curPFail):
 
     ExportDateDT            = curMission['ExportDateDT']
     # reactionTimeSeconds     = curMission['reactionTimeSeconds']       # Where did this go?
-    deltaXY                 = curMission['deltaXY']
-    deltaZ                  = curMission['deltaZ']
     h1                      = curMission['h1']
     h2                      = curMission['h2']
     debrisPickleFolder      = curMission['debrisPickleFolder']
@@ -616,14 +614,14 @@ def genFootprint(curMission, tfailSec, curPFail):
                 prevMean = numberOfPiecesMeanList
 
                 # Place the cloud into a fresh Grid
-                curSkyGrid    = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
+                curSkyGrid    = PySkyGrid(curMission, curPointCloud)
             else:
                 if (arefMeanList != prevAref):
-                    println('ERROR: Using different area lists')
+                    print 'ERROR: Using different area lists'
                     # Comments in the montecarlo functions indicate that this is no longer needed and is []
                     sys.exit()
                 elif (numberOfPiecesMeanList != prevMean).all():
-                    println('ERROR: Using different mean lists')
+                    print 'ERROR: Using different mean lists'
                     sys.exit()
                 else:
                     #Everything is fine, append to existing grid
@@ -650,7 +648,7 @@ def genFootprint(curMission, tfailSec, curPFail):
         curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
 
         # Place the cloud into a Grid
-        curSkyGrid    = PySkyGrid(curPointCloud, deltaXY, deltaXY, deltaZ)
+        curSkyGrid    = PySkyGrid(curMission, curPointCloud)
 
     # Do the ASH
     # Must do the whole thing up-front.  On the fly only works with risk calculations at certain predetermined points.

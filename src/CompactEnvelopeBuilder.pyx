@@ -18,6 +18,7 @@ from cpython.buffer cimport Py_buffer
 from libc.string cimport memcpy
 
 import datetime as dt
+import sys
 
 
 #cdef extern from "classes.h":
@@ -114,7 +115,10 @@ cdef extern from "SkyGrid.h":
 cdef class PySkyGrid:
     cdef SkyGrid *thisptr                    # hold a C++ instance which we're wrapping
     
-    def __cinit__(self, PyPointCloud incoming, double xBinLength_in, double yBinLength_in, double zBinHeight_in):
+    def __cinit__(self, dict curMission, PyPointCloud incoming):
+        xBinLength_in = curMission['deltaXY']
+        yBinLength_in = curMission['deltaXY']
+        zBinHeight_in = curMission['deltaZ']
         self.thisptr = new SkyGrid( incoming.thisptr,  xBinLength_in,  yBinLength_in,  zBinHeight_in)
     
     def __dealloc__(self):
@@ -315,16 +319,29 @@ cdef class PyPointCloud:
     
     def __cinit__(self, dict pcd, double secondsFromLaunch, dict curMission):
         
+        # Will load up all the points starting from the timestep that corresponds to secondsFromLaunch (ie tfail)
+        #   and will create points for them in the cloud all the out to secondsFromLaunch + debrisMaxTime.
+        #   Once a point lands, all of its subsequent timesteps are counted as landed.
+        debrisMaxTime           = curMission['debrisTimeLimitSec']  # used to be pcd['maxTime'], but want this time consistent across all clouds
+
+        # Unless there is a reaction time + monitoring latency, then those will take the place of debrisMaxTime.
         reactionTimeSeconds     = curMission['reactionTimeSeconds']
+        healthMonitoringLatency = curMission['healthMonitoringLatency']
+        if reactionTimeSeconds <= 0:
+            healthMonitoringLatency = 0.
+
+        if (reactionTimeSeconds+healthMonitoringLatency) > debrisMaxTime:
+            print "ERROR: debrisMaxTime is less than your reaction + latency time"
+            sys.exit()
+
         debrisDeltaT            = curMission['deltaT']  # Should be the deltaT for the debris propagations, not the envelopes!
         NASkm                   = curMission['NASkm']
-        debrisMaxTime           = curMission['debrisTimeLimitSec']  # used to be pcd['maxTime'], but want this time consistent across all clouds
         
         self.thisptr = new PointCloud(pcd['flatPointArray'],    pcd['debrisID'],        pcd['numPieces'],       pcd['numTimeSteps'],
                                       debrisMaxTime,            pcd['deltaTsec'],
                                       pcd['UTC'],               debrisDeltaT,     secondsFromLaunch,
                                       pcd['launchLat'],         pcd['launchLon'],       pcd['launchAzimuth'],
-                                      pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeSeconds,    NASkm)
+                                      pcd['debrisMass'],        pcd['debrisArea'],      reactionTimeSeconds+healthMonitoringLatency,    NASkm)
     
     def __dealloc__(self):
         del self.thisptr
