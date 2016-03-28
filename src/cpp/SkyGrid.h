@@ -190,14 +190,10 @@ public:
                                                              double d_Airplane_top /*km*/, double delta_t);
     vector<double> AircraftVulnerabilityModel_Larson(binData &PD, double aircraftSpeed /* km/s */, double d_Airplane_front /*km*/,
                                                      double d_Airplane_top /*km*/, double delta_t);
-    // Debugging Functions (Matlab)
-    void GoMatlab(string fileName, vector<Point> tempVec);
-    void DumpGridToMatlab(char *fileName);
     
     // Debugging Functions (Used for being interactive with Python)
     map<int, map<int, map<int,double> > > getSpatialProbabilty();
     void generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
-    map<int, map<int, map<int,double> > > projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ);
 
     
     
@@ -217,9 +213,6 @@ public:
     void generateHazardProbabilities(vector<int> numberOfPiecesMean);
     double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail);
     
-    
-
-
     map<int, vector<vector<double> > > ProbabilityTotalStorage;    // Stores the x index, y index, and probability value for every cell at this tstep and zstep
     map<int, int> stopIXStorage;
     
@@ -235,6 +228,13 @@ public:
     void PythonDebrisIntoGrid(void *flatPointArray, int numPieces, void *numTimeSteps, int maxTime, double deltaT,    // arguments for assembling the points
                               double NewInitialUTC, double timeOffsetSec, double launchLat, double launchLon, double launchAzimuth);    // and encorporating into grid
     void PythonDebrisIntoGrid(PointCloud *incomingCloud);
+    
+    // ==== In the graveyard ====
+//    map<int, map<int, map<int,double> > > projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ);
+//    // Debugging Functions (Matlab)
+//    void GoMatlab(string fileName, vector<Point> tempVec);
+//    void DumpGridToMatlab(char *fileName);
+    //==== END Graveyard ====
 
 
 };

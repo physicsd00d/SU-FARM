@@ -405,7 +405,6 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
 
 /*! This replicates, as closely as reasonably possible, the way the FAA creates SUAs from probability of 
  *      impact debris clouds.  The
- *  TODO: Finish removing the coarsen grid stuff. All references to newDeltaXY_in, newDeltaZ_in
  */
 double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail){
     
@@ -434,13 +433,6 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
     int J_maxTimeStep   =  100000000; //s
     int f_startTimeStep = -100000000;
     generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep);
-    
-//    // The FAA uses a rather coarse grid, so convert to their coarse grid
-//    //      These are the parameters of the coarsened grid
-//    double newDeltaXY   = newDeltaXY_in;      //[km]
-//    double newDeltaZ    = newDeltaZ_in;       //[km]  20km...This is higher than NASkm, but I need the values to nest, so hopefully this is fine
-
-    //    projectSpatialProbabilityFAA(newDeltaXY, newDeltaZ);
 
     // The thresholds given in the regulations, combined with how the FAA currently computes them, makes them
     //      pointlessly ill-defined because they neither specify what "cumulative" means nor the grid size for the threshold.
@@ -483,7 +475,6 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
                 
                 // No matter how small the cell area is, assume an aircraft is present and ask "what's the probability of impact?"
                 //      Dividing by probAircraftPresentInCell is the "assume an aircraft is present".
-//                double curProb = SpatialProbabilty_Coarse[zindex][xindex][yindex] / probAircraftPresentInCell;
                 double curProb = SpatialProbabilty[zindex][xindex][yindex] * pFail;
                 
                 if (curProb > (thresh)) {
@@ -680,231 +671,7 @@ map<int, map<int, map<int,double> > >SkyGrid::getSpatialProbabilty(){
 }
 
 
-/*! Take SpatialProbability, which is defined on a relatively fine grid, and transfer it
- *      to a much coarser grid (3.5km on a side) which approximates the grid spacing the
- *      FAA uses (2n.m. on a side ~ 3.7km) when doing their risk calculations.
- *
- *      NOTE: This function updates the xBinLenght, yBinLength, and zBinHeight values!!!
- */
-map<int, map<int, map<int,double> > > SkyGrid::projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ){
-    
-//    // These are the parameters of the coarsened grid
-//    double newDeltaXY   = 3.5;      //[km]
-//    double newDeltaZ    = 20.;      //[km]  This is higher than NASkm, but I need the values to nest, so hopefully this is fine
-    
-    // This is where we'll store the new spatial probability for now
-    map<int, map<int, map<int,double> > > SpatialProbabilty_Coarse;
-    
-    // Do some checking to make sure they nest with existing
-    bool xNests = (fmod(newDeltaXY,xBinLength) < 1e-12);
-    bool yNests = (fmod(newDeltaXY,yBinLength) < 1e-12);
-    bool zNests = (fmod(newDeltaZ ,zBinHeight) < 1e-12);
-    
-    if (not (xNests and yNests and zNests)){
-        cout << "ERROR!!!  projectSpatialProbabilityFAA does not nest\n";
-        printf("%f, %f, %f\n", fmod(newDeltaXY,xBinLength), fmod(newDeltaXY,yBinLength), fmod(newDeltaZ ,zBinHeight));
-        return SpatialProbabilty_Coarse;
-    }
 
-    // These are the iterators for map<int, map<int, map<int,double> > > SpatialProbabilty
-    map<int, map<int, map<int,double> > >::iterator it_z;
-    map<int, map<int,double> >::iterator it_x;
-    map<int,double>::iterator it_y;
-    
-    for (it_z = SpatialProbabilty.begin(); it_z != SpatialProbabilty.end(); ++it_z){
-        int zindex      = it_z->first;   // This index may need to be coarsened since the FAA doesn't use different altitudes
-        int newZIndex   = floor((ZREF + zindex * zBinHeight)/newDeltaZ);
-        
-        // printf("zindex = %d, newZIndex = %d, zNests = %s\n", zindex, newZIndex, zNests ? "True":"False");
-        
-        for (it_x = it_z->second.begin(); it_x != it_z->second.end(); ++it_x){
-            int xindex      = it_x->first;
-            int newXIndex   = floor((XREF + xindex*xBinLength)/newDeltaXY);
-            
-            // printf("    xindex = %d, newXIndex = %d, xNests = %s\n", xindex, newXIndex, xNests ? "True":"False");
-
-            
-            for (it_y = it_x->second.begin(); it_y != it_x->second.end(); ++it_y){
-                int yindex      = it_y->first;
-                int newYIndex   = floor((YREF + yindex*yBinLength)/newDeltaXY);
-                
-                SpatialProbabilty_Coarse[newZIndex][newXIndex][newYIndex] += it_y->second;
-                // printf("        yindex = %d, newYIndex = %d, yNests = %s\n", yindex, newYIndex, yNests ? "True":"False");
-
-            }
-            
-        }
-        
-        
-    }
-    
-    // Update the values
-    SpatialProbabilty = SpatialProbabilty_Coarse;
-    xBinLength = newDeltaXY;
-    yBinLength = newDeltaXY;
-    zBinHeight = newDeltaZ;
-    
-    return SpatialProbabilty_Coarse;
-    
-    
-}
-
-
-
-
-
-
-
-
-void SkyGrid::DumpGridToMatlab(char *fileName){
-    
-    // Check that you can still use it
-    if (!isProbability){
-        cout << "ERROR, youre trying to use DumpGridToMatlab before converting to probabilities\n\n";
-        exit(-13);
-    }
-    
-    int debugTime = 40 ;
-//    int debugTime = 60 ;
-    
-    ofstream outfile;
-	outfile.open(fileName, ios::out);
-    
-    // Set the precision and make sure output is set to scientific
-	outfile.precision(9);
-	outfile << std::scientific;
-    
-    // Iterators for the probability grid
-    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
-    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
-    map<int, map<int, map<int,binData> > >::iterator it_x;
-    map<int, map<int, binData> >::iterator it_y;
-    map<int, binData>::iterator it_ID;
-    
-    outfile << "clear all; close all; clc;\n\n";
-    
-//    cout << "DUMPING ProbabilityMapDebIX\n";
-    for (it_time=ProbabilityMapDebIX.begin(); it_time != ProbabilityMapDebIX.end(); ++it_time) {
-        
-        int tx = it_time->first;        //Assuming, for the moment, that it starts at tx = 0
-        
-//        if (tx != debugTime) {continue; }
-        
-        outfile << "vec{" << tx << "} = [\n";
-
-        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
-            int zindex = it_z->first;
-            
-            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
-                int xindex = it_x->first;
-                
-                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
-                    int yindex = it_y->first;
-                    
-                    double probSumHere = 0.;
-                    for (it_ID = ProbabilityMapDebIX[tx][zindex][xindex][yindex].begin(); it_ID != ProbabilityMapDebIX[tx][zindex][xindex][yindex].end(); ++it_ID){
-                        int curID = it_ID->first;
-                        
-                        binData PD = it_ID->second;
-                        
-                        outfile << zindex << "  " << xindex << "  " << yindex << "  " << curID <<  "  " << PD.probDebris << "  " << PD.avgVel
-                            << "  " << PD.minVel << "  " << PD.maxVel << ";\n";
-                        
-//                        double probOfStrike = (arefMeanList[curID]*m2tokm2 + airplaneArea)/cellArea;
-//                        probSumHere += (it_ID->second) * numberOfPiecesMean[curID] * probOfStrike;
-                        
-                        
-                    } } } }
-        outfile << "];\n\n\n\n";
-    }
-    
-    
-    
-//    temp4Vec[0] = lowerleftX;
-//    temp4Vec[1] = lowerleftY;
-//    temp4Vec[2] = lowerleftZ;
-//    temp4Vec[3] = 1. - probNoStrike;
-    
-    map<int, vector<vector<double> > >::iterator it_StorageTime;
-//    cout << "DUMPING ProbabilityTotalStorage\n";
-
-//    int tsteps = ProbabilityTotalStorage.size();
-//    for (int tx = 0; tx < tsteps; tx++){
-    for (it_StorageTime = ProbabilityTotalStorage.begin(); it_StorageTime != ProbabilityTotalStorage.end(); ++it_StorageTime){
-        int tx = it_StorageTime->first;
-//        cout << "tx" << endl;
-        
-//        if (tx != debugTime) {continue; }
-        
-        outfile << "ProbabilityTotalStorage{" << tx << "} = [\n";
-
-        int numHere = ProbabilityTotalStorage[tx].size();
-        for (int ix = 0; ix < numHere; ix++){
-            
-            // Outputing in the format z,x,y,prob
-            outfile << ProbabilityTotalStorage[tx][ix][2] << "  " << ProbabilityTotalStorage[tx][ix][0] << "  "
-                << ProbabilityTotalStorage[tx][ix][1] << "  " << ProbabilityTotalStorage[tx][ix][3] << ";\n";
-
-        }
-        outfile << "];\n\n\n\n";
-    }
-    
-//    cout << "DUMPING stopIXStorage\n";
-    map<int, int>::iterator it_StopIXTime;
-
-    for (it_StopIXTime = stopIXStorage.begin(); it_StopIXTime != stopIXStorage.end(); ++it_StopIXTime){
-        int tx = it_StopIXTime->first;
-        
-//        if (tx != debugTime) {continue; }
-        
-        outfile << "stopIXStorage{" << tx << "} = " << stopIXStorage[tx] << ";\n";
-
-    }
-    outfile << "\n\n";
-    
-    outfile <<  "NumTimestepsHere = " << getNumRange() << endl;
-
-    outfile.close();
-    
-    return;
-}
-
-
-
-
-
-void SkyGrid::GoMatlab(string fileName, vector<Point> tempVec){
-    
-    // Check that you can still use it
-    if (isProbability){
-        cout << "ERROR, youre trying to use GoMatlab after converting to probabilities\n\n";
-        exit(-13);
-    }
-    
-    ofstream outfile;
-	outfile.open(fileName.c_str(), ios::out);
-    
-    // Set the precision and make sure output is set to scientific
-	outfile.precision(9);
-	outfile << std::scientific;
-    
-    outfile << "clear all; close all; clc;\n\n";
-    
-    outfile << "vec = [\n";
-    //    for (int tx = (all_points_num_range-1); tx < all_points_num_range; tx ++){
-    //        int num_current_points = (INTxx) pts[tx][curIX].size();
-    for (int ix = 0; ix < tempVec.size(); ix++){
-        outfile << tempVec[ix].get_x() << "  " << tempVec[ix].get_y() << ";\n";
-    }
-    //}
-    
-    outfile << "];\n\n\n\n";
-    outfile << "scatter(vec(:,1), vec(:,2))\n";
-    
-    outfile.close();    
-    
-    return;
-}
 
 
 
