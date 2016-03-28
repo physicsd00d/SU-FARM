@@ -1341,7 +1341,17 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
 
 
 
-map<int, map<int, map<int,double> > >SkyGrid::SendASHToPython(int betaID, int tx_desired){
+map<int, map<int, map<int,double> > >SkyGrid::SendProbabilitiesToPython(int betaID, int tx_desired, int probDesired){
+    
+    // debris = 0
+    // noStrike = 1
+    // noCasualty = 2
+    // noCatastropher = 3
+//    // Save the probability for this grid cell.  Only put it in the leading debIX.
+//    ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoImpact         = probNoStrike;
+//    ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCasualty       = probNoCasualty;
+//    ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCatastrophe    = probNoCatastrophe;
+    
     
     // The output
     map<int, map<int, map<int,double> > > GridAsVector;   //[z][x][y]
@@ -1373,7 +1383,24 @@ map<int, map<int, map<int,double> > >SkyGrid::SendASHToPython(int betaID, int tx
                         
 //                        ProbabilityMapDebIX[tx][zindex][xindex][yindex][curID].probDebris
                         binData curData = it_ID->second;
-                        GridAsVector[zindex][xindex][yindex] = curData.probDebris;
+                        switch (probDesired) {
+                            case 0:
+                                GridAsVector[zindex][xindex][yindex] = curData.probDebris;
+                                break;
+                            case 1:
+                                GridAsVector[zindex][xindex][yindex] = curData.probNoImpact;
+                                break;
+                            case 2:
+                                GridAsVector[zindex][xindex][yindex] = curData.probNoCasualty;
+                                break;
+                            case 3:
+                                GridAsVector[zindex][xindex][yindex] = curData.probNoCatastrophe;
+                                break;
+                            default:
+                                printf("ERROR SendProbabilitiesToPython: If you see this then youre in trouble\n");
+                                break;
+                        }
+                        
                         
                     }
                 }
