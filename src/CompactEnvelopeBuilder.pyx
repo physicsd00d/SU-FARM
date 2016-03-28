@@ -80,7 +80,6 @@ cdef extern from "SkyGrid.h":
         
         void ASH2(double h1, double h2)
         double WTF()
-        void DumpGridToMatlab(char *fileName)
 
         vector[double] createEmptyAircraftDensityMap()
         void populateAircraftDensityMap(void *densityMapArray, int numElements)
@@ -96,12 +95,15 @@ cdef extern from "SkyGrid.h":
 
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
-        void generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
-        map[int, map[int, map[int,double]]] projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ)
-
+        map[int, map[int, map[int,double]]] generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
+ 
         void generateHazardProbabilities(vector[int] numberOfPiecesMean)
         # double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
         double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail)
+
+        ### ==== Graveyard
+        # void DumpGridToMatlab(char *fileName)
+        # map[int, map[int, map[int,double]]] projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ)
 
 
 
@@ -183,28 +185,8 @@ cdef class PySkyGrid:
 #        self.thisptr.ASH2(h1, h2, numDebrisPerIXSimulated)
 #        return self.thisptr.generateAllPointsFromASH(numberOfPiecesMeanList, arefMeanList, len(numberOfPiecesMeanList), thresh, pFail)
 
-    def DumpGridToMatlab(self, char *filename):
-        self.thisptr.DumpGridToMatlab(filename)
-
     # TODO: If the code is working without this stuff, then send it to a graveyard.
-#     def createEmptyAircraftDensityMap(self):
-# #        cdef vector<double> tempAns = self.thisptr.createEmptyAircraftDensityMap()
 
-#         # i cannot figure out how to do this nicely, so it's going to become a slow-ass hack
-#         tempAns = self.thisptr.createEmptyAircraftDensityMap()
-#         numEntries = tempAns.size()
-        
-#         # Allocate the memory
-#         latlonArray = np.zeros( (numEntries,))
-#         for ix in range(numEntries):
-#             latlonArray[ix] = tempAns[ix]
-
-#         latlonArray = latlonArray.reshape(numEntries/4, 4)
-#         return latlonArray
-
-#     def populateAircraftDensityMap(self, np.ndarray[double, ndim = 1, mode="c"] densityMapArray, int numElements):
-#         if (numElements > 0) or (numElements == -1):
-#             self.thisptr.populateAircraftDensityMap(&densityMapArray[0], numElements)
 
     def SendGridToPython(self, int tx_desired):
         # Get the grid
@@ -270,7 +252,6 @@ cdef class PySkyGrid:
         return self.thisptr.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                                        h1_in, h2_in)
 
-
     def GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
         #define PROB_IMPACT      1001
         #define PROB_CASUALTY    1002
@@ -280,19 +261,33 @@ cdef class PySkyGrid:
     def GetSpatialProbabilty(self):
         return self.thisptr.getSpatialProbabilty()
 
-    def GetSpatialProbabilty_Coarse(self, newDeltaXY, newDeltaZ):
-        return self.thisptr.projectSpatialProbabilityFAA(newDeltaXY, newDeltaZ)
-
     def generateHazardProbabilities(self, numberOfPiecesMean):
         self.thisptr.generateHazardProbabilities(numberOfPiecesMean)
-
-    # def generateAllPoints_CumulativeTJC(self, double thresh, int whichProb):
-    #     return self.thisptr.generateAllPoints_CumulativeTJC(thresh, whichProb)
             
     def generateAllPoints_CumulativeFAA(self, double thresh, int whichProb, double pFail):
         return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, pFail)
 
-
+    ### ==== Graveyard ====
+    # def DumpGridToMatlab(self, char *filename):
+    #     self.thisptr.DumpGridToMatlab(filename)
+    # def GetSpatialProbabilty_Coarse(self, newDeltaXY, newDeltaZ):
+    #     return self.thisptr.projectSpatialProbabilityFAA(newDeltaXY, newDeltaZ)
+    # def generateAllPoints_CumulativeTJC(self, double thresh, int whichProb):
+    #     return self.thisptr.generateAllPoints_CumulativeTJC(thresh, whichProb)
+    # def createEmptyAircraftDensityMap(self):
+    #     # cdef vector<double> tempAns = self.thisptr.createEmptyAircraftDensityMap()
+    #     # i cannot figure out how to do this nicely, so it's going to become a slow-ass hack
+    #     tempAns = self.thisptr.createEmptyAircraftDensityMap()
+    #     numEntries = tempAns.size()
+    #     # Allocate the memory
+    #     latlonArray = np.zeros( (numEntries,))
+    #     for ix in range(numEntries):
+    #         latlonArray[ix] = tempAns[ix]
+    #     latlonArray = latlonArray.reshape(numEntries/4, 4)
+    #     return latlonArray
+    # def populateAircraftDensityMap(self, np.ndarray[double, ndim = 1, mode="c"] densityMapArray, int numElements):
+    #     if (numElements > 0) or (numElements == -1):
+    #         self.thisptr.populateAircraftDensityMap(&densityMapArray[0], numElements)
 
 # This is here IN THE HOPES that it will allow me to pass PointCloud / SkyGrid objects into the footprint class
 # http://docs.cython.org/src/userguide/external_C_code.html

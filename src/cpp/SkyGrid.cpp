@@ -542,6 +542,7 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
 
 
 
+
 void SkyGrid::loadRemainingPointsIntoAllPoints(int tx, vector<vector<double> > ProbabilityHere){
     // Turn it into a points vector and return it
     double eps = 1e-4;  // Add a little bit to make sure this gets binned properly later
@@ -572,7 +573,7 @@ void SkyGrid::loadRemainingPointsIntoAllPoints(int tx, vector<vector<double> > P
  *          Probably a good idea to make f an input when you do that, so you can get f=t case easily
  *
  */
-void SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep){
+map<int, map<int, map<int,double> > >  SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep){
     // whichProb selects between impact, casualty, and catastrophe
     // J is the INDEX of the maximum time to consider
     // f is the INDEX of the fail time that this probability corresponds to
@@ -635,33 +636,8 @@ void SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f
                     } } }   // Ends loop back to it_z
         }
     }
-    
-//    // Check on the probabilities
-//    { // Changing scope so I can redefine the iterators
-//        map<int, map<int, map<int,double> > >::iterator it_z;
-//        map<int, map<int,double> >::iterator it_x;
-//        map<int, double>::iterator it_y;
-//        
-//        for (it_z = SpatialProbabilty.begin(); it_z != SpatialProbabilty.end(); ++it_z){
-//            int zindex = it_z->first;
-//            for (it_x = SpatialProbabilty[zindex].begin(); it_x != SpatialProbabilty[zindex].end(); ++it_x){
-//                int xindex = it_x->first;
-//                for (it_y = SpatialProbabilty[zindex][xindex].begin(); it_y != SpatialProbabilty[zindex][xindex].end(); ++it_y){
-//                    int yindex = it_y->first;
-//                    
-//                    if (zindex < 0){
-//                        printf("SpatialProbabilty[%d][%d][%d] = %E\n",
-//                               zindex, xindex, yindex, SpatialProbabilty[zindex][xindex][yindex]);
-//                    }
-//                }}}
-//    }
 
-//    cout << "C++ maxVal = " << maxVal << endl;
-    
-//    cout << "\n\n\nDEBUG!!!" << endl;
-//    projectSpatialProbabilityFAA();
-
-    return;
+    return SpatialProbabilty;
 }
 
  
