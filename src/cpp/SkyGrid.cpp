@@ -637,7 +637,7 @@ void SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f
                         
                         // TODO: Check to see if there are roundoff errors or something doing it this way versus above.
                         double prevVal = SpatialProbabilty[zindex][xindex][yindex];
-                        SpatialProbabilty[zindex][xindex][yindex] = 1. - (prevVal+1.) * thisProb;
+                        SpatialProbabilty[zindex][xindex][yindex] = 1. - (1.-prevVal) * thisProb;
                         
                         maxVal = std::max(maxVal, SpatialProbabilty[zindex][xindex][yindex]);
                         
