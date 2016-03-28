@@ -218,6 +218,10 @@ public:
     
 //    vector<vector<double> >SendGridToPython(int tx_desired);
     map<double, map<double, map<double,double> > >SendGridToPython(int tx_desired);
+    map<int, map<int, map<int,int> > >SendHistogramToPython(int betaID, int tx_desired);
+    map<int, map<int, map<int,double> > >SendProbabilitiesToPython(int betaID, int tx_desired, int probDesired);
+    map<int, map<int, map<int,double> > >SendHazardPointsToPython();
+
     
     int identifyYourself();
     double getZBinHeight();

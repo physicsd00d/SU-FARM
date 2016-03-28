@@ -92,6 +92,10 @@ cdef extern from "SkyGrid.h":
         
 #        vector[vector[double]] SendGridToPython(int tx_desired)
         map[double, map[double, map[double,double]]] SendGridToPython(int tx_desired)
+        map[int, map[int, map[int,int] ] ] SendHistogramToPython(int betaID, int tx_desired)
+        map[int, map[int, map[int,double]]] SendProbabilitiesToPython(int betaID, int tx_desired, int probDesired)
+        map[int, map[int, map[int,double]]] SendHazardPointsToPython()
+
 
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
@@ -201,6 +205,21 @@ cdef class PySkyGrid:
                     tempGrid.append([zval, lonVal, latVal, probVal])
         probGrid = np.array(tempGrid)
         return probGrid
+
+    def SendHistogramToPython(self, int betaID, int tx_desired):
+        # map[double, map[double, map[double,int] ] ] 
+        histogram = <dict> self.thisptr.SendHistogramToPython(betaID, tx_desired)
+        return histogram
+
+    def SendProbabilitiesToPython(self, int betaID, int tx_desired, int probDesired):
+        # map[double, map[double, map[double,int] ] ] 
+        ASH = <dict> self.thisptr.SendProbabilitiesToPython(betaID, tx_desired, probDesired)
+        return ASH
+
+    def SendHazardPointsToPython(self):
+        # map[double, map[double, map[double,int] ] ] 
+        pts = <dict> self.thisptr.SendHazardPointsToPython()
+        return pts
 
         
 #        # You have to tell Cython what to expect for the sub-iterators (so also defining curz for consistency)
