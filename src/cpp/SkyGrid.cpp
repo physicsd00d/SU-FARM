@@ -1341,6 +1341,46 @@ void SkyGrid::ASH2(double h1_in, double h2_in){
 
 
 
+map<int, map<int, map<int,double> > >SkyGrid::SendHazardPointsToPython(){
+    // I think all timesteps are the same here, so just look at the first non-empty timestep
+    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
+    it_time=ProbabilityMapDebIX.begin();
+    int tx = it_time->first;
+
+//    map<int, vector<vector<double> > > ProbabilityTotalStorage;    // Stores the x index, y index, and probability value for every cell at this tstep and zstep
+    
+    // Also want to convert back to indices so for easy comparison with other debugging outputs
+    map<int, map<int, map<int,double> > > GridAsVector;   //[z][x][y]
+    
+    for (vector<vector<double> >::iterator curPt = ProbabilityTotalStorage[tx].begin();
+         curPt != ProbabilityTotalStorage[tx].end(); ++curPt){
+        
+        double lowerleftX   = curPt->at(0);
+        double lowerleftY   = curPt->at(1);
+        double lowerleftZ   = curPt->at(2);
+        double curProb      = curPt->at(3);
+        
+//        double lowerleftX = xref + xindex*xBinLength;   // Note that xindex is most likely negative
+//        double lowerleftY = yref + yindex*yBinLength;   // Note that yindex may be positive or negative
+//        double lowerleftZ = zref + zindex*zBinHeight;
+        
+        int xindex = (int) round((lowerleftX - XREF)/xBinLength);
+        int yindex = (int) round((lowerleftY - YREF)/yBinLength);
+        int zindex = (int) round((lowerleftZ - ZREF)/zBinHeight);
+        
+        GridAsVector[zindex][xindex][yindex] = curProb;
+    }
+    
+    return GridAsVector;
+    
+}
+
+
+
+
+
+
+
 map<int, map<int, map<int,double> > >SkyGrid::SendProbabilitiesToPython(int betaID, int tx_desired, int probDesired){
     
     // debris = 0
