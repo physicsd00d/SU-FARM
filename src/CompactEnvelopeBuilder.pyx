@@ -32,11 +32,49 @@ import sys
 #
 #
 #
-### ~~~~~~~~~~~~~~~~~~~~~ SKYGRID CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#cdef extern from "PointCloud.h" namespace "PointCloud":
-#    
+### ~~~~~~~~~~~~~~~~~~~~~ Grid3D CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
+cdef extern from "Grid3D.h":
+    cdef cppclass Grid3D:
+        Grid3D()
+        Grid3D(map[int, map[int, map[int,double]]] SpatialProbabilty_in)
+        map[int, map[int, map[int,double]]] getGrid()
 
+cdef class PyGrid3D:
+    cdef Grid3D *thisptr                    # hold a C++ instance which we're wrapping
+    
+    # def __cinit__(self, dict SpatialProbabilty_in):
+    #     self.thisptr = new Grid3D(SpatialProbabilty_in)
+    
+    def __cinit__(self, PyGrid3D obj=None):
+        if obj:
+            print "type of obj = {0}".format(type(obj))
+            self.thisptr = obj.thisptr
+        else:
+            print "Using default Grid3D constructor"
+            self.thisptr = new Grid3D()
 
+    def __dealloc__(self):
+        del self.thisptr
+
+    def getGrid(self):
+        return self.thisptr.getGrid()
+
+# cdef class PyGrid3D:
+#     cdef Grid3D *thisptr                    # hold a C++ instance which we're wrapping
+    
+#     def __cinit__(self, dict SpatialProbabilty_in):
+#         self.thisptr = new Grid3D(SpatialProbabilty_in)
+    
+#     # def __cinit__(self, obj=None):
+#     #     self.thisptr = new Grid3D()
+#     #     if obj:
+#     #         self.thisptr = obj.thisptr
+
+#     def __dealloc__(self):
+#         del self.thisptr
+
+#     def getGrid(self):
+#         return self.getGrid()
 
 
 ## ~~~~~~~~~~~~~~~~~~~~~ SKYGRID CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -103,7 +141,8 @@ cdef extern from "SkyGrid.h":
 
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
-        map[int, map[int, map[int,double]]] generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
+        Grid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
+        # PyGrid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
  
         void generateHazardProbabilities(vector[int] numberOfPiecesMean)
         # double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
@@ -284,11 +323,27 @@ cdef class PySkyGrid:
         return self.thisptr.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                                        h1_in, h2_in)
 
+    # def GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
+    #     #define PROB_IMPACT      1001
+    #     #define PROB_CASUALTY    1002
+    #     #define PROB_CATASTROPHE 1003
+    #     return PyGrid3D(self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)[0])
+
+    # First attempt that got it to compile and work
     def GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
         #define PROB_IMPACT      1001
         #define PROB_CASUALTY    1002
         #define PROB_CATASTROPHE 1003
-        return self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
+        obj = PyGrid3D()
+        obj.thisptr[0] = self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
+        return obj
+
+    # What it used to be before i started returning a Grid3D object
+    # cdef Grid3D GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
+    #     #define PROB_IMPACT      1001
+    #     #define PROB_CASUALTY    1002
+    #     #define PROB_CATASTROPHE 1003
+    #     return self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
             
     def GetSpatialProbabilty(self):
         return self.thisptr.getSpatialProbabilty()

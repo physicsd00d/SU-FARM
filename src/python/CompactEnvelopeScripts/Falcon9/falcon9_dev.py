@@ -126,7 +126,7 @@ curMission['deltaT']                  = 1.      # Seconds, this is the time reso
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 10.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
@@ -269,7 +269,7 @@ delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round t
 debrisPickleFolder      = curMission['debrisPickleFolder']
 deltaXY                 = curMission['deltaXY']
 deltaZ                  = curMission['deltaZ']
-tfailSec = 0.
+tfailSec = 60.
 
 inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
 input = open(inFileName, 'rb')
@@ -279,7 +279,7 @@ input.close()
 arefMeanList = cur_mpc['arefMeanList']
 numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
 
-from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
+from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
 
 # Package them up into a PointCLoud
 # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
@@ -287,7 +287,45 @@ curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
 
 # Place the cloud into a Grid
 curSkyGrid              = PySkyGrid(curMission, curPointCloud)
+h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+h2                        = curMission['deltaXY'] 
+# h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+# h2                        = curMission['h2'] 
+curSkyGrid.generateASH(h1, h2)
 
+def checkNorm(ash):
+    curNorm = 0.
+    for curZ in ash:
+        for curX in ash[curZ]:
+            for curY in ash[curZ][curX]:
+                curNorm += ash[curZ][curX][curY]
+    return curNorm
+
+# Okay, now I can look through the histograms any way I want
+# curID = 10  # highest beta
+curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
+hist = dict()
+ash = dict()
+whichProb = 0   # Impact
+for tx in range(300):
+    hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
+    ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
+
+    # if len(hist[tx]) > 0:
+    # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
+    print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
+
+print 'generateHazardProbabilities'
+curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
+
+whichProb = curSkyGrid.getProbImpactCode()
+tempGrid3D = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec+150, tfailSec)
+temp = tempGrid3D.getGrid()
+
+for z in temp:
+    for x in temp[z]:
+        for y in temp[z][x]:
+            print "[{0}][{1}][{2}] = {3:e}".format(z,x,y, temp[z][x][y]) 
 
 
 #
@@ -368,7 +406,78 @@ curSkyGrid              = PySkyGrid(curMission, curPointCloud)
 
 
 
-
+### Match this
+# generateHazardProbabilities
+# [124][1][-14116][6352] -> 0.000000E+00 * 9.999613E-01
+# [125][1][-14116][6352] -> 3.873102E-05 * 9.999614E-01
+# [177][1][-14116][6352] -> 7.734734E-05 * 9.977185E-01
+# [178][1][-14116][6352] -> 2.358637E-03 * 9.954200E-01
+# [179][1][-14116][6352] -> 6.927807E-03 * 9.954235E-01
+# [180][1][-14116][6352] -> 1.147262E-02 * 9.954267E-01
+# [181][1][-14116][6352] -> 1.599340E-02 * 9.931317E-01
+# [182][1][-14116][6352] -> 2.275182E-02 * 9.954342E-01
+# [183][1][-14116][6352] -> 2.721378E-02 * 9.463568E-01
+# [184][1][-14116][6352] -> 7.939714E-02 * 9.308014E-01
+# [185][1][-14116][6352] -> 1.431016E-01 * 9.329589E-01
+# [186][1][-14116][6352] -> 2.005490E-01 * 8.832070E-01
+# [187][1][-14116][6352] -> 2.939193E-01 * 8.593692E-01
+# [188][1][-14116][6352] -> 3.932160E-01 * 8.461824E-01
+# [189][1][-14116][6352] -> 4.865500E-01 * 7.613635E-01
+# [190][1][-14116][6352] -> 6.090779E-01 * 6.300726E-01
+# [191][1][-14116][6352] -> 7.536907E-01 * 5.542229E-01
+# [192][1][-14116][6352] -> 8.634898E-01 * 5.403972E-01
+# [193][1][-14116][6352] -> 9.262302E-01 * 4.919908E-01
+# [194][1][-14116][6352] -> 9.637060E-01 * 4.470612E-01
+# [195][1][-14116][6352] -> 9.837743E-01 * 3.884570E-01
+# [196][1][-14116][6352] -> 9.936970E-01 * 3.572080E-01
+# [197][1][-14116][6352] -> 9.977485E-01 * 3.271343E-01
+# [198][1][-14116][6352] -> 9.992635E-01 * 2.962286E-01
+# [199][1][-14116][6352] -> 9.997818E-01 * 2.765135E-01
+# [200][1][-14116][6352] -> 9.999397E-01 * 2.281497E-01
+# [201][1][-14116][6352] -> 9.999862E-01 * 1.329828E-01
+# [202][1][-14116][6352] -> 9.999982E-01 * 8.110280E-02
+# [203][1][-14116][6352] -> 9.999999E-01 * 6.712495E-02
+# [204][1][-14116][6352] -> 1.000000E+00 * 6.856211E-02
+# [205][1][-14116][6352] -> 1.000000E+00 * 7.275751E-02
+# [206][1][-14116][6352] -> 1.000000E+00 * 7.370047E-02
+# [207][1][-14116][6352] -> 1.000000E+00 * 7.514612E-02
+# [208][1][-14116][6352] -> 1.000000E+00 * 7.866974E-02
+# [209][1][-14116][6352] -> 1.000000E+00 * 7.968113E-02
+# [210][1][-14116][6352] -> 1.000000E+00 * 8.333504E-02
+# [0][-14119][6352] = 7.222048e-02
+# [0][-14119][6353] = 3.279850e-02
+# [0][-14119][6354] = 5.102704e-04
+# [0][-14118][6352] = 9.982917e-01
+# [0][-14118][6353] = 5.089480e-01
+# [0][-14118][6354] = 1.050376e-02
+# [0][-14118][6350] = 1.263690e-01
+# [0][-14118][6351] = 8.839138e-01
+# [0][-14117][6352] = 9.999909e-01
+# [0][-14117][6353] = 8.021458e-01
+# [0][-14117][6354] = 5.295458e-02
+# [0][-14117][6351] = 6.394572e-01
+# [0][-14116][6352] = 9.999549e-01
+# [0][-14116][6353] = 7.140744e-01
+# [0][-14116][6354] = 2.815018e-03
+# [0][-14116][6351] = 3.389844e-02
+# [0][-14115][6352] = 3.844029e-03
+# [0][-14115][6353] = 5.366407e-03
+# [0][-14115][6351] = 3.425544e-05
+# [1][-14121][6351] = 3.370991e-01
+# [1][-14120][6351] = 6.343077e-01
+# [1][-14119][6352] = 1.641278e-01
+# [1][-14119][6351] = 1.000000e+00
+# [1][-14118][6352] = 1.000000e+00
+# [1][-14118][6353] = 9.726192e-03
+# [1][-14118][6350] = 1.532478e-02
+# [1][-14118][6351] = 1.000000e+00
+# [1][-14117][6352] = 1.000000e+00
+# [1][-14117][6353] = 6.535208e-01
+# [1][-14117][6351] = 1.000000e+00
+# [1][-14116][6352] = 1.000000e+00
+# [1][-14116][6353] = 7.220435e-01
+# [1][-14116][6351] = 5.312908e-05
+# [-1][0][0] = 0.000000e+00
 
 
 

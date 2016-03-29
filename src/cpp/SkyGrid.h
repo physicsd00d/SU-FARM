@@ -20,6 +20,7 @@
 //#include "Point.h"
 #include "Footprint3D.h"    //Contains a lot of the includes that this needs
 #include "PointCloud.h"
+#include "Grid3D.h"
 
 //#include <gsl/gsl_blas.h>   //WHY???
 
@@ -118,7 +119,8 @@ private:
     // This is a map that contains the probabilities of interest (as specified by whichProb) that have been
     //  summed over all time and over all debIX.  Thus, it represents that total probability of, for instance, impact
     //  at a given point in xyz space.
-    map<int, map<int, map<int,double> > > SpatialProbabilty;
+//    map<int, map<int, map<int,double> > > SpatialProbabilty;
+    Grid3D SpatialProbabilty;
 
     vector<double> xpts_KDE;
     vector<double> ypts_KDE;
@@ -195,7 +197,7 @@ public:
     
     // Debugging Functions (Used for being interactive with Python)
     map<int, map<int, map<int,double> > > getSpatialProbabilty();
-    map<int, map<int, map<int,double> > > generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
+    Grid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
 
     
     

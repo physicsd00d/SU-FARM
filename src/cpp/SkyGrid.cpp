@@ -464,18 +464,20 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
     
     map<int,int> PointsAtThisLevel;
     
-    for (zit = SpatialProbabilty.begin(); zit != SpatialProbabilty.end(); ++zit){
+    map<int, map<int, map<int,double> > > grid = SpatialProbabilty.getGrid();
+    
+    for (zit = grid.begin(); zit != grid.end(); ++zit){
         int zindex = zit->first;
         
-        for (xit = SpatialProbabilty[zindex].begin(); xit != SpatialProbabilty[zindex].end(); ++xit){
+        for (xit = grid[zindex].begin(); xit != grid[zindex].end(); ++xit){
             int xindex = xit->first;
             
-            for (yit = SpatialProbabilty[zindex][xindex].begin(); yit != SpatialProbabilty[zindex][xindex].end(); ++yit){
+            for (yit = grid[zindex][xindex].begin(); yit != grid[zindex][xindex].end(); ++yit){
                 int yindex = yit->first;
                 
                 // No matter how small the cell area is, assume an aircraft is present and ask "what's the probability of impact?"
                 //      Dividing by probAircraftPresentInCell is the "assume an aircraft is present".
-                double curProb = SpatialProbabilty[zindex][xindex][yindex] * pFail;
+                double curProb = grid[zindex][xindex][yindex] * pFail;
                 
                 if (curProb > (thresh)) {
                     
@@ -573,10 +575,12 @@ void SkyGrid::loadRemainingPointsIntoAllPoints(int tx, vector<vector<double> > P
  *          Probably a good idea to make f an input when you do that, so you can get f=t case easily
  *
  */
-map<int, map<int, map<int,double> > >  SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep){
+Grid3D SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep){
     // whichProb selects between impact, casualty, and catastrophe
     // J is the INDEX of the maximum time to consider
     // f is the INDEX of the fail time that this probability corresponds to
+    
+    map<int, map<int, map<int,double> > > SpatialProbabilty;  // TODO: Eventually make this start as a Grid3D
     
     // Iterators for the probability grid
     map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
@@ -632,9 +636,9 @@ map<int, map<int, map<int,double> > >  SkyGrid::generateSpatialProbability(int w
                         SpatialProbabilty[zindex][xindex][yindex] = 1. - (1.-prevVal) * thisProb;
                         
 //                        [1][-14116][6352] = 0.000000e+00
-//                        if ((zindex == 1) && (xindex == -14116) && (yindex == 6352)) {
-//                            printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
-//                        }
+                        if ((zindex == 1) && (xindex == -14116) && (yindex == 6352)) {
+                            printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
+                        }
 
 //                        printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
 
@@ -644,13 +648,13 @@ map<int, map<int, map<int,double> > >  SkyGrid::generateSpatialProbability(int w
         }
     }
 
-    return SpatialProbabilty;
+    return Grid3D(SpatialProbabilty);
 }
 
  
 
 map<int, map<int, map<int,double> > >SkyGrid::getSpatialProbabilty(){
-    return SpatialProbabilty;
+    return SpatialProbabilty.getGrid();
 }
 
 

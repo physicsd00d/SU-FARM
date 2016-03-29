@@ -28,7 +28,7 @@ def catchArgs():
 
 # Contains cython wrapping information
 pyxFile = "CompactEnvelopeBuilder.pyx"
-srcNames = ["SkyGrid", "Debris", "Footprint3D", "Point", "Random_Number",  "timer", "PointCloud", "Trajectory"]
+srcNames = ["Grid3D", "SkyGrid", "Debris", "Footprint3D", "Point", "Random_Number",  "timer", "PointCloud", "Trajectory"]
 
 # Location of the Cython file (pyx)
 pyxDir = os.path.realpath('src/') 
