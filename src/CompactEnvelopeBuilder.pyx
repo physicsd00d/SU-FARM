@@ -51,6 +51,10 @@ cdef extern from "SkyGrid.h":
         double getLaunchAzimuth()
         double getInitialUTC()
 
+        int getProbImpactCode()
+        int getProbCasualtyCode()
+        int getProbCatastropheCode()
+
 #        void PythonDebrisIntoGrid(void *flatPointArray, int numPieces, void *numTimeSteps, int maxTime, double deltaT,  # arguments for assembling the points
 #                                  double NewInitialUTC, double timeOffsetSec, double launchLat, double launchLon, double launchAzimuth)  #encorporation
         
@@ -144,6 +148,15 @@ cdef class PySkyGrid:
     
     def getNumRange(self):
         return self.thisptr.getNumRange()
+
+    def getProbImpactCode(self):
+        return self.thisptr.getProbImpactCode()
+
+    def getProbCasualtyCode(self):
+        return self.thisptr.getProbCasualtyCode()
+
+    def getProbCatastropheCode(self):
+        return self.thisptr.getProbCatastropheCode()
     
     def IncorporatePointCloudIntoGrid(self, PyPointCloud incomingCloud):
         self.thisptr.PythonDebrisIntoGrid(incomingCloud.thisptr)
@@ -275,7 +288,7 @@ cdef class PySkyGrid:
         #define PROB_IMPACT      1001
         #define PROB_CASUALTY    1002
         #define PROB_CATASTROPHE 1003
-        self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
+        return self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
             
     def GetSpatialProbabilty(self):
         return self.thisptr.getSpatialProbabilty()

@@ -163,7 +163,9 @@ public:
     SkyGrid(string CapeLrhcFile, double xBinLength_in, double yBinLength_in, double zBinHeight_in);
     SkyGrid(string SkyGridFileName);
     
-
+    int getProbImpactCode();
+    int getProbCasualtyCode();
+    int getProbCatastropheCode();
     
     void RemoveHistogramKeepTiming();
 

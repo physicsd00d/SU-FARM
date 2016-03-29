@@ -631,6 +631,13 @@ map<int, map<int, map<int,double> > >  SkyGrid::generateSpatialProbability(int w
                         double prevVal = SpatialProbabilty[zindex][xindex][yindex];
                         SpatialProbabilty[zindex][xindex][yindex] = 1. - (1.-prevVal) * thisProb;
                         
+//                        [1][-14116][6352] = 0.000000e+00
+//                        if ((zindex == 1) && (xindex == -14116) && (yindex == 6352)) {
+//                            printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
+//                        }
+
+//                        printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
+
                         maxVal = std::max(maxVal, SpatialProbabilty[zindex][xindex][yindex]);
                         
                     } } }   // Ends loop back to it_z
@@ -647,7 +654,17 @@ map<int, map<int, map<int,double> > >SkyGrid::getSpatialProbabilty(){
 }
 
 
+int SkyGrid::getProbImpactCode(){
+    return PROB_IMPACT;
+}
 
+int SkyGrid::getProbCasualtyCode(){
+    return PROB_CASUALTY;
+}
+
+int SkyGrid::getProbCatastropheCode(){
+    return PROB_CATASTROPHE;
+}
 
 
 
