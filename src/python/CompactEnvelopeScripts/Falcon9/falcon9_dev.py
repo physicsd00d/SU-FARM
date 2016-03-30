@@ -136,7 +136,7 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 10.      # Seconds
+curMission['healthMonitoringLatency'] = 20.      # Seconds
 
 curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 2
@@ -344,7 +344,31 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 
 
 
+import numpy as np
+def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
+    deltaTFail                  = curMission['deltaTFail']
+    failProfile                 = curMission['failProfile']
+    failProfileSeconds          = curMission['failProfileSeconds']
+    pFail                       = curMission['pFail']
 
+    numGridsHere = int(np.round((timehi - timelo)/deltaTFail)) # TODO: Fix this when removing overlapping times
+
+    # Figure out which failure times are worth propagating (i.e. they have a nonzero probability of happening)
+    timeRange = []
+    pFailThisTimestepVec = []
+    for ix in range(numGridsHere):
+        sublo = timelo + ix*deltaTFail
+        subhi = sublo + deltaTFail
+        indices = np.where((failProfileSeconds >= sublo) & (failProfileSeconds < subhi))[0]
+        pFailThisTimestep = np.sum(failProfile[indices]) * pFail
+
+        if pFailThisTimestep > 0.:
+            timeRange.append(sublo)
+            pFailThisTimestepVec.append(pFailThisTimestep)
+
+    print 'times are ' + str(timeRange)
+    print 'probs are ' + str(pFailThisTimestepVec)
+    return timeRange, pFailThisTimestepVec
 
 
 
@@ -357,55 +381,147 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 # So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
 # TODO: Change PointCloud to incorporate f + delta_R + delta_H
 
-delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
-delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
-
-debrisPickleFolder      = curMission['debrisPickleFolder']
-# deltaXY                 = curMission['deltaXY']
-# deltaZ                  = curMission['deltaZ']
 from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
 
+def getProbImpacts(curMission, tfailSec):
+
+    delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    # TODO round to integer
+    delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  # TODO round to integer
+    debrisPickleFolder      = curMission['debrisPickleFolder']
+
+    inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+    input = open(inFileName, 'rb')
+    cur_mpc = pickle.load(input)
+    input.close()
+
+    # Package them up into a PointCLoud
+    curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+    # Place the cloud into a Grid
+    curSkyGrid              = PySkyGrid(curMission, curPointCloud)
+
+    # ASH them
+    h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    h2                        = curMission['deltaXY'] 
+    # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    # h2                        = curMission['h2'] 
+    curSkyGrid.generateASH(h1, h2)
+
+    # Calculate all of the hazard probabilities
+    curSkyGrid.generateHazardProbabilities(cur_mpc['numberOfPiecesMeanList'])
+
+    # Finally get the probabilities for the times we want
+    whichProb = curSkyGrid.getProbImpactCode()
+    P_RH = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_R + delta_H, tfailSec)
+    P_H = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_H, tfailSec)
+    # TODO: I'm enforcing deltaTFail = 1 already, so make delta_R and delta_H just be in seconds.
+
+    return P_RH, P_H
 
 
+# Round all the times to integers to make the dictionary lookups safer
+delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    
+delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  
+deltaTFail = int(curMission['deltaTFail'])
+
+probUnknown = dict()    # Holds the probability grids for the statetimes at which we don't have a VHM update yet
+probUpdated = dict()    # Holds the previous risks we were exposed to before the VHM updates told us we were safe.
+sumUpdatedProbs = PyGrid3D(); # Add in the updated probabilities as we go.
 
 # Flow should go like this.  Knowing delta_R and delta_H ahead of time
 # time = 0
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
-tfailSec = 0.
+footprintStart = 0.
+footprintUntil = 180.
 
-inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-input = open(inFileName, 'rb')
-cur_mpc = pickle.load(input)
-input.close()
-
-# Package them up into a PointCLoud
-curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
-
-# Place the cloud into a Grid
-curSkyGrid              = PySkyGrid(curMission, curPointCloud)
-
-# ASH them
-h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-h2                        = curMission['deltaXY'] 
-# h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-# h2                        = curMission['h2'] 
-curSkyGrid.generateASH(h1, h2)
-
-# Calculate all of the hazard probabilities
-curSkyGrid.generateHazardProbabilities(cur_mpc['numberOfPiecesMeanList'])
-
-# Finally get the probabilities for the times we want
-whichProb = curSkyGrid.getProbImpactCode()
-P_RH = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_R + delta_H, tfailSec)
-P_H = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_H, tfailSec)
+#TODO: MUST USE THE FAIL PROBABILITIES!!! 
+timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
 
 
-#
-# time = 1
-# SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
-# SkyGrid for P_I(x, f=1 | t <= f=1 + delta_H) to be used once the health update comes in
-#
+# tfailSec = footprintStart
+# while tfailSec <= footprintUntil:
+for tx in range(len(timeRange)):
+    tfailSec = timeRange[tx]
+    curPFail = pFailThisTimestepVec[tx]
+
+    print "t = {0}".format(tfailSec)
+
+    # This calculation doesn't account for the probability of failure, i.e. pFail = 1.
+    P_RH, P_H = getProbImpacts(curMission, tfailSec)
+    # So do that now
+    P_RH    *= curPFail
+    P_H     *= curPFail
+
+    # P_H will start to get used at curTime + delta_H + deltaTFail and will be used at every subsequent step as well.
+    curTime = int(tfailSec)
+    placeAtThisTime = curTime + delta_H + deltaTFail
+    if placeAtThisTime <= footprintUntil:
+        probUpdated[placeAtThisTime] = P_H
+
+    # This P_RH will get used for timesteps up to curTime + delta_H
+    # Need these to be their own separate objects, so use copy constructor to make them different
+    tempTime = curTime
+    while (tempTime <= tfailSec + delta_H):
+        if tempTime <= footprintUntil:
+            if tempTime in probUnknown:
+                probUnknown[tempTime] += P_RH
+            else:
+                probUnknown[tempTime] = PyGrid3D(P_RH)
+        tempTime += deltaTFail
+
+    # Now take the probs at the current time, which is tfailSec, and make an envelope out of them
+    if curTime in probUpdated:
+        sumUpdatedProbs += probUpdated[curTime]
+        del probUpdated[curTime] # remove that one from the dict since it's already been used
+
+
+    # All done here, increment time
+    tfailSec += deltaTFail
+
+
+
+
+
+
+
+
+# Make footprint out of P_RH
+
+# #
+# # time = 1
+# # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
+# # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_H) to be used once the health update comes in
+# #
+# tfailSec = 0. + 1*deltaTFail
+# P_RH, P_H = getProbImpacts(curMission, tfailSec)
+
+# # P_H will start to get used at curTime + delta_H + deltaTFail and will be used at every subsequent step as well.
+# curTime = int(tfailSec)
+# probUpdated[curTime + delta_H + deltaTFail] = P_H
+
+# # This P_RH will get used for timesteps up to curTime + delta_H
+# # Need these to be their own separate objects, so use copy constructor to make them different
+# while (curTime <= tfailSec + delta_H):
+#     if curTime in probUnknown:
+#         probUnknown[curTime] += P_RH
+#     else:
+#         probUnknown[curTime] = PyGrid3D(P_RH)
+#     curTime += deltaTFail
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
