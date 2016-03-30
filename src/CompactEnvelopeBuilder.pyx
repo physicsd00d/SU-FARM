@@ -36,8 +36,11 @@ import sys
 cdef extern from "Grid3D.h":
     cdef cppclass Grid3D:
         Grid3D()
+        Grid3D(const Grid3D &obj) # Copy constructor
         Grid3D(map[int, map[int, map[int,double]]] SpatialProbabilty_in)
         map[int, map[int, map[int,double]]] getGrid()
+        # Grid3D* operator+(Grid3D*)
+        Grid3D operator+(const Grid3D &obj)
 
 cdef class PyGrid3D:
     cdef Grid3D *thisptr                    # hold a C++ instance which we're wrapping
@@ -47,34 +50,28 @@ cdef class PyGrid3D:
     
     def __cinit__(self, PyGrid3D obj=None):
         if obj:
-            print "type of obj = {0}".format(type(obj))
-            self.thisptr = obj.thisptr
+            # Call the copy constructor.  The 'new' is very important; without it you will get errors when deallocating:
+            #  malloc: *** error for object 0x104b0c438: pointer being freed was not allocated
+            self.thisptr = new Grid3D(obj.thisptr[0])
+
         else:
-            print "Using default Grid3D constructor"
             self.thisptr = new Grid3D()
 
     def __dealloc__(self):
         del self.thisptr
 
+    # cdef Grid3D add(self, Grid3D one, Grid3D two):
+    #     return (one + two)
+
+    # THE CRUX!!! If you want this to work, you MUST declare the type of self as PyGrid3D.
+    #   Otherwise, (self.thisptr[0] + obj.thisptr[0]) will try to convert the Grid3D objects into PyObjects
+    def __add__(PyGrid3D self, PyGrid3D obj):
+        ans = PyGrid3D()
+        ans.thisptr[0] = (self.thisptr[0] + obj.thisptr[0])
+        return ans
+
     def getGrid(self):
         return self.thisptr.getGrid()
-
-# cdef class PyGrid3D:
-#     cdef Grid3D *thisptr                    # hold a C++ instance which we're wrapping
-    
-#     def __cinit__(self, dict SpatialProbabilty_in):
-#         self.thisptr = new Grid3D(SpatialProbabilty_in)
-    
-#     # def __cinit__(self, obj=None):
-#     #     self.thisptr = new Grid3D()
-#     #     if obj:
-#     #         self.thisptr = obj.thisptr
-
-#     def __dealloc__(self):
-#         del self.thisptr
-
-#     def getGrid(self):
-#         return self.getGrid()
 
 
 ## ~~~~~~~~~~~~~~~~~~~~~ SKYGRID CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

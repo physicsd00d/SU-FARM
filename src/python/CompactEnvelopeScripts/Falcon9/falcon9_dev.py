@@ -328,6 +328,10 @@ for z in temp:
             print "[{0}][{1}][{2}] = {3:e}".format(z,x,y, temp[z][x][y]) 
 
 
+newGrid = PyGrid3D(tempGrid3D) # Not okay
+
+addGrid = tempGrid3D + newGrid
+
 #
 # time = 1
 # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
@@ -482,6 +486,9 @@ for z in temp:
 
 
 
+# from CompactEnvelopeBuilder import PyGrid3D
+# myGrid = PyGrid3D()  # Okay
+# newGrid = PyGrid3D(myGrid) # Not okay
 
 
 
