@@ -381,7 +381,7 @@ def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
 # So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
 # TODO: Change PointCloud to incorporate f + delta_R + delta_H
 
-from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
+from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D, PyFootprint
 
 def getProbImpacts(curMission, tfailSec):
 
@@ -433,7 +433,7 @@ sumUpdatedProbs = PyGrid3D(); # Add in the updated probabilities as we go.
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
 footprintStart = 0.
-footprintUntil = 180.
+footprintUntil = 80.
 
 #TODO: MUST USE THE FAIL PROBABILITIES!!! 
 timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
@@ -487,6 +487,14 @@ for tx in range(len(timeRange)):
 
 
 
+# [0][-14121][6350] = 3.892401E-308
+
+
+emptySky = PySkyGrid(curMission=curMission)
+emptySky.applyCumulativeThreshold(sumUpdatedProbs, 1e-7, np.array([int(tfailSec/deltaTFail)]))
+# emptySky.applyCumulativeThreshold(sumUpdatedProbs, 1e-7, np.array([int(0)]))
+myFootprint = PyFootprint(emptySky)
+myFootprint.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fp_' + str(tfailSec) + '.kml', yyyy, mm, dd, hour, min)
 
 
 

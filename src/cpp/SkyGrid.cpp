@@ -26,6 +26,7 @@ SkyGrid::SkyGrid(string CapeLrhcFile, double xBinLength_in, double yBinLength_in
     isProbability = false;
     doneASH = false;
     hazardProbabilitiesGenerated = false;
+    fromEmpty = false;
 //    uniformProbabilityValue = -1;
 
     
@@ -55,6 +56,7 @@ SkyGrid::SkyGrid(PointCloud *newCloud, double xBinLength_in, double yBinLength_i
     isProbability = false;
     doneASH = false;
     hazardProbabilitiesGenerated = false;
+    fromEmpty = false;
 //    uniformProbabilityValue = -1;
 
 
@@ -73,7 +75,6 @@ SkyGrid::SkyGrid(double xBinLength_in, double yBinLength_in, double zBinHeight_i
     yBinLength = yBinLength_in;
     zBinHeight = zBinHeight_in;  //bin_size
     
-    
     // This will get set once you load some points in
 //    all_points_num_range = incomingGrid->getPointsRange();
     
@@ -86,9 +87,12 @@ SkyGrid::SkyGrid(double xBinLength_in, double yBinLength_in, double zBinHeight_i
     
     // Must also load things into all_points
     
+    // Since your'e going to be loading probabilities, you're not allowed to redo any of these, so set true.
     isProbability = true;
     doneASH = true;
     hazardProbabilitiesGenerated = true;
+    fromEmpty = true;
+    
 
 
 //
@@ -579,7 +583,7 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
 /*! This replicates, as closely as reasonably possible, the way the FAA creates SUAs from probability of
  *      impact debris clouds.  The
  */
-double SkyGrid::applyCumulativeThreshold(const Grid3D &grid, double thresh, vector<int> txVec){
+double SkyGrid::applyCumulativeThreshold(const Grid3D &grid_in, double thresh, vector<int> txVec){
     // txVec are the time indices where the points should be placed
     
     vector<vector<int> > IndicesHere;    // Stores the x,y,z indices from the grid
@@ -588,12 +592,20 @@ double SkyGrid::applyCumulativeThreshold(const Grid3D &grid, double thresh, vect
     vector<int> temp3Vec;
     temp3Vec.assign(3,0);
     
+    printf("passed in times:\n");
+    for (int tx = 0; tx < txVec.size(); tx++){
+        printf("  %d\n", txVec[tx]);
+    }
+    
+    // Dunno why, but const_iterators don't seem to work for me.  Just copy the values then.
+    map<int, map<int, map<int,double> > > grid = grid_in.getGrid();
+    
     // Iterators to run through the grid
     map<int, map<int, map<int,double> > >::iterator zit;
     map<int, map<int,double> >::iterator xit;
     map<int,double>::iterator yit;
     
-    for (zit = grid.getGrid().begin(); zit != grid.getGrid().end(); ++zit){
+    for (zit = grid.begin(); zit != grid.end(); ++zit){
         int zindex = zit->first;
         
         for (xit = zit->second.begin(); xit != zit->second.end(); ++xit){
@@ -603,26 +615,34 @@ double SkyGrid::applyCumulativeThreshold(const Grid3D &grid, double thresh, vect
                 int yindex = yit->first;
                 
                 double curProb = yit->second;
+//                double curProb = grid.at(zindex).at(xindex).at(yindex);
+                
+//                printf("[%d][%d][%d] = %E\n", zindex, xindex, yindex, curProb);
 
-                if (curProb > (thresh)) {
+                if (curProb > thresh) {
 
                     temp3Vec[0] = xindex;
                     temp3Vec[1] = yindex;
                     temp3Vec[2] = zindex;
-
-                    //PointsAtThisLevel[zindex] += 1;
+                    
+                    //printf("made temp3Vec...\n");
                     IndicesHere.push_back(temp3Vec);
+                    //printf("                 ...and pushed it\n");
+
                 } else {
+                    //printf("in the else clause\n");
                     maxAllowableProbability = std::max(maxAllowableProbability, curProb);
                 }
                 
             }
+            //printf("done with all the ys at this level\n");
         }
     }
     
+    printf("finished loop\n");
     // Now place the points in the all_points
     for (int tx = 0; tx < txVec.size(); tx++){
-        loadIndicesIntoAllPoints(tx,IndicesHere);
+        loadIndicesIntoAllPoints(txVec[tx],IndicesHere);
     }
     
     return maxAllowableProbability;
@@ -633,10 +653,11 @@ void SkyGrid::loadIndicesIntoAllPoints(int tx, vector<vector<int> > IndicesHere)
     // Turn it into a points vector and return it
     double eps = 1e-4;  // Add a little bit to make sure this gets binned properly later
     
-    if (tx != 0){
-        printf("ERROR: Not currently allowing tx to be anything other than zero.\n");
-        exit(-90);
-    }
+    
+//    if (tx != 0){
+//        printf("ERROR: Not currently allowing tx to be anything other than zero.\n");
+//        exit(-90);
+//    }
     
     long numAllPoints = all_points_total.size();
     if (numAllPoints > 0){
@@ -644,7 +665,8 @@ void SkyGrid::loadIndicesIntoAllPoints(int tx, vector<vector<int> > IndicesHere)
         exit(-90);
     }
     
-    all_points_total.assign(tx, vector<Point>());
+    int numTimePts = tx+1;  // tx is an index, so there's +1 time slots.  This will work for only the first tx.
+    all_points_total.assign(numTimePts, vector<Point>());
     
     unsigned long stopIX = IndicesHere.size();
     for (unsigned long ix = 0; ix < stopIX; ix++){
@@ -824,7 +846,10 @@ double SkyGrid::getZBinHeight(){
 
 int SkyGrid::getNumRange(){
     int ans = -1;
-    if (isProbability){
+    if (fromEmpty){
+        ans = (int) all_points_total.size();
+        
+    } else if (isProbability){
 //        ans = Probability.size();
         
         // Check if the vector is empty
@@ -856,8 +881,8 @@ int SkyGrid::getNumRange(){
         
 //        cout << "ISPRObABLITY ========================================================= " << ans << "   " << lastIX;
 //        cout << "\n\n\n\n\n\n\n\n";
-    }
-    else {
+        
+    } else {
 //        ans = Grid.size();
 //        cout << "In moving to DebIX versions of things, this here might be broken.  Exiting." << endl;
 //        exit(17);

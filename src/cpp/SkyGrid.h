@@ -136,8 +136,7 @@ private:
     const static double bufferDist = 0.;          // Want at least 10km on any edge for a histogram buffer.  TURNING OFF BUFFER!!!!
     int halfBufferCells;                                    // The number of extra cells you need on a side to have the bufferDist
     
-    bool isProbability;     // Once you convert the object to a probability, you can never go back and add more grid points.
-        
+    
 //    void GridTheSky(vector<vector<Point> > &total_points_at);   //[tx][point]   Only gets called in the constructorss
     void GridTheSky();   //[tx][point]   Only gets called in the constructorss
 
@@ -155,8 +154,10 @@ private:
 //    double generateAllPointsFromProbability(double thresh, int Ntotal, int numEventsSimulated,  double pFail);
 //    double generateAllPointsFromProbability002(double thresh, int Ntotal, int numEventsSimulated, double pFail);
 
+    bool isProbability;     // Once you convert the object to a probability, you can never go back and add more grid points.
     bool doneASH;
     bool hazardProbabilitiesGenerated;
+    bool fromEmpty;
 
     
 public:

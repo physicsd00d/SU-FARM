@@ -168,6 +168,10 @@ cdef extern from "SkyGrid.h":
         # double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
         double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail)
 
+        # double applyCumulativeThreshold(Grid3D grid, double thresh, vector[int] txVec)
+        double applyCumulativeThreshold(const Grid3D &grid, double thresh, vector[int] txVec)
+
+
         ### ==== Graveyard
         # void DumpGridToMatlab(char *fileName)
         # map[int, map[int, map[int,double]]] projectSpatialProbabilityFAA(double newDeltaXY, double newDeltaZ)
@@ -396,6 +400,11 @@ cdef class PySkyGrid:
             
     def generateAllPoints_CumulativeFAA(self, double thresh, int whichProb, double pFail):
         return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, pFail)
+
+    def applyCumulativeThreshold(self, PyGrid3D curGrid, double thresh, vector[int] txVec):
+        print "cython says txVec = {0}".format(txVec)
+        return self.thisptr.applyCumulativeThreshold(curGrid.thisptr[0], thresh, txVec)
+            # double applyCumulativeThreshold(const Grid3D &grid, double thresh, vector[int] txVec)
 
     ### ==== Graveyard ====
     # def DumpGridToMatlab(self, char *filename):
