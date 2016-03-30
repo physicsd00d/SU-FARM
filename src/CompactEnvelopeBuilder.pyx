@@ -42,6 +42,8 @@ cdef extern from "Grid3D.h":
         # Grid3D* operator+(Grid3D*)
         Grid3D operator+(const Grid3D &obj)
         Grid3D operator*(double k)
+        bool operator<=(const Grid3D &obj)
+
 
 cdef class PyGrid3D:
     cdef Grid3D *thisptr                    # hold a C++ instance which we're wrapping
@@ -74,7 +76,19 @@ cdef class PyGrid3D:
     def __mul__(PyGrid3D self, double k):
         ans = PyGrid3D()
         ans.thisptr[0] = (self.thisptr[0] * k)
-        return ans        
+        return ans    
+
+    # def __le__(PyGrid3D self, PyGrid3D obj):
+    #     return self.thisptr[0] <= obj.thisptr[0]
+
+    def __richcmp__(PyGrid3D self, PyGrid3D obj, int op):
+        # This is a cython-specific method that must be used for the "rich" comparisons
+        # Takes an integer code (op) to specify which rich comparison is desired
+        # <   0, # ==  2, # >   4, # <=  1, # !=  3, # >=  5
+        if op == 1:
+            return self.thisptr[0] <= obj.thisptr[0]
+        else:
+            raise NotImplementedError
 
     def getGrid(self):
         return self.thisptr.getGrid()

@@ -636,9 +636,9 @@ Grid3D SkyGrid::generateSpatialProbability(int whichProb, int J_maxTimeStep, int
                         SpatialProbabilty[zindex][xindex][yindex] = 1. - (1.-prevVal) * thisProb;
                         
 //                        [1][-14116][6352] = 0.000000e+00
-                        if ((zindex == 1) && (xindex == -14116) && (yindex == 6352)) {
+//                        if ((zindex == 1) && (xindex == -14116) && (yindex == 6352)) {
                             printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
-                        }
+//                        }
 
 //                        printf("[%d][%d][%d][%d] -> %E * %E\n", tx, zindex, xindex, yindex, prevVal, thisProb);
 

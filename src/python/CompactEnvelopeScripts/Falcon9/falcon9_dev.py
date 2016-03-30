@@ -136,11 +136,20 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 5.      # Seconds
+curMission['healthMonitoringLatency'] = 10.      # Seconds
 
 curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 2
 curMission['NASkm']                     = NASkm
+
+
+if curMission['deltaT'] != 1.0:
+    print "ERROR: Required deltaT = 1."
+    sys.exit()
+
+if (curMission['healthMonitoringLatency'] % curMission['deltaTFail']) != 0.:
+    print "ERROR: If you're not exploding every second, then your VHM latency must be a multiple of deltaTFail"
+    sys.exit()
 
 
 '''
@@ -251,6 +260,94 @@ mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
 
+# ### Prototyping the use of non-zero health monitoring.
+
+# # Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
+
+# # This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
+# # genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
+# # So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
+# # TODO: Change PointCloud to incorporate f + delta_R + delta_H
+
+# delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
+# delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
+# # Flow should go like this.  Knowing delta_R and delta_H ahead of time
+# # time = 0
+# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
+# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
+# debrisPickleFolder      = curMission['debrisPickleFolder']
+# deltaXY                 = curMission['deltaXY']
+# deltaZ                  = curMission['deltaZ']
+# tfailSec = 60.
+
+# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+# input = open(inFileName, 'rb')
+# cur_mpc = pickle.load(input)
+# input.close()
+
+# arefMeanList = cur_mpc['arefMeanList']
+# numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
+
+# from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
+
+# # Package them up into a PointCLoud
+# # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
+# curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+# # Place the cloud into a Grid
+# curSkyGrid              = PySkyGrid(curMission, curPointCloud)
+# h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+# h2                        = curMission['deltaXY'] 
+# # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+# # h2                        = curMission['h2'] 
+# curSkyGrid.generateASH(h1, h2)
+
+# def checkNorm(ash):
+#     curNorm = 0.
+#     for curZ in ash:
+#         for curX in ash[curZ]:
+#             for curY in ash[curZ][curX]:
+#                 curNorm += ash[curZ][curX][curY]
+#     return curNorm
+
+# # Okay, now I can look through the histograms any way I want
+# # curID = 10  # highest beta
+# curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
+# hist = dict()
+# ash = dict()
+# whichProb = 0   # Impact
+# for tx in range(300):
+#     hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
+#     ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
+
+#     # if len(hist[tx]) > 0:
+#     # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
+#     print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
+
+# print 'generateHazardProbabilities'
+# curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
+
+# whichProb = curSkyGrid.getProbImpactCode()
+# tempGrid3D = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec+150, tfailSec)
+# temp = tempGrid3D.getGrid()
+
+# for z in temp:
+#     for x in temp[z]:
+#         for y in temp[z][x]:
+#             print "[{0}][{1}][{2}] = {3:e}".format(z,x,y, temp[z][x][y]) 
+
+
+# newGrid = PyGrid3D(tempGrid3D) # Not okay
+
+# addGrid = tempGrid3D + newGrid
+
+
+
+
+
+
+
+
 ### Prototyping the use of non-zero health monitoring.
 
 # Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
@@ -262,77 +359,46 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 
 delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
 delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
+
+debrisPickleFolder      = curMission['debrisPickleFolder']
+# deltaXY                 = curMission['deltaXY']
+# deltaZ                  = curMission['deltaZ']
+from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
+
+
+
+
 # Flow should go like this.  Knowing delta_R and delta_H ahead of time
 # time = 0
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
-debrisPickleFolder      = curMission['debrisPickleFolder']
-deltaXY                 = curMission['deltaXY']
-deltaZ                  = curMission['deltaZ']
-tfailSec = 60.
+tfailSec = 0.
 
 inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
 input = open(inFileName, 'rb')
 cur_mpc = pickle.load(input)
 input.close()
 
-arefMeanList = cur_mpc['arefMeanList']
-numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
-
-from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
-
 # Package them up into a PointCLoud
-# NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
 curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
 
 # Place the cloud into a Grid
 curSkyGrid              = PySkyGrid(curMission, curPointCloud)
+
+# ASH them
 h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
 h2                        = curMission['deltaXY'] 
 # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
 # h2                        = curMission['h2'] 
 curSkyGrid.generateASH(h1, h2)
 
-def checkNorm(ash):
-    curNorm = 0.
-    for curZ in ash:
-        for curX in ash[curZ]:
-            for curY in ash[curZ][curX]:
-                curNorm += ash[curZ][curX][curY]
-    return curNorm
+# Calculate all of the hazard probabilities
+curSkyGrid.generateHazardProbabilities(cur_mpc['numberOfPiecesMeanList'])
 
-# Okay, now I can look through the histograms any way I want
-# curID = 10  # highest beta
-curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
-hist = dict()
-ash = dict()
-whichProb = 0   # Impact
-for tx in range(300):
-    hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
-    ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
-
-    # if len(hist[tx]) > 0:
-    # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
-    print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
-
-print 'generateHazardProbabilities'
-curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
-
+# Finally get the probabilities for the times we want
 whichProb = curSkyGrid.getProbImpactCode()
-tempGrid3D = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec+150, tfailSec)
-temp = tempGrid3D.getGrid()
-
-for z in temp:
-    for x in temp[z]:
-        for y in temp[z][x]:
-            print "[{0}][{1}][{2}] = {3:e}".format(z,x,y, temp[z][x][y]) 
-
-
-newGrid = PyGrid3D(tempGrid3D) # Not okay
-
-addGrid = tempGrid3D + newGrid
-
-
+P_RH = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_R + delta_H, tfailSec)
+P_H = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_H, tfailSec)
 
 
 #

@@ -84,5 +84,36 @@ Grid3D Grid3D::operator*(double k){
     return Grid3D(ans);
 }
 
+bool Grid3D::operator<=(const Grid3D &obj){
+    printf("LEQ operator!\n");
+    
+    // this <= obj
+    // thus should iterate over this, because if an [z,x,y] isn't in this, then it's automatically 0 <= obj,
+    //   assuming obj >= 0 which should be true.  Perhaps should check that as well.
+    
+//    bool ans = true;
+    
+    map<int, map<int, map<int,double> > >::iterator zit;
+    map<int, map<int,double> >::iterator xit;
+    map<int,double>::iterator yit;
+    
+    for (zit = this->SpatialProbabilty.begin(); zit != this->SpatialProbabilty.end(); ++zit){
+        int zindex = zit->first;
+        
+        for (xit = zit->second.begin(); xit != zit->second.end(); ++xit){
+            int xindex = xit->first;
+            
+            for (yit = xit->second.begin(); yit != xit->second.end(); ++yit){
+                int yindex = yit->first;
+                if (yit->second > obj.SpatialProbabilty.at(zindex).at(xindex).at(yindex)) {
+                    return false;
+                }
+            }
+        }
+    }
+    
+    return true;
+}
+
 
 
