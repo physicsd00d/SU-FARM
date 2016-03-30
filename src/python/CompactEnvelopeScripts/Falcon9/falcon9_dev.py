@@ -398,7 +398,7 @@ def getProbImpacts(curMission, tfailSec):
     curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
 
     # Place the cloud into a Grid
-    curSkyGrid              = PySkyGrid(curMission, curPointCloud)
+    curSkyGrid              = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
 
     # ASH them
     h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
@@ -475,6 +475,12 @@ for tx in range(len(timeRange)):
         sumUpdatedProbs += probUpdated[curTime]
         del probUpdated[curTime] # remove that one from the dict since it's already been used
 
+
+    # # Make the envelope (should be low memory, most points will be thrown out as redundant)
+    # print 'StoreFootprintAsVector'
+    # outfileStr = footprintVectorFolder + '/fpVec_' + str(tfailSec) + '.dat'
+    # myFootprint = PyFootprint(curSkyGrid)
+    # myFootprint.StoreFootprintAsVector(outfileStr)
 
     # All done here, increment time
     tfailSec += deltaTFail

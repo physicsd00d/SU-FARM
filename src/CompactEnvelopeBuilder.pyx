@@ -38,7 +38,7 @@ cdef extern from "Grid3D.h":
         Grid3D()
         Grid3D(const Grid3D &obj) # Copy constructor
         Grid3D(map[int, map[int, map[int,double]]] SpatialProbabilty_in)
-        map[int, map[int, map[int,double]]] getGrid()
+        map[int, map[int, map[int,double]]] getGrid() const
         # Grid3D* operator+(Grid3D*)
         Grid3D operator+(const Grid3D &obj)
         Grid3D operator*(double k)
@@ -100,6 +100,9 @@ cdef extern from "SkyGrid.h":
     cdef cppclass SkyGrid:
 #        SkyGrid(char *CapeLrhcFile, double xBinLength_in, double yBinLength_in, double zBinHeight_in)
         SkyGrid(PointCloud *newCloud, double xBinLength_in, double yBinLength_in, double zBinHeight_in)
+        SkyGrid(double xBinLength_in, double yBinLength_in, double zBinHeight_in,
+                 double all_points_UTC_in, double all_points_delta_t_in,
+                 double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in)
 
         double getLaunchLat()
         double getLaunchLon()
@@ -181,12 +184,35 @@ cdef extern from "SkyGrid.h":
 cdef class PySkyGrid:
     cdef SkyGrid *thisptr                    # hold a C++ instance which we're wrapping
     
-    def __cinit__(self, dict curMission, PyPointCloud incoming):
+    # def __cinit__(self, dict curMission, PyPointCloud incoming):
+    #     xBinLength_in = curMission['deltaXY']
+    #     yBinLength_in = curMission['deltaXY']
+    #     zBinHeight_in = curMission['deltaZ']
+    #     self.thisptr = new SkyGrid( incoming.thisptr,  xBinLength_in,  yBinLength_in,  zBinHeight_in)
+    
+
+    def __cinit__(self, **kwargs):
+        curMission = kwargs['curMission']
         xBinLength_in = curMission['deltaXY']
         yBinLength_in = curMission['deltaXY']
         zBinHeight_in = curMission['deltaZ']
-        self.thisptr = new SkyGrid( incoming.thisptr,  xBinLength_in,  yBinLength_in,  zBinHeight_in)
-    
+
+        if ('pointCloud' in kwargs):
+            incoming = <PyPointCloud> kwargs['pointCloud']
+            self.thisptr = new SkyGrid( incoming.thisptr,  xBinLength_in,  yBinLength_in,  zBinHeight_in)
+        else:
+            # Make an empty one
+            all_points_UTC_in = curMission['initialUTC']
+            all_points_delta_t_in = curMission['deltaTFail']  # footprint will have same time steps as simulated explosions, 
+                                                              #  otherwise there would be empty timesteps 
+            all_points_launchLat_in = curMission['launchLat']
+            all_points_launchLon_in = curMission['launchLon']
+            all_points_launchAzimuth_in = curMission['launchAzimuth']
+
+            self.thisptr = new SkyGrid(xBinLength_in, yBinLength_in, zBinHeight_in,
+                 all_points_UTC_in, all_points_delta_t_in,
+                 all_points_launchLat_in, all_points_launchLon_in, all_points_launchAzimuth_in)
+
     def __dealloc__(self):
         del self.thisptr
 

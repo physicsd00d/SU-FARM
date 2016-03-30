@@ -28,7 +28,7 @@ Grid3D::Grid3D( const Grid3D &obj){
 }// copy constructor
 
 
-map<int, map<int, map<int,double> > > Grid3D::getGrid(){
+map<int, map<int, map<int,double> > > Grid3D::getGrid() const{
     return SpatialProbabilty;
 }
 

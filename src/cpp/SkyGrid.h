@@ -164,6 +164,9 @@ public:
     SkyGrid(PointCloud *newCloud, double xBinLength_in, double yBinLength_in, double zBinHeight_in);
     SkyGrid(string CapeLrhcFile, double xBinLength_in, double yBinLength_in, double zBinHeight_in);
     SkyGrid(string SkyGridFileName);
+    SkyGrid(double xBinLength_in, double yBinLength_in, double zBinHeight_in,
+            double all_points_UTC_in, double all_points_delta_t_in,
+            double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in);
     
     int getProbImpactCode();
     int getProbCasualtyCode();
@@ -216,6 +219,12 @@ public:
 
     void generateHazardProbabilities(vector<int> numberOfPiecesMean);
     double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail);
+    
+    double applyCumulativeThreshold(const Grid3D &grid, double thresh, vector<int> txVec);
+    void loadIndicesIntoAllPoints(int tx, vector<vector<int> > IndicesHere);
+
+    
+    
     
     map<int, vector<vector<double> > > ProbabilityTotalStorage;    // Stores the x index, y index, and probability value for every cell at this tstep and zstep
     map<int, int> stopIXStorage;

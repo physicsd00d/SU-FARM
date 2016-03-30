@@ -64,6 +64,52 @@ SkyGrid::SkyGrid(PointCloud *newCloud, double xBinLength_in, double yBinLength_i
 }
 
 
+// Make an empty skygrid
+SkyGrid::SkyGrid(double xBinLength_in, double yBinLength_in, double zBinHeight_in,
+                 double all_points_UTC_in, double all_points_delta_t_in,
+                 double all_points_launchLat_in, double all_points_launchLon_in, double all_points_launchAzimuth_in){
+   
+    xBinLength = xBinLength_in;
+    yBinLength = yBinLength_in;
+    zBinHeight = zBinHeight_in;  //bin_size
+    
+    
+    // This will get set once you load some points in
+//    all_points_num_range = incomingGrid->getPointsRange();
+    
+    
+    all_points_UTC              = all_points_UTC_in;
+    all_points_delta_t          = all_points_delta_t_in;  //seconds.
+    all_points_launchLat        = all_points_launchLat_in;
+    all_points_launchLon        = all_points_launchLon_in;
+    all_points_launchAzimuth    = all_points_launchAzimuth_in;
+    
+    // Must also load things into all_points
+    
+    isProbability = true;
+    doneASH = true;
+    hazardProbabilitiesGenerated = true;
+
+
+//
+//    // Allocate the footprint vector
+//	footprint_storage3D.assign(footprint_num_range,vector<vector<vector<Point> > >());
+//    
+//	for (int t = 0; t < footprint_num_range; t++) {
+//		footprint_storage3D[t].assign(num_bins,vector<vector<Point> >());
+//    }
+//    
+//    // Snag a copy of all_points_total
+//    all_points_passed_in = incomingGrid->getAllPoints();
+    
+    
+    
+    
+}
+
+
+
+
 void SkyGrid::PythonDebrisIntoGrid(PointCloud *in){
     
     // Check that you can still use it
@@ -529,6 +575,100 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
 
 
 
+
+/*! This replicates, as closely as reasonably possible, the way the FAA creates SUAs from probability of
+ *      impact debris clouds.  The
+ */
+double SkyGrid::applyCumulativeThreshold(const Grid3D &grid, double thresh, vector<int> txVec){
+    // txVec are the time indices where the points should be placed
+    
+    vector<vector<int> > IndicesHere;    // Stores the x,y,z indices from the grid
+    double maxAllowableProbability = 0.;
+    
+    vector<int> temp3Vec;
+    temp3Vec.assign(3,0);
+    
+    // Iterators to run through the grid
+    map<int, map<int, map<int,double> > >::iterator zit;
+    map<int, map<int,double> >::iterator xit;
+    map<int,double>::iterator yit;
+    
+    for (zit = grid.getGrid().begin(); zit != grid.getGrid().end(); ++zit){
+        int zindex = zit->first;
+        
+        for (xit = zit->second.begin(); xit != zit->second.end(); ++xit){
+            int xindex = xit->first;
+            
+            for (yit = xit->second.begin(); yit != xit->second.end(); ++yit){
+                int yindex = yit->first;
+                
+                double curProb = yit->second;
+
+                if (curProb > (thresh)) {
+
+                    temp3Vec[0] = xindex;
+                    temp3Vec[1] = yindex;
+                    temp3Vec[2] = zindex;
+
+                    //PointsAtThisLevel[zindex] += 1;
+                    IndicesHere.push_back(temp3Vec);
+                } else {
+                    maxAllowableProbability = std::max(maxAllowableProbability, curProb);
+                }
+                
+            }
+        }
+    }
+    
+    // Now place the points in the all_points
+    for (int tx = 0; tx < txVec.size(); tx++){
+        loadIndicesIntoAllPoints(tx,IndicesHere);
+    }
+    
+    return maxAllowableProbability;
+}
+
+
+void SkyGrid::loadIndicesIntoAllPoints(int tx, vector<vector<int> > IndicesHere){
+    // Turn it into a points vector and return it
+    double eps = 1e-4;  // Add a little bit to make sure this gets binned properly later
+    
+    if (tx != 0){
+        printf("ERROR: Not currently allowing tx to be anything other than zero.\n");
+        exit(-90);
+    }
+    
+    long numAllPoints = all_points_total.size();
+    if (numAllPoints > 0){
+        printf("ERROR: Not currently allowed to add points more than once\n");
+        exit(-90);
+    }
+    
+    all_points_total.assign(tx, vector<Point>());
+    
+    unsigned long stopIX = IndicesHere.size();
+    for (unsigned long ix = 0; ix < stopIX; ix++){
+        Point hollowPoint;
+        vector<int> thisPt = IndicesHere[ix];
+        double lowerleftX = XREF + thisPt[0]*xBinLength;   // Note that xindex is most likely negative
+        double lowerleftY = YREF + thisPt[1]*yBinLength;   // Note that yindex may be positive or negative
+        double lowerleftZ = ZREF + thisPt[2]*zBinHeight;
+        
+        for (int dx = 0; dx < 2; dx++){
+            for (int dy = 0; dy < 2; dy++){
+                // BIG KLUDGE!!!  Hopefully fixes the fact that the swinging arm doesn't sort left-to-right
+                double randx = (rand() % 1000)/1000000.;
+                double randy = (rand() % 1000)/1000000.;
+                
+                double curx = lowerleftX + dx*xBinLength + randx;
+                double cury = lowerleftY + dy*yBinLength + randy;
+                double curz = lowerleftZ + eps;
+                
+                hollowPoint.set_xyz(curx, cury, curz);
+                all_points_total[tx].push_back(hollowPoint);
+                
+            } } }
+}
 
 
 
