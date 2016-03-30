@@ -549,7 +549,7 @@ void PointCloud::assemble_all_points_debris(vector<double> flatPointArray, vecto
         double timeInFlightCutoff = timeOffsetSec + reactionTimeSeconds;    //seconds
         if (timeInFlightCutoff < timeInFlight) {
             //update this if we're cutting off sooner
-            time_steps_out = (INTxx) ceil(timeInFlightCutoff/tstepSeconds);  } }
+            time_steps_out = (INTxx) ceil(timeInFlightCutoff/tstepSeconds) + 1;  } } //plus 1 for converting from times to steps
     
     //    cout << "~~~~~~~~~~ Entering assemble_all_points_debris ~~~~~~~~~~~~~~~" << endl;
     //    cout << "flatPointArray = " << flatPointArray[6] << endl;
