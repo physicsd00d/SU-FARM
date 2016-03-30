@@ -41,6 +41,7 @@ cdef extern from "Grid3D.h":
         map[int, map[int, map[int,double]]] getGrid()
         # Grid3D* operator+(Grid3D*)
         Grid3D operator+(const Grid3D &obj)
+        Grid3D operator*(double k)
 
 cdef class PyGrid3D:
     cdef Grid3D *thisptr                    # hold a C++ instance which we're wrapping
@@ -69,6 +70,11 @@ cdef class PyGrid3D:
         ans = PyGrid3D()
         ans.thisptr[0] = (self.thisptr[0] + obj.thisptr[0])
         return ans
+
+    def __mul__(PyGrid3D self, double k):
+        ans = PyGrid3D()
+        ans.thisptr[0] = (self.thisptr[0] * k)
+        return ans        
 
     def getGrid(self):
         return self.thisptr.getGrid()

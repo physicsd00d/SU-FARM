@@ -33,20 +33,13 @@ map<int, map<int, map<int,double> > > Grid3D::getGrid(){
 }
 
 Grid3D Grid3D::operator+(const Grid3D &in){
-    printf("Plus Operator!\n");
+//    printf("Plus Operator!\n");
     Grid3D ans;
-//    ans = this->SpatialProbabilty; // Start with current objects map then add in to it
     ans = in.SpatialProbabilty;      // Start with the incoming grid and add what we've already got to it
     
     map<int, map<int, map<int,double> > >::iterator zit;
     map<int, map<int,double> >::iterator xit;
     map<int,double>::iterator yit;
-    
-//    in.SpatialProbabilty;
-//    map<int, map<int, map<int,double> > > *grid = &(in.SpatialProbabilty);
-//    zit = grid.begin();
-//    zit = ((map<int, map<int, map<int,double> > >) in.SpatialProbabilty).begin();
-//    zit = this->SpatialProbabilty.begin();
     
     for (zit = this->SpatialProbabilty.begin(); zit != this->SpatialProbabilty.end(); ++zit){
         int zindex = zit->first;
@@ -64,7 +57,32 @@ Grid3D Grid3D::operator+(const Grid3D &in){
     
     return ans;
 }
-//Box operator+(consBox&);
+
+Grid3D Grid3D::operator*(double k){
+//    printf("Scalar Mult Operator!\n");
+    map<int, map<int, map<int,double> > > ans;
+//    ans = in.SpatialProbabilty;      // Start with the incoming grid and add what we've already got to it
+    
+    map<int, map<int, map<int,double> > >::iterator zit;
+    map<int, map<int,double> >::iterator xit;
+    map<int,double>::iterator yit;
+    
+    for (zit = this->SpatialProbabilty.begin(); zit != this->SpatialProbabilty.end(); ++zit){
+        int zindex = zit->first;
+        
+        for (xit = zit->second.begin(); xit != zit->second.end(); ++xit){
+            int xindex = xit->first;
+            
+            for (yit = xit->second.begin(); yit != xit->second.end(); ++yit){
+                int yindex = yit->first;
+                
+                ans[zindex][xindex][yindex] = yit->second * k;
+            }
+        }
+    }
+    
+    return Grid3D(ans);
+}
 
 
 

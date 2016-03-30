@@ -33,7 +33,7 @@ public:
     
     // Overloading operators
     Grid3D operator+(const Grid3D &obj);
-
+    Grid3D operator*(double k);
 
 };
 

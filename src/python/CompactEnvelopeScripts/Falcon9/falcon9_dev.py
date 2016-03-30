@@ -332,6 +332,9 @@ newGrid = PyGrid3D(tempGrid3D) # Not okay
 
 addGrid = tempGrid3D + newGrid
 
+
+
+
 #
 # time = 1
 # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
