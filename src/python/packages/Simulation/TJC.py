@@ -627,7 +627,7 @@ def genFootprint(curMission, tfailSec, curPFail):
                 prevMean = numberOfPiecesMeanList
 
                 # Place the cloud into a fresh Grid
-                curSkyGrid    = PySkyGrid(curMission, curPointCloud)
+                curSkyGrid    = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
             else:
                 if (arefMeanList != prevAref):
                     print 'ERROR: Using different area lists'
@@ -661,7 +661,7 @@ def genFootprint(curMission, tfailSec, curPFail):
         curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
 
         # Place the cloud into a Grid
-        curSkyGrid    = PySkyGrid(curMission, curPointCloud)
+        curSkyGrid    = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
 
     # Do the ASH
     # Must do the whole thing up-front.  On the fly only works with risk calculations at certain predetermined points.

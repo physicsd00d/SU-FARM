@@ -18,7 +18,7 @@ freshWind   = False
 freshDebris = False
 debug       = False
 
-doMain      = False
+doMain      = True
 addStageReentry = False
 
 
@@ -136,10 +136,10 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 20.      # Seconds
+curMission['healthMonitoringLatency'] = 10.      # Seconds
 
 curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 2
+curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
 
@@ -260,89 +260,6 @@ mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
 
-# ### Prototyping the use of non-zero health monitoring.
-
-# # Reaction time is applied within PointCloud, so all envelopes are automatically for t <= J
-
-# # This makes a footprint for a failure at ix over all time up to the reaction time, f + delta_R
-# # genFootprint(mission1, timeRange[ix], pFailThisTimestepVec[ix]) 
-# # So that's almost the argument of the second sum, but the pointcloud will need to keep up to f + delta_R + delta_H
-# # TODO: Change PointCloud to incorporate f + delta_R + delta_H
-
-# delta_H = curMission['healthMonitoringLatency']/curMission['deltaT']    # TODO round to integer
-# delta_R = curMission['reactionTimeSeconds']/curMission['deltaT']  # TODO round to integer
-# # Flow should go like this.  Knowing delta_R and delta_H ahead of time
-# # time = 0
-# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
-# # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
-# debrisPickleFolder      = curMission['debrisPickleFolder']
-# deltaXY                 = curMission['deltaXY']
-# deltaZ                  = curMission['deltaZ']
-# tfailSec = 60.
-
-# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-# input = open(inFileName, 'rb')
-# cur_mpc = pickle.load(input)
-# input.close()
-
-# arefMeanList = cur_mpc['arefMeanList']
-# numberOfPiecesMeanList  = cur_mpc['numberOfPiecesMeanList']
-
-# from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D#, PyFootprint
-
-# # Package them up into a PointCLoud
-# # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
-# curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
-
-# # Place the cloud into a Grid
-# curSkyGrid              = PySkyGrid(curMission, curPointCloud)
-# h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-# h2                        = curMission['deltaXY'] 
-# # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-# # h2                        = curMission['h2'] 
-# curSkyGrid.generateASH(h1, h2)
-
-# def checkNorm(ash):
-#     curNorm = 0.
-#     for curZ in ash:
-#         for curX in ash[curZ]:
-#             for curY in ash[curZ][curX]:
-#                 curNorm += ash[curZ][curX][curY]
-#     return curNorm
-
-# # Okay, now I can look through the histograms any way I want
-# # curID = 10  # highest beta
-# curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
-# hist = dict()
-# ash = dict()
-# whichProb = 0   # Impact
-# for tx in range(300):
-#     hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
-#     ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
-
-#     # if len(hist[tx]) > 0:
-#     # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
-#     print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
-
-# print 'generateHazardProbabilities'
-# curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
-
-# whichProb = curSkyGrid.getProbImpactCode()
-# tempGrid3D = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec+150, tfailSec)
-# temp = tempGrid3D.getGrid()
-
-# for z in temp:
-#     for x in temp[z]:
-#         for y in temp[z][x]:
-#             print "[{0}][{1}][{2}] = {3:e}".format(z,x,y, temp[z][x][y]) 
-
-
-# newGrid = PyGrid3D(tempGrid3D) # Not okay
-
-# addGrid = tempGrid3D + newGrid
-
-
-
 
 import numpy as np
 def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
@@ -401,10 +318,10 @@ def getProbImpacts(curMission, tfailSec):
     curSkyGrid              = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
 
     # ASH them
-    h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-    h2                        = curMission['deltaXY'] 
-    # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-    # h2                        = curMission['h2'] 
+    # h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    # h2                        = curMission['deltaXY'] 
+    h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    h2                        = curMission['h2'] 
     curSkyGrid.generateASH(h1, h2)
 
     # Calculate all of the hazard probabilities
@@ -423,6 +340,7 @@ def getProbImpacts(curMission, tfailSec):
 delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    
 delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  
 deltaTFail = int(curMission['deltaTFail'])
+thresh = curMission['thresh']
 
 probUnknown = dict()    # Holds the probability grids for the statetimes at which we don't have a VHM update yet
 probUpdated = dict()    # Holds the previous risks we were exposed to before the VHM updates told us we were safe.
@@ -433,14 +351,11 @@ sumUpdatedProbs = PyGrid3D(); # Add in the updated probabilities as we go.
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
 # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
 footprintStart = 0.
-footprintUntil = 80.
+footprintUntil = 180.
 
 #TODO: MUST USE THE FAIL PROBABILITIES!!! 
 timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
 
-
-# tfailSec = footprintStart
-# while tfailSec <= footprintUntil:
 for tx in range(len(timeRange)):
     tfailSec = timeRange[tx]
     curPFail = pFailThisTimestepVec[tx]
@@ -449,8 +364,7 @@ for tx in range(len(timeRange)):
 
     # This calculation doesn't account for the probability of failure, i.e. pFail = 1.
     P_RH, P_H = getProbImpacts(curMission, tfailSec)
-    # So do that now
-    P_RH    *= curPFail
+    P_RH    *= curPFail                                 # So do that now
     P_H     *= curPFail
 
     # P_H will start to get used at curTime + delta_H + deltaTFail and will be used at every subsequent step as well.
@@ -475,233 +389,76 @@ for tx in range(len(timeRange)):
         sumUpdatedProbs += probUpdated[curTime]
         del probUpdated[curTime] # remove that one from the dict since it's already been used
 
+    # This is the total cumulative spatial probability at this time
+    # P_Now = sumUpdatedProbs + probUnknown[curTime]
+    P_Now = probUnknown[curTime]
 
-    # # Make the envelope (should be low memory, most points will be thrown out as redundant)
-    # print 'StoreFootprintAsVector'
-    # outfileStr = footprintVectorFolder + '/fpVec_' + str(tfailSec) + '.dat'
-    # myFootprint = PyFootprint(curSkyGrid)
-    # myFootprint.StoreFootprintAsVector(outfileStr)
+    # Now that you've used it, delete it to save memory
+    del probUnknown[curTime]    
+
+    # Put this into a SkyGrid object so we can apply the threshold and make a footprint
+    skyNow = PySkyGrid(curMission=curMission)
+    skyNow.applyCumulativeThreshold(P_Now, thresh, np.array([int(tfailSec/deltaTFail)]))
+    myFootprint = PyFootprint(skyNow)
+    myFootprint.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fp_' + str(tfailSec) + '.kml', yyyy, mm, dd, hour, min)
+
+    # Store it
+    outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
+    myFootprint.StoreFootprintAsVector(outfileStr)
 
     # All done here, increment time
     tfailSec += deltaTFail
 
+# Now that we've made them all, merge them appropriately
+# Oh boy, this is confusing.  curMission['all_points_delta_t'] is the delta_t for the final envelopes, but not for the sub-envelopes from before
 
+def makeFootprintForTimes(curMission, timelo, timehi):
+    # For all the times [timelo, timehi], load up those vectors and merge em
+    tfailSec = timelo
+    while tfailSec <= timehi:
+        outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
+        if tfailSec == timelo:
+            totalFootPrint = ceb.PyFootprint(outfileStr, True)
+        else:
+            totalFootPrint.MergeFootprintVectors(ceb.PyFootprint(outfileStr, True))
 
-# [0][-14121][6350] = 3.892401E-308
+        # Increment and repeat
+        tfailSec += deltaTFail
 
+    # This converts the timestep of the footprint to be the argument.  Also combines all points together and rewraps them 
+    #  to produce a smooth and concise footprint.
+    totalFootPrint.SmoothedOut(curMission['all_points_delta_t'])
+    return totalFootPrint
 
-emptySky = PySkyGrid(curMission=curMission)
-emptySky.applyCumulativeThreshold(sumUpdatedProbs, 1e-7, np.array([int(tfailSec/deltaTFail)]))
-# emptySky.applyCumulativeThreshold(sumUpdatedProbs, 1e-7, np.array([int(0)]))
-myFootprint = PyFootprint(emptySky)
-myFootprint.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fp_' + str(tfailSec) + '.kml', yyyy, mm, dd, hour, min)
 
+    # numRange = totalFootPrint.getNumRange()
+    # print "numRange = {0}".format(numRange)
+    # totalFootPrint.SmoothedOut(numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
 
 
+for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
+    timelo = footprintStart + ix*footprintIntervals
+    timehi = np.min( (footprintStart + (ix+1)*footprintIntervals - deltaTFail, footprintUntil) )
+    tString = "{0}-{1}".format(timelo, timehi)
+    print tString
 
+    # Make a footprint with the final timing, assembled from all the subfootprints between timelo and timehi
+    curFP = makeFootprintForTimes(curMission, timelo, timehi)
 
-# Make footprint out of P_RH
+    # Merge them all together
+    if ix == 0:
+        footprintTotal = curFP
+    else:
+        print '\n\nMERGE'
+        footprintTotal.MergeFootprintVectors(curFP)
 
-# #
-# # time = 1
-# # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_R + delta_H) to be used immediately
-# # SkyGrid for P_I(x, f=1 | t <= f=1 + delta_H) to be used once the health update comes in
-# #
-# tfailSec = 0. + 1*deltaTFail
-# P_RH, P_H = getProbImpacts(curMission, tfailSec)
 
-# # P_H will start to get used at curTime + delta_H + deltaTFail and will be used at every subsequent step as well.
-# curTime = int(tfailSec)
-# probUpdated[curTime + delta_H + deltaTFail] = P_H
+    # Check it out
+    # curFP.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fp_' + tString + '.kml', yyyy, mm, dd, hour, min)
 
-# # This P_RH will get used for timesteps up to curTime + delta_H
-# # Need these to be their own separate objects, so use copy constructor to make them different
-# while (curTime <= tfailSec + delta_H):
-#     if curTime in probUnknown:
-#         probUnknown[curTime] += P_RH
-#     else:
-#         probUnknown[curTime] = PyGrid3D(P_RH)
-#     curTime += deltaTFail
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# footprintTotal = []
-
-# for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
-#     timelo = footprintStart + ix*footprintIntervals
-#     timehi = np.min( (footprintStart + (ix+1)*footprintIntervals, footprintUntil) )
-
-#     print 'TIMES: From {0} to {1}'.format(timelo, timehi)
-#     EVstrike, curFootPrint = makeFootprintFromTimes_InstantaneousOnly(curMission, timelo, timehi)
-#     print 'EV =  ' + str(EVstrike)
-
-#     # Now take that footprint and...
-#     # Smooth it out to a single timestep
-
-#     # This is what the footprint will look like if there was an "error" in generating it
-#     if curFootPrint == []:
-#         print "\n\n===========\nEMPTY FOOTPRINT!!!\n==============\n\n"
-#         continue
-
-#     numRange = curFootPrint.getNumRange()
-#     curFootPrint.SmoothedOut(numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
-
-#     numRange = curFootPrint.getNumRange()
-#     FPDeltaT = curFootPrint.getDeltaT()
-
-#     # Resize the deltaT to be only the length of the interval
-#     #   So if we're making an envelope at each second, then the footprint should be chopped at 1 second
-#     #   If we're combining times, like every 5 seconds or every minute, then it should be 5s or 60s
-#     curFootPrint.ChopTimeAt(footprintIntervals)
-
-#     # Translate the footprint forward to tfailSec
-#     if timelo > 0:
-#         curFootPrint.SlideFootprintBySeconds(timelo)
-
-#     # Merge it with the others
-#     if ix == 0:
-#         footprintTotal = curFootPrint
-#     else:
-#         print '\n\nMERGE'
-#         footprintTotal.MergeFootprintVectors(curFootPrint)
-
-
-#     # # Print to GE
-#     # debugFolder = 'GeneratedFiles/Sandbox/'
-#     # vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, timelo, timehi)
-#     # curFootPrint.ExportGoogleEarth(debugFolder + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
-
-#     # # Fprint.SmoothedOut(footprintIntervals)
-#     #
-#     # # Fprint.SmoothedOut()
-#     # curFootPrint.ExportGoogleEarth('GeneratedFiles/PythonGE_' + str(timelo) + 'To'
-#     #                                       + str(timehi) + 'FootprintSMOOTH.kml', yyyy, mm, dd, hour, min)
-
-# footprintTotal.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
-
-# # Just to be safe(?), set the params we need in order to translate / rotate
-# footprintTotal.SetAzimuthDeg(curMission['launchAzimuth'])
-# footprintTotal.SetLaunchLatDeg(curMission['launchLat'])
-# footprintTotal.SetLaunchLonDeg(curMission['launchLon'])
-
-# return footprintTotal
-
-
-
-
-
-### Match this
-# generateHazardProbabilities
-# [124][1][-14116][6352] -> 0.000000E+00 * 9.999613E-01
-# [125][1][-14116][6352] -> 3.873102E-05 * 9.999614E-01
-# [177][1][-14116][6352] -> 7.734734E-05 * 9.977185E-01
-# [178][1][-14116][6352] -> 2.358637E-03 * 9.954200E-01
-# [179][1][-14116][6352] -> 6.927807E-03 * 9.954235E-01
-# [180][1][-14116][6352] -> 1.147262E-02 * 9.954267E-01
-# [181][1][-14116][6352] -> 1.599340E-02 * 9.931317E-01
-# [182][1][-14116][6352] -> 2.275182E-02 * 9.954342E-01
-# [183][1][-14116][6352] -> 2.721378E-02 * 9.463568E-01
-# [184][1][-14116][6352] -> 7.939714E-02 * 9.308014E-01
-# [185][1][-14116][6352] -> 1.431016E-01 * 9.329589E-01
-# [186][1][-14116][6352] -> 2.005490E-01 * 8.832070E-01
-# [187][1][-14116][6352] -> 2.939193E-01 * 8.593692E-01
-# [188][1][-14116][6352] -> 3.932160E-01 * 8.461824E-01
-# [189][1][-14116][6352] -> 4.865500E-01 * 7.613635E-01
-# [190][1][-14116][6352] -> 6.090779E-01 * 6.300726E-01
-# [191][1][-14116][6352] -> 7.536907E-01 * 5.542229E-01
-# [192][1][-14116][6352] -> 8.634898E-01 * 5.403972E-01
-# [193][1][-14116][6352] -> 9.262302E-01 * 4.919908E-01
-# [194][1][-14116][6352] -> 9.637060E-01 * 4.470612E-01
-# [195][1][-14116][6352] -> 9.837743E-01 * 3.884570E-01
-# [196][1][-14116][6352] -> 9.936970E-01 * 3.572080E-01
-# [197][1][-14116][6352] -> 9.977485E-01 * 3.271343E-01
-# [198][1][-14116][6352] -> 9.992635E-01 * 2.962286E-01
-# [199][1][-14116][6352] -> 9.997818E-01 * 2.765135E-01
-# [200][1][-14116][6352] -> 9.999397E-01 * 2.281497E-01
-# [201][1][-14116][6352] -> 9.999862E-01 * 1.329828E-01
-# [202][1][-14116][6352] -> 9.999982E-01 * 8.110280E-02
-# [203][1][-14116][6352] -> 9.999999E-01 * 6.712495E-02
-# [204][1][-14116][6352] -> 1.000000E+00 * 6.856211E-02
-# [205][1][-14116][6352] -> 1.000000E+00 * 7.275751E-02
-# [206][1][-14116][6352] -> 1.000000E+00 * 7.370047E-02
-# [207][1][-14116][6352] -> 1.000000E+00 * 7.514612E-02
-# [208][1][-14116][6352] -> 1.000000E+00 * 7.866974E-02
-# [209][1][-14116][6352] -> 1.000000E+00 * 7.968113E-02
-# [210][1][-14116][6352] -> 1.000000E+00 * 8.333504E-02
-# [0][-14119][6352] = 7.222048e-02
-# [0][-14119][6353] = 3.279850e-02
-# [0][-14119][6354] = 5.102704e-04
-# [0][-14118][6352] = 9.982917e-01
-# [0][-14118][6353] = 5.089480e-01
-# [0][-14118][6354] = 1.050376e-02
-# [0][-14118][6350] = 1.263690e-01
-# [0][-14118][6351] = 8.839138e-01
-# [0][-14117][6352] = 9.999909e-01
-# [0][-14117][6353] = 8.021458e-01
-# [0][-14117][6354] = 5.295458e-02
-# [0][-14117][6351] = 6.394572e-01
-# [0][-14116][6352] = 9.999549e-01
-# [0][-14116][6353] = 7.140744e-01
-# [0][-14116][6354] = 2.815018e-03
-# [0][-14116][6351] = 3.389844e-02
-# [0][-14115][6352] = 3.844029e-03
-# [0][-14115][6353] = 5.366407e-03
-# [0][-14115][6351] = 3.425544e-05
-# [1][-14121][6351] = 3.370991e-01
-# [1][-14120][6351] = 6.343077e-01
-# [1][-14119][6352] = 1.641278e-01
-# [1][-14119][6351] = 1.000000e+00
-# [1][-14118][6352] = 1.000000e+00
-# [1][-14118][6353] = 9.726192e-03
-# [1][-14118][6350] = 1.532478e-02
-# [1][-14118][6351] = 1.000000e+00
-# [1][-14117][6352] = 1.000000e+00
-# [1][-14117][6353] = 6.535208e-01
-# [1][-14117][6351] = 1.000000e+00
-# [1][-14116][6352] = 1.000000e+00
-# [1][-14116][6353] = 7.220435e-01
-# [1][-14116][6351] = 5.312908e-05
-# [-1][0][0] = 0.000000e+00
-
-
-
-
-# from CompactEnvelopeBuilder import PyGrid3D
-# myGrid = PyGrid3D()  # Okay
-# newGrid = PyGrid3D(myGrid) # Not okay
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
+sys.exit()
 
 
 

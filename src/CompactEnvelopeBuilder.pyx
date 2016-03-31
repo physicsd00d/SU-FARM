@@ -402,7 +402,6 @@ cdef class PySkyGrid:
         return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, pFail)
 
     def applyCumulativeThreshold(self, PyGrid3D curGrid, double thresh, vector[int] txVec):
-        print "cython says txVec = {0}".format(txVec)
         return self.thisptr.applyCumulativeThreshold(curGrid.thisptr[0], thresh, txVec)
             # double applyCumulativeThreshold(const Grid3D &grid, double thresh, vector[int] txVec)
 

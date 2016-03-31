@@ -482,7 +482,7 @@ double SkyGrid::generateAllPoints_CumulativeFAA(double thresh, int whichProb, do
     // This generates the spatial probability over the grid originally specified
     int J_maxTimeStep   =  100000000; //s
     int f_startTimeStep = -100000000;
-    generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep);
+    SpatialProbabilty = generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep);
 
     // The thresholds given in the regulations, combined with how the FAA currently computes them, makes them
     //      pointlessly ill-defined because they neither specify what "cumulative" means nor the grid size for the threshold.
