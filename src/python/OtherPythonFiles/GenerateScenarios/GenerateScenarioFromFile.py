@@ -146,7 +146,7 @@ for elem in scenarioNameList:
             # Prototyping new getPositionedFootprint
             '''
 
-            curFootprint = PyFootprint(footprintLibrary + datName, asVector=True)
+            curFootprint = PyFootprint(footprintFileName=footprintLibrary + datName)
             targetAz    = float(curMission.azimuth)
             currentAz   = curFootprint.GetAzimuthDeg()
             # print '     Azimuth current = {0}, target = {1}'.format(currentAz, targetAz)

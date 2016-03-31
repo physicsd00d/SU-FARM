@@ -86,7 +86,7 @@ private:
 	void append_to_existing_footprint();
     
 	// --------- Some parameters that should eventually be variables -----------
-	const static double arm = 50000;
+	const static double arm = 50000;                // Pretty sure this is km
 	const static double eps = 1e-14;				//to account for roundoff error when finding 2pi angle 
 	
 	const static double min_z = 0.;

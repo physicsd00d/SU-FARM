@@ -173,7 +173,7 @@ curMission['launchAzimuth'] = 0.    #degrees, Caveat: we're starting the launch 
 
 #
 # curFileName = '/Users/marian/Documents/Research/Prop3Dof/CythonFiles/OtherPythonFiles/FootprintLibrary/workInProgressTJC01/SS2_America_workInProgressHEALTH.dat'
-# curFootprint = ceb.PyFootprint(curFileName, True)
+# curFootprint = ceb.PyFootprint(footprintFileName=curFileName)
 # curFootprint.SetAzimuthDeg(0.0)
 # curFootprint.StoreFootprintAsVector(curFileName)
 # sys.exit()

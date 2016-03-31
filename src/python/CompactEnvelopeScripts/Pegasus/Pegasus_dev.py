@@ -648,7 +648,7 @@ else:
 
     # Load the footprint
     curFPVecFile = '{0}/fpVec_{1}.dat'.format(curMission['footprintVectorFolder'], tfailSec)
-    curFootPrint = ceb.PyFootprint(curFPVecFile, True)
+    curFootPrint = ceb.PyFootprint(footprintFileName=curFPVecFile)
 
     # Smooth it out to a single timestep
     numRange = curFootPrint.getNumRange()
@@ -727,7 +727,7 @@ else:
 
 # # outfileStr = GeneratedFilesFolder + 'LynxMII_SSA.dat'
 # outfileStr = 'OtherPythonFiles/FootprintLibrary/LynxMII_SSA.dat'
-# thisFP = ceb.PyFootprint(outfileStr, True)
+# thisFP = ceb.PyFootprint(footprintFileName=outfileStr)
 # thisFP.SetAzimuthDeg(curMission['launchAzimuth'])
 # thisFP.StoreFootprintAsVector(outfileStr)
 

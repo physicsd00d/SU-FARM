@@ -908,9 +908,9 @@ if calcIndividualHazard:
 #    curSkyGrid    = ceb.PySkyGrid(curPointCloud, mission1['deltaXY'], mission1['deltaXY'], 5)
 #    curSkyGrid.generateAllPointsFromSimpleHistogram(thresh, totalNumTimeSteps, numEventsSimulated)
 #
-#    myFootprint = ceb.PyFootprint(curSkyGrid)
+#    myFootprint = ceb.PyFootprint(skygrid=curSkyGrid)
 #    if (ix == 0):
-#        totalFootprint = ceb.PyFootprint(curSkyGrid)
+#        totalFootprint = ceb.PyFootprint(skygrid=curSkyGrid)
 #    else:
 #        totalFootprint.MergeFootprintVectors(myFootprint)
 #        
@@ -967,7 +967,7 @@ if calcIndividualHazard:
 #    tfailSec += deltaTFail
 #
 #curSkyGrid.generateAllPointsFromGrid()
-#myFootprint = ceb.PyFootprint(curSkyGrid)
+#myFootprint = ceb.PyFootprint(skygrid=curSkyGrid)
 #myFootprint.ExportGoogleEarth('GeneratedFiles/PythonGE_forward.kml', yyyy, mm, dd, hour, min)
 
 
@@ -1036,7 +1036,7 @@ if calcIndividualHazard:
 #    tfailSec -= deltaTFail
 #
 #curSkyGrid.generateAllPointsFromGrid(mission1['deltaXY'])
-#myFootprint = ceb.PyFootprint(curSkyGrid)
+#myFootprint = ceb.PyFootprint(skygrid=curSkyGrid)
 #myFootprint.ExportGoogleEarth('GeneratedFiles/PythonGE_backward.kml', yyyy, mm, dd, hour, min)
 
 

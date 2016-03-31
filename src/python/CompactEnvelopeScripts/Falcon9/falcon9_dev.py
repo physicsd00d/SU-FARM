@@ -409,7 +409,7 @@ if runDev:
         # Put this into a SkyGrid object so we can apply the threshold and make a footprint
         skyNow = PySkyGrid(curMission=curMission)
         curEV = skyNow.applyCumulativeThreshold(P_Now, thresh, np.array([int(tfailSec/deltaTFail)]))
-        myFootprint = PyFootprint(skyNow)
+        myFootprint = PyFootprint(skygrid=skyNow)
         myFootprint.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fpNew_' + str(tfailSec) + '.kml', yyyy, mm, dd, hour, min)
 
         # Store it
@@ -431,9 +431,9 @@ if runDev:
         while tfailSec <= timehi:
             outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
             if tfailSec == timelo:
-                totalFootPrint = ceb.PyFootprint(outfileStr, True)
+                totalFootPrint = ceb.PyFootprint(footprintFileName=outfileStr)
             else:
-                totalFootPrint.MergeFootprintVectors(ceb.PyFootprint(outfileStr, True))
+                totalFootPrint.MergeFootprintVectors(ceb.PyFootprint(footprintFileName=outfileStr))
 
             # Increment and repeat
             tfailSec += deltaTFail
@@ -605,7 +605,7 @@ if addStageReentry:
 
     curPFail = 1.
     EV_strike, outfileStr = TJC.genFootprint(firstStageMission, tStage, curPFail)
-    firstStageFootprint = ceb.PyFootprint(outfileStr, True)
+    firstStageFootprint = ceb.PyFootprint(footprintFileName=outfileStr)
 
     firstStageFootprint.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
 
@@ -628,7 +628,7 @@ if addStageReentry:
 
 
     '''Now Merge with main footprint'''
-    totalFootprint = ceb.PyFootprint(mainFootprintFile, True)
+    totalFootprint = ceb.PyFootprint(footprintFileName=mainFootprintFile)
     totalFootprint.MergeFootprintVectors(firstStageFootprint)
     totalFootprint.StoreFootprintAsVector(totalFootprintFile)
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)

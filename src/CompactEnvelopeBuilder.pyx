@@ -533,16 +533,27 @@ cdef extern from "Footprint3D.h":
 
 cdef class PyFootprint:
     cdef Footprint3D *thisptr                    # hold a C++ instance which we're wrapping
-    
+
     # Typeless overloaded constructor
-    def __cinit__(self, incoming, asVector=False):
-        if (asVector == False):
+    def __cinit__(self, **kwargs):
+        if 'armLength' in kwargs:
+            armLength = kwargs['armLength']
+        else:
+            armLength = 5000. #km
+
+        if ('skygrid' in kwargs):
+            incoming = kwargs['skygrid']
+            # TODO: type check
             bin_size_in = -5    # This is for a pure PointCloud, which is kind of no longer allowed.  Must be SkyGrid.
             # Must first cast the incoming python object to be a known python object PySkyGrid, then can cast its thisptr to PointCloud
             self.thisptr = new Footprint3D(<PointCloud*> (<PySkyGrid>incoming).thisptr, bin_size_in)
+        elif 'footprintFileName' in kwargs:
+            footprintFileName = kwargs['footprintFileName']
+            # TODO: type check
+            self.thisptr = new Footprint3D(footprintFileName)    #incoming is a string here
         else:
-            self.thisptr = new Footprint3D(incoming)    #incoming is a string here
-    
+            print "No valid PyFootprint constructor for kwargs: {0}".format(kwargs)
+        
     def __dealloc__(self):
         del self.thisptr
     

@@ -300,7 +300,7 @@ if addStageReentry:
 
     curPFail = 1.
     EV_strike, outfileStr = TJC.genFootprint(firstStageMission, tStage, curPFail)
-    firstStageFootprint = ceb.PyFootprint(outfileStr, True)
+    firstStageFootprint = ceb.PyFootprint(footprintFileName=outfileStr)
 
     firstStageFootprint.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
 
@@ -323,7 +323,7 @@ if addStageReentry:
 
 
     '''Now Merge with main footprint'''
-    totalFootprint = ceb.PyFootprint(mainFootprintFile, True)
+    totalFootprint = ceb.PyFootprint(footprintFileName=mainFootprintFile)
     totalFootprint.MergeFootprintVectors(firstStageFootprint)
     totalFootprint.StoreFootprintAsVector(totalFootprintFile)
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
