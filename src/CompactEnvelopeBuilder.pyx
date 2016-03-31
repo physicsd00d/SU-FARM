@@ -93,6 +93,9 @@ cdef class PyGrid3D:
     def getGrid(self):
         return self.thisptr.getGrid()
 
+    # def removeNoDanger(self, PyGrid3D obj):
+        # 
+
 
 ## ~~~~~~~~~~~~~~~~~~~~~ SKYGRID CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # cdef extern from "SkyGrid.h" namespace "SkyGrid":
@@ -495,7 +498,8 @@ cdef extern from "Footprint3D.h":
         #Footprint3D(char *pointsFile, double bin_size_in)
         #void generate_footprint_at_timesteps()
 #        Footprint3D(PointCloud &incoming)
-        Footprint3D(PointCloud *incoming, double bin_size_in)
+        Footprint3D(PointCloud *incoming, double bin_size_in, double arm_length_in)  
+        Footprint3D(PointCloud *incoming, double bin_size_in) # arm_length_in has default value, but need to let cython know like this.
         
         void store_footprint_as_vector(char *footprintFileName)
         int load_footprint_as_vector(char *footprintFileName)
@@ -513,13 +517,16 @@ cdef extern from "Footprint3D.h":
         
         void ChangeAzimuthToDeg(double newAzimuth)
         void ChangeLaunchSiteToDeg(double gdlatIN, double lonIN)
-        void ShiftFootprintByMinutes(int HowManyMinutes)
+        #void ShiftFootprintByMinutes(int HowManyMinutes)  # Don't use this. SlideFootprintBySeconds instead?
 
         void exportGoogleEarth(char *googleEarthFile, int yyyy, int mm, int dd, int hour, int min)
         void make_facet_files(char *folderName, int startTimeMinutes, int offsetTimeMinutes, int tstepMinutes)
 
         void MergeFootprintVectors(Footprint3D *incomingFP)
+        void SmoothedOut(double newDeltaT, double arm_length_in)
         void SmoothedOut(double newDeltaT)
+        void SmoothedOut()
+        int ProjectAllPointsDown(double arm_length_in)
         int ProjectAllPointsDown()
         double ChopTimeAt(double seconds)
 
@@ -536,21 +543,26 @@ cdef class PyFootprint:
 
     # Typeless overloaded constructor
     def __cinit__(self, **kwargs):
-        if 'armLength' in kwargs:
-            armLength = kwargs['armLength']
-        else:
-            armLength = 5000. #km
 
+        # Can either pass in a PySkyGrid object
         if ('skygrid' in kwargs):
-            incoming = kwargs['skygrid']
-            # TODO: type check
+            incoming = kwargs['skygrid']    # TODO: type check
             bin_size_in = -5    # This is for a pure PointCloud, which is kind of no longer allowed.  Must be SkyGrid.
             # Must first cast the incoming python object to be a known python object PySkyGrid, then can cast its thisptr to PointCloud
-            self.thisptr = new Footprint3D(<PointCloud*> (<PySkyGrid>incoming).thisptr, bin_size_in)
+
+            # If you don't pass in an armLength, then the envelopes will be convex by default.  If you want a shorter arm though, go for it.
+            if 'armLength' in kwargs:
+                armLength = kwargs['armLength']     # [km]   TODO: type check
+                self.thisptr = new Footprint3D(<PointCloud*> (<PySkyGrid>incoming).thisptr, bin_size_in, armLength)
+            else:
+                self.thisptr = new Footprint3D(<PointCloud*> (<PySkyGrid>incoming).thisptr, bin_size_in)
+
+        # Or can pass in a filename for a previously generated footprint
         elif 'footprintFileName' in kwargs:
-            footprintFileName = kwargs['footprintFileName']
-            # TODO: type check
-            self.thisptr = new Footprint3D(footprintFileName)    #incoming is a string here
+            footprintFileName = kwargs['footprintFileName']         # TODO: type check
+            self.thisptr = new Footprint3D(footprintFileName)       # footprintFileName is a string here
+
+        # Or you can be an idiot
         else:
             print "No valid PyFootprint constructor for kwargs: {0}".format(kwargs)
         
@@ -596,17 +608,41 @@ cdef class PyFootprint:
     def getDeltaT(self):
         return self.thisptr.getDeltaT()
 
-    def ShiftFootprintByMinutes(self, int HowManyMinutes):
-        self.thisptr.ShiftFootprintByMinutes(HowManyMinutes)
+    # def ShiftFootprintByMinutes(self, int HowManyMinutes):
+    #     self.thisptr.ShiftFootprintByMinutes(HowManyMinutes)
     
     def MergeFootprintVectors(self, PyFootprint incomingFP):
         self.thisptr.MergeFootprintVectors(incomingFP.thisptr)
     
-    def SmoothedOut(self, newDeltaT = -1.):
-        self.thisptr.SmoothedOut(newDeltaT)
+    # def SmoothedOut(self, newDeltaT = -1.):
+    #     self.thisptr.SmoothedOut(newDeltaT)
+
+    def SmoothedOut(self, **kwargs):
+        if len(kwargs) == 0:
+            # Smooth things but keep the same delta_t as before.
+            self.thisptr.SmoothedOut()
+        else:
+            if 'newDeltaT' in kwargs:
+                newDeltaT = kwargs['newDeltaT']   # You passed in this newDeltaT
+            else:
+                newDeltaT = -1  # This means you didn't pass in deltaT but you DID request a new arm length
+                                # Setting newDeltaT to an "invalid" value will leave the deltaT of the footprint untouched.
+
+            if 'armLength' in kwargs:
+                armLength = kwargs['armLength']
+                self.thisptr.SmoothedOut(newDeltaT, armLength)
+            else:
+                self.thisptr.SmoothedOut(newDeltaT)
+
+
+
     
-    def ProjectAllPointsDown(self):
-        return self.thisptr.ProjectAllPointsDown()
+    def ProjectAllPointsDown(self, **kwargs):
+        if 'armLength' in kwargs:
+            armLength = kwargs['armLength']
+            return self.thisptr.ProjectAllPointsDown(armLength)
+        else:
+            return self.thisptr.ProjectAllPointsDown()
     
     def ChopTimeAt(self, double seconds):
         return self.thisptr.ChopTimeAt(seconds)

@@ -320,7 +320,7 @@ if not debug:
 #
 #         print 'EV =  ' + str(EVstrike)
 #
-#         Fprint.SmoothedOut(footprintIntervals)
+#         Fprint.SmoothedOut(newDeltaT=footprintIntervals)
 #         # Fprint.SmoothedOut()
 #         Fprint.ExportGoogleEarth('GeneratedFiles/PythonGE_' + str(timelo) + 'To'
 #                                               + str(timehi) + 'FootprintSMOOTH.kml', yyyy, mm, dd, hour, min)

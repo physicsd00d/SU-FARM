@@ -29,7 +29,7 @@
 string convert_min_to_time(int total_min);
 
 
-Footprint3D::Footprint3D() {}
+Footprint3D::Footprint3D() {}               // Never use this one.
 
 Footprint3D::~Footprint3D(){
 //	cout << "In the full destructor" << endl;
@@ -149,7 +149,10 @@ void Footprint3D::RemoveFootprintKeepTiming(){
 //	Footprint3D(pointsFile, bin_size_in);
 //}
 
+// Not currently being used in Cython, but good to keep around.
 Footprint3D::Footprint3D(string pointsFile, double bin_size_in) {
+    arm_length = 50000.;
+    
 	// Bin the points by ALTITUDE
 	bin_size = bin_size_in;
 	num_bins = (INTxx) ceil((max_z - min_z)/bin_size);
@@ -191,7 +194,7 @@ Footprint3D::Footprint3D(string pointsFile, double bin_size_in) {
 
 
 Footprint3D::Footprint3D(PointCloud &incomingGrid) {
-    
+    arm_length = 50000.;
     cout << "\n\n\nIN THE POINTCLOUD CONSTRUCTOR ~~~~~~~~~~~~~~~~~~\n\n\n";
 
     
@@ -269,7 +272,9 @@ Footprint3D::Footprint3D(PointCloud &incomingGrid) {
 
 
 // I think Cython can't pass c++ objects, but it can pass pointers
-Footprint3D::Footprint3D(PointCloud *incomingGrid, double bin_size_in = -1) {
+Footprint3D::Footprint3D(PointCloud *incomingGrid, double bin_size_in = -1, double arm_length_in) {
+    arm_length = arm_length_in;
+    printf("arm_length = %f\n", arm_length);
     
     int objectID = incomingGrid->identifyYourself();
     if (objectID == 1){
@@ -328,7 +333,7 @@ Footprint3D::Footprint3D(PointCloud *incomingGrid, double bin_size_in = -1) {
     if (debugHere){
         int footprint_tstep = 15;
         int zbinIX = 0;
-        int num_hulls_here = footprint_storage3D[footprint_tstep][zbinIX].size();
+        int num_hulls_here = (int) footprint_storage3D[footprint_tstep][zbinIX].size();
         cout << "%footprint_tstep = " << footprint_tstep << endl;
         
         for (int hullIX = 0; hullIX < num_hulls_here; hullIX++) {
@@ -612,6 +617,9 @@ int Footprint3D::load_footprint_as_vector(string footprintFileName) {
     
 
 	Destruct_footprint();
+    
+    arm_length = -1.;   // The arm should have already been swung.  Don't you dare try to do it again.
+                        // TODO: Save and read in arm_length.  Very low priority.
 	
 	ifstream inFile;
 	inFile.open(footprintFileName.c_str(), ios::in | ios::binary);
@@ -1334,6 +1342,8 @@ void Footprint3D::test_drive_swinging_arm(int timeIX) {
 
 vector<vector<int> > Footprint3D::swing_the_arm(vector <Point> &unique_points) {
 
+    printf("     arm_length = %f\n", arm_length);
+
 	vector<int> hull_indices;
 	vector<vector<int> > hull_indices_storage;
 	
@@ -1400,7 +1410,7 @@ vector<vector<int> > Footprint3D::swing_the_arm(vector <Point> &unique_points) {
 				if (cur_pt == avail_IX[k]) {	//throw out current point from calculations
 					range = 1e6; }
 				
-				if ((range > 0.0) && (range < arm)) {
+				if ((range > 0.0) && (range < arm_length)) {
 					//get angle and transform it be be from [0,2pi] measured clockwise from +x axis
 					double angle = atan2(dy, dx);
 					if (dy < 0) {
@@ -2062,8 +2072,12 @@ void Footprint3D::append_to_existing_footprint() {
  *      boundaries of the shape, you can call this without any deltaT change
  *      and it will rerun the footprint generation algorithm for you.
  */
-void Footprint3D::SmoothedOut(double newDeltaT){
-
+void Footprint3D::SmoothedOut(double newDeltaT, double arm_length_in){
+    arm_length = arm_length_in;
+    
+    // If you pass in a "bad" newDeltaT, then we'll keep the timing unchanged.
+    // So pass in something like newDeltaT = 0 if you don't want to alter the deltaT
+    
     // ------------
     // This first big loop simply takes the incoming footprint structure, and converts it into Points
     // ------------
@@ -2452,7 +2466,8 @@ void Footprint3D::MergeFootprintVectors(Footprint3D &incomingFP){
     return;
 }
 
-int Footprint3D::ProjectAllPointsDown(){
+int Footprint3D::ProjectAllPointsDown(double arm_length_in){
+    arm_length = arm_length_in;
     
 //    cout << "launcLatTEMP = " << getLaunchLat() << endl;
 
@@ -2691,12 +2706,11 @@ void Footprint3D::ShiftFootprintByMinutes(int shiftHowManyMinutes){
         shiftedFootprint.AddToFootprintUTC(0, 1);
 //        MergeFootprintVectors(shiftedFootprint);
     }
-//        this->MergeFootprintVectors(shiftedFootprint); }
-//        CapeFootprint.MergeFootprintVectors(shiftedFootprint); }
     
     // Combine them all into something smooth
+    printf("ERROR: You're about to call this function but maybe you never specified the arm_length.  Don't use this function for now\n");
+    exit(9);
     SmoothedOut();
-//    CapeFootprint.SmoothedOut();
     
     
     return;

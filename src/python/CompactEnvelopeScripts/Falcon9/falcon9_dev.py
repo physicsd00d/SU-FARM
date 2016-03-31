@@ -136,7 +136,7 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 10.      # Seconds
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 1
@@ -272,6 +272,8 @@ totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageD
 
 runDev = True
 if runDev:
+    armLength = 10.
+
     import numpy as np
     def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
         deltaTFail                  = curMission['deltaTFail']
@@ -399,9 +401,17 @@ if runDev:
             del probUpdated[curTime] # remove that one from the dict since it's already been used
 
         # This is the total cumulative spatial probability at this time
-        P_Now = sumUpdatedProbs + probUnknown[curTime]
-        # P_Now = probUnknown[curTime]
+        # P_Now = sumUpdatedProbs + probUnknown[curTime]
+        P_Now = probUnknown[curTime]
         # P_Now = P_RH
+        # P_Now = sumUpdatedProbs
+
+        ## TODO: Turn off the hazard areas where the danger is completely passed
+        # Don't need to block off xyz in sumUpdatedProbs if probUnknown(xyz) = 0
+        # if probUnknown(xyz) == 0  ->  sumUpdatedProbs(xyz) = 0
+        # if probUnknown(xyz) > 0   ->  sumUpdatedProbs(xyz) = sumUpdatedProbs(xyz)
+        # sumUpdatedProbsPruned = sumUpdatedProbs.removeNoDanger(probUnknown[curTime])
+
 
         # Now that you've used it, delete it to save memory
         del probUnknown[curTime]    
@@ -409,7 +419,7 @@ if runDev:
         # Put this into a SkyGrid object so we can apply the threshold and make a footprint
         skyNow = PySkyGrid(curMission=curMission)
         curEV = skyNow.applyCumulativeThreshold(P_Now, thresh, np.array([int(tfailSec/deltaTFail)]))
-        myFootprint = PyFootprint(skygrid=skyNow)
+        myFootprint = PyFootprint(skygrid=skyNow, armLength=armLength)
         myFootprint.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fpNew_' + str(tfailSec) + '.kml', yyyy, mm, dd, hour, min)
 
         # Store it
@@ -440,13 +450,13 @@ if runDev:
 
         # This converts the timestep of the footprint to be the argument.  Also combines all points together and rewraps them 
         #  to produce a smooth and concise footprint.
-        totalFootPrint.SmoothedOut(curMission['all_points_delta_t'])
+        #totalFootPrint.SmoothedOut(newDeltaT=curMission['all_points_delta_t'], armLength=armLength)
         return totalFootPrint
 
 
         # numRange = totalFootPrint.getNumRange()
         # print "numRange = {0}".format(numRange)
-        # totalFootPrint.SmoothedOut(numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
+        # totalFootPrint.SmoothedOut(newDeltaT=numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
 
 
     for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
@@ -607,7 +617,7 @@ if addStageReentry:
     EV_strike, outfileStr = TJC.genFootprint(firstStageMission, tStage, curPFail)
     firstStageFootprint = ceb.PyFootprint(footprintFileName=outfileStr)
 
-    firstStageFootprint.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
+    firstStageFootprint.SmoothedOut()   #I believe this will simply smooth the footprints and not alter the timesteps
 
     # Just to be safe(?), set the params we need in order to translate / rotate
     firstStageFootprint.SetAzimuthDeg(firstStageMission['launchAzimuth'])

@@ -213,7 +213,7 @@ def GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, fo
             continue
 
         numRange = curFootPrint.getNumRange()
-        curFootPrint.SmoothedOut(numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
+        curFootPrint.SmoothedOut(newDeltaT=numRange * curMission['all_points_delta_t'])  # This will make footprintDelaT = numRange, and then change numRange to = 1
 
         numRange = curFootPrint.getNumRange()
         FPDeltaT = curFootPrint.getDeltaT()
@@ -240,13 +240,13 @@ def GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, fo
         # vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, timelo, timehi)
         # curFootPrint.ExportGoogleEarth(debugFolder + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
-        # # Fprint.SmoothedOut(footprintIntervals)
+        # # Fprint.SmoothedOut(newDeltaT=footprintIntervals)
         #
         # # Fprint.SmoothedOut()
         # curFootPrint.ExportGoogleEarth('GeneratedFiles/PythonGE_' + str(timelo) + 'To'
         #                                       + str(timehi) + 'FootprintSMOOTH.kml', yyyy, mm, dd, hour, min)
 
-    footprintTotal.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
+    footprintTotal.SmoothedOut()   #I believe this will simply smooth the footprints and not alter the timesteps
 
     # Just to be safe(?), set the params we need in order to translate / rotate
     footprintTotal.SetAzimuthDeg(curMission['launchAzimuth'])
@@ -273,7 +273,7 @@ def GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footp
 
         print 'EV =  ' + str(EVstrike)
 
-        Fprint.SmoothedOut(footprintIntervals)
+        Fprint.SmoothedOut(newDeltaT=footprintIntervals)
         # Fprint.SmoothedOut()
         # Fprint.ExportGoogleEarth('GeneratedFiles/PythonGE_' + str(timelo) + 'To'
         #                                       + str(timehi) + 'FootprintSMOOTH.kml', yyyy, mm, dd, hour, min)

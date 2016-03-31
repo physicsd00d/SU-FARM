@@ -302,7 +302,7 @@ if addStageReentry:
     EV_strike, outfileStr = TJC.genFootprint(firstStageMission, tStage, curPFail)
     firstStageFootprint = ceb.PyFootprint(footprintFileName=outfileStr)
 
-    firstStageFootprint.SmoothedOut(0)   #I believe this will simply smooth the footprints and not alter the timesteps
+    firstStageFootprint.SmoothedOut()   # this will simply smooth the footprints and not alter the timesteps
 
     # Just to be safe(?), set the params we need in order to translate / rotate
     firstStageFootprint.SetAzimuthDeg(firstStageMission['launchAzimuth'])

@@ -86,7 +86,7 @@ private:
 	void append_to_existing_footprint();
     
 	// --------- Some parameters that should eventually be variables -----------
-	const static double arm = 50000;                // Pretty sure this is km
+	double arm_length;                                     // Pretty sure this is km
 	const static double eps = 1e-14;				//to account for roundoff error when finding 2pi angle 
 	
 	const static double min_z = 0.;
@@ -170,7 +170,7 @@ public:
     Footprint3D(string SUAFile, double timeOn, double timeOff);
 //    Footprint3D(SkyGrid incomingGrid);
     Footprint3D(PointCloud &incoming);
-    Footprint3D(PointCloud *incoming, double bin_size_in);
+    Footprint3D(PointCloud *incoming, double bin_size_in, double arm_length_in = 50000.);
 //    Footprint3D(SkyGrid *incoming);
 
 
@@ -213,7 +213,7 @@ public:
 //	void MergeFootprintVectors(string FP2, string FPOut);
     void MergeFootprintVectors(Footprint3D &incomingFP);
     void MergeFootprintVectors(Footprint3D *incomingFP);    // Cython deals in pointers, not the actual objects themselves
-    void SmoothedOut(double newDeltaT = -1);
+    void SmoothedOut(double newDeltaT = -1, double arm_length_in = 50000.);
 
 
     // ----------- Functions involved in footprint manipulations ---------------
@@ -231,7 +231,7 @@ public:
     
     vector<vector<Point> > DumpFootprintToPoints();
     vector<Point> CollapseFootprintToPoints();
-    int ProjectAllPointsDown();
+    int ProjectAllPointsDown(double arm_length_in = 50000.);
 
 //    void GridTheSky(vector<vector<Point> > &total_points_at);
 //    void ExportBinnedDebrisGoogleEarth();

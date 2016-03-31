@@ -297,7 +297,7 @@ else:
         # Now take that footprint and...
         # Smooth it out to a single timestep
         numRange = curFootPrint.getNumRange()
-        curFootPrint.SmoothedOut(numRange)  # This will make footprintDelaT = numRange, and then change numRange to = 1
+        curFootPrint.SmoothedOut(newDeltaT=numRange)  # This will make footprintDelaT = numRange, and then change numRange to = 1
 
         numRange = curFootPrint.getNumRange()
         FPDeltaT = curFootPrint.getDeltaT()
@@ -324,7 +324,7 @@ else:
         # vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, timelo, timehi)
         # curFootPrint.ExportGoogleEarth(debugFolder + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
-        # # Fprint.SmoothedOut(footprintIntervals)
+        # # Fprint.SmoothedOut(newDeltaT=footprintIntervals)
         #
         # # Fprint.SmoothedOut()
         # curFootPrint.ExportGoogleEarth('GeneratedFiles/PythonGE_' + str(timelo) + 'To'
