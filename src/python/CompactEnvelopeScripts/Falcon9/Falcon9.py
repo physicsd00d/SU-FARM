@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
 doMain      = True
@@ -50,7 +50,7 @@ from copy import deepcopy
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Falcon9
 launchLocation  = LaunchSites.Cape
-vehicleNotes    = 'space2015'
+vehicleNotes    = ''
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -113,7 +113,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -136,11 +136,20 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 5.      # Seconds
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
-curMission['numNodes']                  = 2 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 2
+curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
+
+
+if curMission['deltaT'] != 1.0:
+    print "ERROR: Required deltaT = 1."
+    sys.exit()
+
+if (curMission['healthMonitoringLatency'] % curMission['deltaTFail']) != 0.:
+    print "ERROR: If you're not exploding every second, then your VHM latency must be a multiple of deltaTFail"
+    sys.exit()
 
 
 '''
@@ -197,7 +206,7 @@ curMission['ExportDateDT'] = ExportDate
 if debug:
     # Change a few values
     curMission['debrisCatFile']           = 'Debug.txt'
-    curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+    curMission['reactionTimeSeconds']       = 5*60.     # The number of minutes that the NAS needs to safely handle a sudden debris event.
     curMission['numPiecesPerSample']      = 2      # The number of pieces to consider within each debris group
 
 
@@ -206,7 +215,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
 
     numTrajSamples = 1
-    numWindSamples = 120
+    numWindSamples = 2
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
@@ -250,26 +259,110 @@ vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, vehicleNotes
 mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
-if doMain:
+# import numpy as np
+# t_lo = .0
+# t_hi = 170.
+# deltaTFail = curMission['deltaTFail']
+# timeVec = np.arange(t_hi*1.0,t_lo-deltaTFail,-deltaTFail)        #curTime is in seconds
+# for curTime in timeVec:
+#     print curTime
+#     # TJC.PlotDebrisFromExplodeTime(curMission, profiles, curTime, cutoffNAS = True)
+#     TJC.PlotSubEnvelopes(curMission, curTime)
+# sys.exit()
 
-    # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles)
-    # print "tProactive = {0}\n".format(tProactive)
+
+
+# debugSingleTime = False
+# if debugSingleTime:
+#      ### ===== DEBUG =========
+#     tfailSec = 70.
+
+#     from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
+#     import pickle
+#     import numpy as np
+
+#     deltaXY                 = curMission['deltaXY']
+#     deltaZ                  = curMission['deltaZ']
+#     h1                      = curMission['h1']
+#     h2                      = curMission['h2']
+#     debrisPickleFolder      = curMission['debrisPickleFolder']
+#     footprintVectorFolder   = curMission['footprintVectorFolder']
+#     thresh                  = curMission['thresh']
+#     cumulative              = curMission['cumulative']
+#     whichProbability        = curMission['whichProbability']
+
+#     inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+#     input = open(inFileName, 'rb')
+#     cur_mpc = pickle.load(input)
+#     input.close()
+
+#     arefMeanList = cur_mpc['arefMeanList']
+#     numberOfPiecesMeanList = cur_mpc['numberOfPiecesMeanList']
+
+#     # Package them up into a PointCLoud
+#     # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
+#     curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+#     # Place the cloud into a Grid
+#     curSkyGrid    = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
+
+#     # # Now if I ASH without ASHing, that should just give me the unspread probabilities
+#     print 'ASHING'
+#     h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+#     h2                        = curMission['deltaXY'] 
+#     # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+#     # h2                        = curMission['h2'] 
+#     curSkyGrid.generateASH(h1, h2)
+
+#     def checkNorm(ash):
+#         curNorm = 0.
+#         for curZ in ash:
+#             for curX in ash[curZ]:
+#                 for curY in ash[curZ][curX]:
+#                     curNorm += ash[curZ][curX][curY]
+#         return curNorm
+
+#     # Okay, now I can look through the histograms any way I want
+#     # curID = 10  # highest beta
+#     curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
+#     hist = dict()
+#     ash = dict()
+#     whichProb = 0   # Impact
+#     for tx in range(300):
+#         hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
+#         ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
+
+#         # if len(hist[tx]) > 0:
+#         # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
+#         print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
+
+
+
+
+
+# tfailSec = 100.
+# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+# input = open(inFileName, 'rb')
+# cur_mpc = pickle.load(input)
+# input.close()
+
+# TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail=100., cutoffNAS = False)
+
+
+if doMain:
+    # Note: this is my new and improved method
+    curMission['armLength'] = 10000.
 
     footprintStart = 0.
     footprintUntil = 180.
-
-    footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
-
-    # footprintTotal = TJC.GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footprintIntervals)
-    # vehicleNotes = vehicleNotes + 'NoHealth' + str(int(footprintIntervals))
-
+    footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
-    # outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
 
 
 
 if addStageReentry:
+    # Note: this is being done with the old method
     '''# Prototype handling the first stage reentry'''
 
     # Specify the time of the staging
@@ -280,7 +373,7 @@ if addStageReentry:
     firstStageMission = deepcopy(curMission)
     firstStageMission['debrisPickleFolder'] = curMission['GeneratedFilesFolder']  + 'firstStagePickleFolder'
     firstStageMission['debrisCatFile'] = 'firstStage.txt'
-    firstStageMission['reactionTimeMinutes'] = -1
+    firstStageMission['reactionTimeSeconds'] = -1
     firstStageMission['numPiecesPerSample'] = 1
     firstStageMission['thresh'] = 0.
     coeffIX = []
@@ -302,7 +395,7 @@ if addStageReentry:
     EV_strike, outfileStr = TJC.genFootprint(firstStageMission, tStage, curPFail)
     firstStageFootprint = ceb.PyFootprint(footprintFileName=outfileStr)
 
-    firstStageFootprint.SmoothedOut()   # this will simply smooth the footprints and not alter the timesteps
+    firstStageFootprint.SmoothedOut()   #I believe this will simply smooth the footprints and not alter the timesteps
 
     # Just to be safe(?), set the params we need in order to translate / rotate
     firstStageFootprint.SetAzimuthDeg(firstStageMission['launchAzimuth'])
@@ -327,4 +420,6 @@ if addStageReentry:
     totalFootprint.MergeFootprintVectors(firstStageFootprint)
     totalFootprint.StoreFootprintAsVector(totalFootprintFile)
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
+
+
 
