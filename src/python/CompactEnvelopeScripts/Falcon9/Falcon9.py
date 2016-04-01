@@ -139,7 +139,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 2
+curMission['numNodesEnvelopes']         = 10
 curMission['NASkm']                     = NASkm
 
 

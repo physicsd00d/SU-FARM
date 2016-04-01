@@ -2965,7 +2965,7 @@ def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
             numNodesEnvelopes = np.min((numPossibleNodes, numNodesEnvelopes)) # update numNodesEnvelopes to be realistic
             job_server.set_ncpus(numNodesEnvelopes)
             print 'number of cpus = ' + str(job_server.get_ncpus())
-            maxTime = timeRange[-1]
+            maxTime = len(timeRange)
             ppCount = 0
 
     for tx in range(len(timeRange)):
@@ -2982,13 +2982,13 @@ def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
                 # Calculate a few (numNodesEnvelopes) at once
                 print 'Youre about to submit jobs in parallel.  BE AWARE that cout statements will cause python to malloc error here.  Dont know why.'
                 print 'So if you get a malloc error, be suspicious that you hit an error which triggered a cout'
-                print "tx = {0}, paralleling {1}".format(tx, range(tx,min(tx+numNodesEnvelopes, maxTime+1)))
+                print "tx = {0}, paralleling {1}, maxTime {2}".format(tx, range(tx,min(tx+numNodesEnvelopes, maxTime)), maxTime)
                 jobs = [job_server.submit(getProbImpacts, \
                                           args=(curMission, timeRange[ix]), \
         #                               depfuncs=(MonteCarlo_at_tfail,), \
                                           modules=('from CompactEnvelopeBuilder import PySkyGrid','from CompactEnvelopeBuilder import PyPointCloud','from CompactEnvelopeBuilder import PyGrid3D'), \
                                           # callback=finished002 \
-                                          ) for ix in range(tx,min(tx+numNodesEnvelopes, maxTime+1))]
+                                          ) for ix in range(tx,min(tx+numNodesEnvelopes, maxTime))]
                 job_server.wait()
                 job_server.print_stats()
 
