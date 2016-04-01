@@ -274,7 +274,7 @@ Footprint3D::Footprint3D(PointCloud &incomingGrid) {
 // I think Cython can't pass c++ objects, but it can pass pointers
 Footprint3D::Footprint3D(PointCloud *incomingGrid, double bin_size_in = -1, double arm_length_in) {
     arm_length = arm_length_in;
-    printf("arm_length = %f\n", arm_length);
+    //printf("arm_length = %f\n", arm_length);
     
     int objectID = incomingGrid->identifyYourself();
     if (objectID == 1){
@@ -1342,7 +1342,7 @@ void Footprint3D::test_drive_swinging_arm(int timeIX) {
 
 vector<vector<int> > Footprint3D::swing_the_arm(vector <Point> &unique_points) {
 
-    printf("     arm_length = %f\n", arm_length);
+    //printf("     arm_length = %f\n", arm_length);
 
 	vector<int> hull_indices;
 	vector<vector<int> > hull_indices_storage;

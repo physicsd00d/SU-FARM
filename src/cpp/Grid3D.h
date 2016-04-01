@@ -30,6 +30,8 @@ public:
     Grid3D(map<int, map<int, map<int,double> > > SpatialProbabilty_in);
 	
     map<int, map<int, map<int,double> > > getGrid() const;
+    Grid3D removeNoDanger(const Grid3D &obj);
+
     
     // Overloading operators
     Grid3D operator+(const Grid3D &obj);

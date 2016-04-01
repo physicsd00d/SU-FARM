@@ -39,6 +39,8 @@ cdef extern from "Grid3D.h":
         Grid3D(const Grid3D &obj) # Copy constructor
         Grid3D(map[int, map[int, map[int,double]]] SpatialProbabilty_in)
         map[int, map[int, map[int,double]]] getGrid() const
+        Grid3D removeNoDanger(const Grid3D &obj)
+
         # Grid3D* operator+(Grid3D*)
         Grid3D operator+(const Grid3D &obj)
         Grid3D operator*(double k)
@@ -93,8 +95,12 @@ cdef class PyGrid3D:
     def getGrid(self):
         return self.thisptr.getGrid()
 
-    # def removeNoDanger(self, PyGrid3D obj):
-        # 
+    def removeNoDanger(PyGrid3D self, PyGrid3D obj):
+        ans = PyGrid3D()
+        ans.thisptr[0] = self.thisptr.removeNoDanger(obj.thisptr[0])
+        return ans
+        
+    # Grid3D removeNoDanger(const Grid3D &obj);
 
 
 ## ~~~~~~~~~~~~~~~~~~~~~ SKYGRID CLASS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

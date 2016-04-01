@@ -116,4 +116,117 @@ bool Grid3D::operator<=(const Grid3D &obj){
 }
 
 
+//Grid3D Grid3D::removeNoDanger(const Grid3D &obj){
+//    // For all of the elements in *this, check to see if they have a value in obj.
+//    // If they do, then don't touch that element
+//    // If they don't have a value, that means they're zero, so set them to zero in *this as well.
+//    int ix = 0;
+//    map<int, map<int, map<int,double> > > ans = this->getGrid();
+//
+//    map<int, map<int, map<int,double> > >::iterator zit;
+//    map<int, map<int,double> >::iterator xit;
+//    map<int,double>::iterator yit;
+//    
+//    for (zit = ans.begin(); zit != ans.end(); ++zit){
+//        int zindex = zit->first;
+//        
+//        // Make sure there are values at this z-level
+//        if (obj.SpatialProbabilty.count(zindex) > 0) {
+//        
+//            for (xit = zit->second.begin(); xit != zit->second.end(); ++xit){
+//                int xindex = xit->first;
+//                
+//                // Make sure there are values at this x-level
+//                if (obj.SpatialProbabilty.at(zindex).count(xindex) > 0) {
+//                    
+//                    for (yit = xit->second.begin(); yit != xit->second.end(); ++yit){
+//                        int yindex = yit->first;
+//                        
+//                        int count = (int) obj.SpatialProbabilty.at(zindex).at(xindex).count(yindex);
+//                        if (count == 0) {
+//                            // There is no danger at this location in obj, so set the danger in *this to zero
+//                            printf("   [%d][%d][%d] is not present\n", zindex, xindex, yindex);
+//                            xit->second.erase(yindex);  // Remove the key completely
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    
+//    return Grid3D(ans);
+//    
+//}
+
+
+Grid3D Grid3D::removeNoDanger(const Grid3D &obj){
+    // For all of the elements in *this, check to see if they have a value in obj.
+    // If they do, then don't touch that element
+    // If they don't have a value, that means they're zero, so set them to zero in *this as well.
+    map<int, map<int, map<int,double> > > ans = this->getGrid();
+    
+    map<int, map<int, map<int,double> > >::iterator zit;
+    map<int, map<int,double> >::iterator xit;
+    map<int,double>::iterator yit;
+    
+    for (zit = ans.begin(); zit != ans.end(); ++zit){
+        int zindex = zit->first;
+
+        // Make sure there are values at this z-level
+        int countz = (int) obj.SpatialProbabilty.count(zindex);
+        
+            for (xit = zit->second.begin(); xit != zit->second.end(); ++xit){
+                int xindex = xit->first;
+                    
+                    for (yit = xit->second.begin(); yit != xit->second.end(); ++yit){
+                        int yindex = yit->first;
+                        
+                        // If there are points at z, check if there are points at x too
+                        int countx = 0;
+                        if (countz > 0) { countx = (int) obj.SpatialProbabilty.at(zindex).count(xindex); }
+                        
+                        // There are points at x, check if there are points at y too
+                        int county = 0;
+                        if (countx > 0){ county = (int) obj.SpatialProbabilty.at(zindex).at(xindex).count(yindex); }
+                        
+//                        if (county == 0)
+//                        // Make sure there are values at this x-level
+//                        int countx = (int) obj.SpatialProbabilty.at(zindex).count(xindex);
+//                        // Does this y-point exist?
+//                        int county = (int) obj.SpatialProbabilty.at(zindex).at(xindex).count(yindex);
+                        
+                        if (county == 0) {
+                            // There is no danger at this location in obj, so set the danger in *this to zero
+                            printf("   [%d][%d][%d] is not present\n", zindex, xindex, yindex);
+                            xit->second.erase(yindex);  // Remove the key completely
+                        }
+                    }
+            }
+    }
+    
+    return Grid3D(ans);
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
