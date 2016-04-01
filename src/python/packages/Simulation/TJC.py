@@ -2908,8 +2908,7 @@ def getProbImpacts(curMission, tfailSec):
     P_H = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_H, tfailSec)
     # TODO: I'm enforcing deltaTFail = 1 already, so make delta_R and delta_H just be in seconds.
 
-    return P_RH, P_H
-
+    return P_RH.getGrid(), P_H.getGrid()
 
 def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
     deltaTFail                  = curMission['deltaTFail']
@@ -2957,12 +2956,56 @@ def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
     # MUST USE THE FAIL PROBABILITIES!!! 
     timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
 
+    numNodesEnvelopes = curMission['numNodesEnvelopes']
+    if numNodesEnvelopes > 1:
+        #Set up pp
+            import pp
+            job_server = pp.Server()
+            numPossibleNodes = job_server.get_ncpus()
+            numNodesEnvelopes = np.min((numPossibleNodes, numNodesEnvelopes)) # update numNodesEnvelopes to be realistic
+            job_server.set_ncpus(numNodesEnvelopes)
+            print 'number of cpus = ' + str(job_server.get_ncpus())
+            maxTime = timeRange[-1]
+            ppCount = 0
+
     for tx in range(len(timeRange)):
         tfailSec = timeRange[tx]
         curPFail = pFailThisTimestepVec[tx]
 
         # This calculation doesn't account for the probability of failure, i.e. pFail = 1.
-        P_RH, P_H = getProbImpacts(curMission, tfailSec)
+        if numNodesEnvelopes == 1:
+            # Calculate this as you need it
+            P_RH, P_H = getProbImpacts(curMission, tfailSec)
+        else:
+            if ppCount == 0:
+                results = []   # Holds the results of the envelope creation if using pp
+                # Calculate a few (numNodesEnvelopes) at once
+                print 'Youre about to submit jobs in parallel.  BE AWARE that cout statements will cause python to malloc error here.  Dont know why.'
+                print 'So if you get a malloc error, be suspicious that you hit an error which triggered a cout'
+                print "tx = {0}, paralleling {1}".format(tx, range(tx,min(tx+numNodesEnvelopes, maxTime+1)))
+                jobs = [job_server.submit(getProbImpacts, \
+                                          args=(curMission, timeRange[ix]), \
+        #                               depfuncs=(MonteCarlo_at_tfail,), \
+                                          modules=('from CompactEnvelopeBuilder import PySkyGrid','from CompactEnvelopeBuilder import PyPointCloud','from CompactEnvelopeBuilder import PyGrid3D'), \
+                                          # callback=finished002 \
+                                          ) for ix in range(tx,min(tx+numNodesEnvelopes, maxTime+1))]
+                job_server.wait()
+                job_server.print_stats()
+
+                # Now dump the results into a list
+                for job in jobs:
+                    # print job()
+                    results.append(job())
+                    # vals.append(job()[0])
+                    # fileNames.append(job()[1])
+
+            # Get the precalculated values
+            print "tx = {0}, ppcount = {1}".format(tx, ppCount)
+            P_RH    = PyGrid3D(dict=results[ppCount][0])
+            P_H     = PyGrid3D(dict=results[ppCount][1])
+            # print P_RH.getGrid()
+            ppCount = (ppCount+1) % numNodesEnvelopes
+
         P_RH    *= curPFail                                 # So do that now
         P_H     *= curPFail
         
@@ -2980,7 +3023,7 @@ def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
                 if tempTime in probUnknown:
                     probUnknown[tempTime] += P_RH
                 else:
-                    probUnknown[tempTime] = PyGrid3D(P_RH)
+                    probUnknown[tempTime] = PyGrid3D(grid=P_RH)
             tempTime += deltaTFail
 
         # Now take the probs at the current time, which is tfailSec, and make an envelope out of them

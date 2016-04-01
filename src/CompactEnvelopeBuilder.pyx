@@ -53,12 +53,24 @@ cdef class PyGrid3D:
     # def __cinit__(self, dict SpatialProbabilty_in):
     #     self.thisptr = new Grid3D(SpatialProbabilty_in)
     
-    def __cinit__(self, PyGrid3D obj=None):
-        if obj:
+    # def __cinit__(self, PyGrid3D obj=None):
+    #     if obj:
+    #         # Call the copy constructor.  The 'new' is very important; without it you will get errors when deallocating:
+    #         #  malloc: *** error for object 0x104b0c438: pointer being freed was not allocated
+    #         self.thisptr = new Grid3D(obj.thisptr[0])
+
+    #     else:
+    #         self.thisptr = new Grid3D()
+
+    def __cinit__(self, **kwargs):
+        if 'grid' in kwargs:
+            obj1 = <PyGrid3D> kwargs['grid']
             # Call the copy constructor.  The 'new' is very important; without it you will get errors when deallocating:
             #  malloc: *** error for object 0x104b0c438: pointer being freed was not allocated
-            self.thisptr = new Grid3D(obj.thisptr[0])
-
+            self.thisptr = new Grid3D(obj1.thisptr[0])
+        elif 'dict' in kwargs:
+            obj = <map[int, map[int, map[int,double]]]> kwargs['dict']
+            self.thisptr = new Grid3D(obj)
         else:
             self.thisptr = new Grid3D()
 

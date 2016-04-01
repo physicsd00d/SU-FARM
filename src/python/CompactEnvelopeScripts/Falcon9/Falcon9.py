@@ -126,7 +126,7 @@ curMission['deltaT']                  = 1.      # Seconds, this is the time reso
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 10.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
@@ -139,7 +139,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodesEnvelopes']         = 2
 curMission['NASkm']                     = NASkm
 
 
@@ -421,5 +421,22 @@ if addStageReentry:
     totalFootprint.StoreFootprintAsVector(totalFootprintFile)
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
-
+# t = 0.0, curPFail = 0.00384158054763, curEV = 8.74345357448e-11
+# t = 10.0, curPFail = 0.00322909977888, curEV = 5.22387577793e-08
+# t = 20.0, curPFail = 0.00167566498909, curEV = 9.51254676391e-08
+# t = 30.0, curPFail = 0.000763743561604, curEV = 2.40607358433e-10
+# t = 40.0, curPFail = 0.000315583572514, curEV = 9.26786832273e-08
+# t = 50.0, curPFail = 0.000122854360758, curEV = 7.65799722236e-08
+# t = 60.0, curPFail = 7.79467850187e-05, curEV = 9.46252965686e-08
+# t = 70.0, curPFail = 0.000203184252099, curEV = 8.03477871841e-08
+# t = 80.0, curPFail = 0.000637036973329, curEV = 9.92331713844e-08
+# t = 90.0, curPFail = 0.00144568846946, curEV = 9.98893278579e-08
+# t = 100.0, curPFail = 0.002300990413, curEV = 9.95909693532e-08
+# t = 110.0, curPFail = 0.00253199788052, curEV = 9.98862611894e-08
+# t = 120.0, curPFail = 0.00184510768573, curEV = 9.97920312481e-08
+# t = 130.0, curPFail = 0.000813289770532, curEV = 9.98483287621e-08
+# t = 140.0, curPFail = 0.000181736694585, curEV = 9.9951091907e-08
+# t = 150.0, curPFail = 1.43309723121e-05, curEV = 3.28934668997e-08
+# t = 160.0, curPFail = 1.63286854877e-07, curEV = 9.18756160035e-13
+# t = 170.0, curPFail = 6.08574524108e-12, curEV = 0.0
 
