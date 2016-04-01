@@ -592,10 +592,10 @@ double SkyGrid::applyCumulativeThreshold(const Grid3D &grid_in, double thresh, v
     vector<int> temp3Vec;
     temp3Vec.assign(3,0);
     
-    printf("passed in times:\n");
-    for (int tx = 0; tx < txVec.size(); tx++){
-        printf("  %d\n", txVec[tx]);
-    }
+    // printf("passed in times:\n");
+    // for (int tx = 0; tx < txVec.size(); tx++){
+    //     printf("  %d\n", txVec[tx]);
+    // }
     
     // Dunno why, but const_iterators don't seem to work for me.  Just copy the values then.
     map<int, map<int, map<int,double> > > grid = grid_in.getGrid();
@@ -615,9 +615,9 @@ double SkyGrid::applyCumulativeThreshold(const Grid3D &grid_in, double thresh, v
                 int yindex = yit->first;
                 
                 double curProb = yit->second;
-//                double curProb = grid.at(zindex).at(xindex).at(yindex);
+               // double curProb = grid.at(zindex).at(xindex).at(yindex);
                 
-//                printf("[%d][%d][%d] = %E\n", zindex, xindex, yindex, curProb);
+               // printf("[%d][%d][%d] = %E\n", zindex, xindex, yindex, curProb);
 
                 if (curProb > thresh) {
 
@@ -639,7 +639,6 @@ double SkyGrid::applyCumulativeThreshold(const Grid3D &grid_in, double thresh, v
         }
     }
     
-    printf("finished loop\n");
     // Now place the points in the all_points
     for (int tx = 0; tx < txVec.size(); tx++){
         loadIndicesIntoAllPoints(txVec[tx],IndicesHere);

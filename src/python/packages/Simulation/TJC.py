@@ -2871,6 +2871,211 @@ def getStateVector(curMission, atmProfile, Toffset, ThrustOffsetAngDeg):
 
 
 
+# ========================= Updated Envelope Calculations =========================== #
+
+
+from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud, PyGrid3D, PyFootprint
+
+def getProbImpacts(curMission, tfailSec):
+
+    # Are these steps or seconds?  I think I decided they should be seconds
+    delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    # TODO round to integer
+    delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  # TODO round to integer
+    debrisPickleFolder      = curMission['debrisPickleFolder']
+
+    inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
+    input = open(inFileName, 'rb')
+    cur_mpc = pickle.load(input)
+    input.close()
+
+    # Package them up into a PointCLoud
+    curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+    # Place the cloud into a Grid
+    curSkyGrid              = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
+
+    # ASH them
+    h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    h2                        = curMission['h2'] 
+    curSkyGrid.generateASH(h1, h2)
+
+    # Calculate all of the hazard probabilities
+    curSkyGrid.generateHazardProbabilities(cur_mpc['numberOfPiecesMeanList'])
+
+    # Finally get the probabilities for the times we want
+    whichProb = curSkyGrid.getProbImpactCode()
+    P_RH = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_R + delta_H, tfailSec)
+    P_H = curSkyGrid.GenerateSpatialProbability(whichProb, tfailSec + delta_H, tfailSec)
+    # TODO: I'm enforcing deltaTFail = 1 already, so make delta_R and delta_H just be in seconds.
+
+    return P_RH, P_H
+
+
+def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
+    deltaTFail                  = curMission['deltaTFail']
+    failProfile                 = curMission['failProfile']
+    failProfileSeconds          = curMission['failProfileSeconds']
+    pFail                       = curMission['pFail']
+
+    numGridsHere = int(np.round((timehi - timelo)/deltaTFail)) # TODO: Fix this when removing overlapping times
+
+    # Figure out which failure times are worth propagating (i.e. they have a nonzero probability of happening)
+    timeRange = []
+    pFailThisTimestepVec = []
+    for ix in range(numGridsHere):
+        sublo = timelo + ix*deltaTFail
+        subhi = sublo + deltaTFail
+        indices = np.where((failProfileSeconds >= sublo) & (failProfileSeconds < subhi))[0]
+        pFailThisTimestep = np.sum(failProfile[indices]) * pFail
+
+        if pFailThisTimestep > 0.:
+            timeRange.append(sublo)
+            pFailThisTimestepVec.append(pFailThisTimestep)
+
+    return timeRange, pFailThisTimestepVec
+
+
+def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
+    armLength                   = curMission['armLength']
+
+    # Round all the times to integers to make the dictionary lookups safer
+    delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    
+    #delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  
+    deltaTFail = int(curMission['deltaTFail'])
+    thresh = curMission['thresh']
+
+    probUnknown = dict()    # Holds the probability grids for the statetimes at which we don't have a VHM update yet
+    probUpdated = dict()    # Holds the previous risks we were exposed to before the VHM updates told us we were safe.
+    sumUpdatedProbs = PyGrid3D(); # Add in the updated probabilities as we go.
+
+    # Flow should go like this.  Knowing delta_R and delta_H ahead of time
+    # time = 0
+    # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
+    # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
+
+
+    # MUST USE THE FAIL PROBABILITIES!!! 
+    timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
+
+    for tx in range(len(timeRange)):
+        tfailSec = timeRange[tx]
+        curPFail = pFailThisTimestepVec[tx]
+
+        # This calculation doesn't account for the probability of failure, i.e. pFail = 1.
+        P_RH, P_H = getProbImpacts(curMission, tfailSec)
+        P_RH    *= curPFail                                 # So do that now
+        P_H     *= curPFail
+        
+        # P_H will start to get used at curTime + delta_H + deltaTFail and will be used at every subsequent step as well.
+        curTime = int(tfailSec)
+        placeAtThisTime = curTime + delta_H + deltaTFail
+        if placeAtThisTime <= footprintUntil:
+            probUpdated[placeAtThisTime] = P_H
+
+        # This P_RH will get used for timesteps up to curTime + delta_H
+        # Need these to be their own separate objects, so use copy constructor to make them different
+        tempTime = curTime
+        while (tempTime <= tfailSec + delta_H):
+            if tempTime <= footprintUntil:
+                if tempTime in probUnknown:
+                    probUnknown[tempTime] += P_RH
+                else:
+                    probUnknown[tempTime] = PyGrid3D(P_RH)
+            tempTime += deltaTFail
+
+        # Now take the probs at the current time, which is tfailSec, and make an envelope out of them
+        if curTime in probUpdated:
+            sumUpdatedProbs += probUpdated[curTime]
+            del probUpdated[curTime] # remove that one from the dict since it's already been used
+
+        ## Turn off the hazard areas where the danger is completely passed
+        # Don't need to block off xyz in sumUpdatedProbs if probUnknown(xyz) = 0
+        # if probUnknown(xyz) == 0  ->  sumUpdatedProbs(xyz) = 0
+        # if probUnknown(xyz) > 0   ->  sumUpdatedProbs(xyz) = sumUpdatedProbs(xyz)
+        sumUpdatedProbsPruned = sumUpdatedProbs.removeNoDanger(probUnknown[curTime])
+
+
+        # This is the total cumulative spatial probability at this time
+        # P_Now = sumUpdatedProbs + probUnknown[curTime]
+        # P_Now = probUnknown[curTime]
+        # P_Now = P_RH
+        # P_Now = sumUpdatedProbs
+        # P_Now = sumUpdatedProbsPruned
+        P_Now = sumUpdatedProbsPruned + probUnknown[curTime]
+
+
+        # Now that you've used it, delete it to save memory
+        del probUnknown[curTime]    
+
+        # Put this into a SkyGrid object so we can apply the threshold and make a footprint
+        skyNow = PySkyGrid(curMission=curMission)
+        curEV = skyNow.applyCumulativeThreshold(P_Now, thresh, np.array([int(tfailSec/deltaTFail)]))
+        myFootprint = PyFootprint(skygrid=skyNow, armLength=armLength)
+
+        # Plot it if you want
+        # [yyyy, mm, dd, hour, min]   = curMission['ExportDate']
+        #myFootprint.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fpNew_' + str(tfailSec) + '.kml', yyyy, mm, dd, hour, min)
+
+        # Store it
+        outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
+        myFootprint.StoreFootprintAsVector(outfileStr)
+
+        print "t = {0}, curPFail = {1}, curEV = {2}".format(tfailSec, curPFail, curEV)
+
+        # All done here, increment time
+        tfailSec += deltaTFail
+
+def mergeFootprintBetweenTimes(curMission, timelo, timehi):
+    deltaTFail                  = curMission['deltaTFail']
+    armLength                   = curMission['armLength']
+
+    # For all the times [timelo, timehi], load up those vectors and merge em
+    tfailSec = timelo
+    while tfailSec <= timehi:
+        outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
+        if tfailSec == timelo:
+            totalFootPrint = ceb.PyFootprint(footprintFileName=outfileStr)
+        else:
+            totalFootPrint.MergeFootprintVectors(ceb.PyFootprint(footprintFileName=outfileStr))
+
+        # Increment and repeat
+        tfailSec += deltaTFail
+
+    # This converts the timestep of the footprint to be the argument.  Also combines all points together and rewraps them 
+    #  to produce a smooth and concise footprint.
+    totalFootPrint.SmoothedOut(newDeltaT=curMission['all_points_delta_t'], armLength=armLength)
+    return totalFootPrint
+
+
+def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
+    # Unpack a little
+    footprintIntervals = curMission['all_points_delta_t']
+    deltaTFail = curMission['deltaTFail']
+
+    # Make all of the individual hazard areas that we'll later merge together to make the final envelope
+    GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil)
+
+    # Now merge the failTime hazard areas (previous line) according to the outgoing timestep
+    for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
+        timelo = footprintStart + ix*footprintIntervals
+        timehi = np.min( (footprintStart + (ix+1)*footprintIntervals - deltaTFail, footprintUntil) )
+        tString = "{0}-{1}".format(timelo, timehi)
+        print tString
+
+        # Make a footprint with the final timing, assembled from all the subfootprints between timelo and timehi
+        curFP = mergeFootprintBetweenTimes(curMission, timelo, timehi)
+
+        # Merge them all together
+        if ix == 0:
+            footprintTotal = curFP
+        else:
+            print '\n\nMERGE'
+            footprintTotal.MergeFootprintVectors(curFP)
+
+        # Check it out
+        # curFP.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fp_' + tString + '.kml', yyyy, mm, dd, hour, min)
+    return footprintTotal
+
 
 
 

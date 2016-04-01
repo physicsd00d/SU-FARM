@@ -23,7 +23,6 @@ Grid3D::Grid3D(map<int, map<int, map<int,double> > > SpatialProbabilty_in){
 }
 
 Grid3D::Grid3D( const Grid3D &obj){
-    printf("Copy Constructor!\n");
     SpatialProbabilty = obj.SpatialProbabilty;
 }// copy constructor
 
@@ -33,7 +32,6 @@ map<int, map<int, map<int,double> > > Grid3D::getGrid() const{
 }
 
 Grid3D Grid3D::operator+(const Grid3D &in){
-//    printf("Plus Operator!\n");
     Grid3D ans;
     ans = in.SpatialProbabilty;      // Start with the incoming grid and add what we've already got to it
     
@@ -59,9 +57,7 @@ Grid3D Grid3D::operator+(const Grid3D &in){
 }
 
 Grid3D Grid3D::operator*(double k){
-//    printf("Scalar Mult Operator!\n");
     map<int, map<int, map<int,double> > > ans;
-//    ans = in.SpatialProbabilty;      // Start with the incoming grid and add what we've already got to it
     
     map<int, map<int, map<int,double> > >::iterator zit;
     map<int, map<int,double> >::iterator xit;
@@ -85,13 +81,9 @@ Grid3D Grid3D::operator*(double k){
 }
 
 bool Grid3D::operator<=(const Grid3D &obj){
-    printf("LEQ operator!\n");
-    
     // this <= obj
     // thus should iterate over this, because if an [z,x,y] isn't in this, then it's automatically 0 <= obj,
     //   assuming obj >= 0 which should be true.  Perhaps should check that as well.
-    
-//    bool ans = true;
     
     map<int, map<int, map<int,double> > >::iterator zit;
     map<int, map<int,double> >::iterator xit;
@@ -189,15 +181,9 @@ Grid3D Grid3D::removeNoDanger(const Grid3D &obj){
                         int county = 0;
                         if (countx > 0){ county = (int) obj.SpatialProbabilty.at(zindex).at(xindex).count(yindex); }
                         
-//                        if (county == 0)
-//                        // Make sure there are values at this x-level
-//                        int countx = (int) obj.SpatialProbabilty.at(zindex).count(xindex);
-//                        // Does this y-point exist?
-//                        int county = (int) obj.SpatialProbabilty.at(zindex).at(xindex).count(yindex);
-                        
                         if (county == 0) {
                             // There is no danger at this location in obj, so set the danger in *this to zero
-                            printf("   [%d][%d][%d] is not present\n", zindex, xindex, yindex);
+                            //printf("   [%d][%d][%d] is not present\n", zindex, xindex, yindex);
                             xit->second.erase(yindex);  // Remove the key completely
                         }
                     }
