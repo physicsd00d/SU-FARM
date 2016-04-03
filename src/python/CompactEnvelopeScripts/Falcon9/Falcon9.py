@@ -354,7 +354,7 @@ if doMain:
     curMission['armLength'] = 10000.
 
     footprintStart = 0.
-    footprintUntil = 180.
+    footprintUntil = min(180., curMission['failProfileSeconds'][-1])
     footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)

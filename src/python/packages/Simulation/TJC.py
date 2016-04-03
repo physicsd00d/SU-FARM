@@ -2934,8 +2934,9 @@ def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
     return timeRange, pFailThisTimestepVec
 
 
-def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
+def GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec):
     armLength                   = curMission['armLength']
+    footprintUntil              = timeRange[-1]
 
     # Round all the times to integers to make the dictionary lookups safer
     delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    
@@ -2951,10 +2952,6 @@ def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
     # time = 0
     # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_R + delta_H) to be used immediately
     # SkyGrid for P_I(x, f=0 | t <= f=0 + delta_H) to be used once the health update comes in
-
-
-    # MUST USE THE FAIL PROBABILITIES!!! 
-    timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
 
     numNodesEnvelopes = curMission['numNodesEnvelopes']
     if numNodesEnvelopes > 1:
@@ -3068,18 +3065,21 @@ def GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil):
         # All done here, increment time
         tfailSec += deltaTFail
 
-def mergeFootprintBetweenTimes(curMission, timelo, timehi):
+def mergeFootprintBetweenTimes(curMission, timeRange, timelo, timehi):
     deltaTFail                  = curMission['deltaTFail']
     armLength                   = curMission['armLength']
 
     # For all the times [timelo, timehi], load up those vectors and merge em
     tfailSec = timelo
+    isFirst = True
     while tfailSec <= timehi:
-        outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
-        if tfailSec == timelo:
-            totalFootPrint = ceb.PyFootprint(footprintFileName=outfileStr)
-        else:
-            totalFootPrint.MergeFootprintVectors(ceb.PyFootprint(footprintFileName=outfileStr))
+        if tfailSec in timeRange:  # Don't try to load footprints for times that didn't have one created
+            outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
+            if isFirst:
+                totalFootPrint = ceb.PyFootprint(footprintFileName=outfileStr)
+                isFirst = False
+            else:
+                totalFootPrint.MergeFootprintVectors(ceb.PyFootprint(footprintFileName=outfileStr))
 
         # Increment and repeat
         tfailSec += deltaTFail
@@ -3095,8 +3095,11 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
     footprintIntervals = curMission['all_points_delta_t']
     deltaTFail = curMission['deltaTFail']
 
+    # First find all of the times that will have footprints created and merged
+    timeRange, pFailThisTimestepVec = getEnvelopeTimesAndFailProbs(curMission, footprintStart, footprintUntil)
+
     # Make all of the individual hazard areas that we'll later merge together to make the final envelope
-    GenerateHazardVectorFiles(curMission, footprintStart, footprintUntil)
+    GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec)
 
     # Now merge the failTime hazard areas (previous line) according to the outgoing timestep
     for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
@@ -3106,7 +3109,7 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
         print tString
 
         # Make a footprint with the final timing, assembled from all the subfootprints between timelo and timehi
-        curFP = mergeFootprintBetweenTimes(curMission, timelo, timehi)
+        curFP = mergeFootprintBetweenTimes(curMission, timeRange, timelo, timehi)
 
         # Merge them all together
         if ix == 0:
