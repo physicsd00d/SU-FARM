@@ -30,6 +30,7 @@ curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
+debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
 '''
@@ -50,7 +51,7 @@ from copy import deepcopy
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Sound
 launchLocation  = LaunchSites.WSands
-vehicleNotes    = 'space2015'
+vehicleNotes    = ''
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -113,7 +114,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 5*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -136,10 +137,20 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 4
 curMission['NASkm']                     = NASkm
+
+
+if curMission['deltaT'] != 1.0:
+    print "ERROR: Required deltaT = 1."
+    sys.exit()
+
+if (curMission['healthMonitoringLatency'] % curMission['deltaTFail']) != 0.:
+    print "ERROR: If you're not exploding every second, then your VHM latency must be a multiple of deltaTFail"
+    sys.exit()
 
 
 '''
@@ -213,14 +224,10 @@ if (freshWind):
     pickle.dump(profiles,output)
     output.close()
 
-    # tfail = 10.
-    # TJC.MonteCarlo_until_tfail(curMission, profiles, tfail)
-    # TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail*1.0)
-
-    # sys.exit()
 else:
     import pickle
     profiles = pickle.load(open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl','rb'))
+
 
 if freshDebris:
     t_lo = 0.
@@ -243,20 +250,13 @@ mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
 if doMain:
-
-    # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles)
-    # print "tProactive = {0}\n".format(tProactive)
+    # Note: this is my new and improved method
+    curMission['armLength'] = 10000.
 
     footprintStart = 0.
     footprintUntil = 865.
-
-    footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
-
-    # footprintTotal = TJC.GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footprintIntervals)
-    # vehicleNotes = vehicleNotes + 'NoHealth' + str(int(footprintIntervals))
-
+    footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
-    # outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
 
 

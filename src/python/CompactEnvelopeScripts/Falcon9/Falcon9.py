@@ -30,6 +30,7 @@ curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
+debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
 '''
@@ -89,7 +90,7 @@ curMission['loverd']    = 0.
 
 
 # These hold files that need to be read in
-curMission['debrisCatPath']     = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatPath']     = debrisPath + 'Falcon9/'
 curMission['debrisCatFile']     = 'Halcon9_1stNEW.txt'
 curMission['atmospherePickle']  = rootDir + "data/AtmoProfiles/Cape.pkl"
 
@@ -113,7 +114,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeSeconds']       = 5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 5*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -229,11 +230,6 @@ if (freshWind):
     pickle.dump(profiles,output)
     output.close()
 
-    # tfail = 10.
-    # TJC.MonteCarlo_until_tfail(curMission, profiles, tfail)
-    # TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail*1.0)
-
-    # sys.exit()
 else:
     import pickle
     profiles = pickle.load(open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl','rb'))
@@ -259,102 +255,12 @@ vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, vehicleNotes
 mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
-# import numpy as np
-# t_lo = .0
-# t_hi = 170.
-# deltaTFail = curMission['deltaTFail']
-# timeVec = np.arange(t_hi*1.0,t_lo-deltaTFail,-deltaTFail)        #curTime is in seconds
-# for curTime in timeVec:
-#     print curTime
-#     # TJC.PlotDebrisFromExplodeTime(curMission, profiles, curTime, cutoffNAS = True)
-#     TJC.PlotSubEnvelopes(curMission, curTime)
-# sys.exit()
-
-
-
-# debugSingleTime = False
-# if debugSingleTime:
-#      ### ===== DEBUG =========
-#     tfailSec = 70.
-
-#     from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
-#     import pickle
-#     import numpy as np
-
-#     deltaXY                 = curMission['deltaXY']
-#     deltaZ                  = curMission['deltaZ']
-#     h1                      = curMission['h1']
-#     h2                      = curMission['h2']
-#     debrisPickleFolder      = curMission['debrisPickleFolder']
-#     footprintVectorFolder   = curMission['footprintVectorFolder']
-#     thresh                  = curMission['thresh']
-#     cumulative              = curMission['cumulative']
-#     whichProbability        = curMission['whichProbability']
-
-#     inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-#     input = open(inFileName, 'rb')
-#     cur_mpc = pickle.load(input)
-#     input.close()
-
-#     arefMeanList = cur_mpc['arefMeanList']
-#     numberOfPiecesMeanList = cur_mpc['numberOfPiecesMeanList']
-
-#     # Package them up into a PointCLoud
-#     # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
-#     curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
-
-#     # Place the cloud into a Grid
-#     curSkyGrid    = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
-
-#     # # Now if I ASH without ASHing, that should just give me the unspread probabilities
-#     print 'ASHING'
-#     h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-#     h2                        = curMission['deltaXY'] 
-#     # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
-#     # h2                        = curMission['h2'] 
-#     curSkyGrid.generateASH(h1, h2)
-
-#     def checkNorm(ash):
-#         curNorm = 0.
-#         for curZ in ash:
-#             for curX in ash[curZ]:
-#                 for curY in ash[curZ][curX]:
-#                     curNorm += ash[curZ][curX][curY]
-#         return curNorm
-
-#     # Okay, now I can look through the histograms any way I want
-#     # curID = 10  # highest beta
-#     curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
-#     hist = dict()
-#     ash = dict()
-#     whichProb = 0   # Impact
-#     for tx in range(300):
-#         hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
-#         ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
-
-#         # if len(hist[tx]) > 0:
-#         # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
-#         print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
-
-
-
-
-
-# tfailSec = 100.
-# inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-# input = open(inFileName, 'rb')
-# cur_mpc = pickle.load(input)
-# input.close()
-
-# TJC.PlotDebrisFromExplodeTime(curMission, profiles, tfail=100., cutoffNAS = False)
-
-
 if doMain:
     # Note: this is my new and improved method
     curMission['armLength'] = 10000.
 
     footprintStart = 0.
-    footprintUntil = min(180., curMission['failProfileSeconds'][-1])
+    footprintUntil = 180.
     footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
@@ -421,22 +327,5 @@ if addStageReentry:
     totalFootprint.StoreFootprintAsVector(totalFootprintFile)
     totalFootprint.ExportGoogleEarth(firstStageMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
 
-# t = 0.0, curPFail = 0.00384158054763, curEV = 8.74345357448e-11
-# t = 10.0, curPFail = 0.00322909977888, curEV = 5.22387577793e-08
-# t = 20.0, curPFail = 0.00167566498909, curEV = 9.51254676391e-08
-# t = 30.0, curPFail = 0.000763743561604, curEV = 2.40607358433e-10
-# t = 40.0, curPFail = 0.000315583572514, curEV = 9.26786832273e-08
-# t = 50.0, curPFail = 0.000122854360758, curEV = 7.65799722236e-08
-# t = 60.0, curPFail = 7.79467850187e-05, curEV = 9.46252965686e-08
-# t = 70.0, curPFail = 0.000203184252099, curEV = 8.03477871841e-08
-# t = 80.0, curPFail = 0.000637036973329, curEV = 9.92331713844e-08
-# t = 90.0, curPFail = 0.00144568846946, curEV = 9.98893278579e-08
-# t = 100.0, curPFail = 0.002300990413, curEV = 9.95909693532e-08
-# t = 110.0, curPFail = 0.00253199788052, curEV = 9.98862611894e-08
-# t = 120.0, curPFail = 0.00184510768573, curEV = 9.97920312481e-08
-# t = 130.0, curPFail = 0.000813289770532, curEV = 9.98483287621e-08
-# t = 140.0, curPFail = 0.000181736694585, curEV = 9.9951091907e-08
-# t = 150.0, curPFail = 1.43309723121e-05, curEV = 3.28934668997e-08
-# t = 160.0, curPFail = 1.63286854877e-07, curEV = 9.18756160035e-13
-# t = 170.0, curPFail = 6.08574524108e-12, curEV = 0.0
+
 

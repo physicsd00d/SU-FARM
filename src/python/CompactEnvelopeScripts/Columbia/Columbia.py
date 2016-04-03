@@ -121,7 +121,7 @@ curMission['h1']                        = 20.    # Smoothing parameters for the 
 curMission['h2']                        = 20.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeMinutes']       = -5    # The number of minutes that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = -5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
                                                 #   Negative means to turn off reaction time and keep all points
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.

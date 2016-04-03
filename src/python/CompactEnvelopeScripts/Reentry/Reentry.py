@@ -20,10 +20,16 @@ doMain                  = True
 import os
 import sys
 
+print "New method of compact envelopes is not yet able to handle the reentry case."
+print "TODO: Split the debris files up by tfail and windIX, like reentry case, for "
+print "all vehicles.  Then more memory efficient and congruous with this use case."
+sys.exit()
+
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
+debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
 '''
@@ -31,9 +37,6 @@ Import the modules necessary for the script.
 Note: Must Come After sys.path update
 Note: This block is probably the same across all main scripts
 '''
-# import debrisPythonWrapper as dpw
-# import getPropTraj as traj
-# import AtmosProfile as AP
 import CompactEnvelopeBuilder as ceb
 import numpy as np
 from Simulation import TJC
@@ -114,7 +117,7 @@ curMission['h1']                        = 6.    # Smoothing parameters for the A
 curMission['h2']                        = 6.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 5*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
                                                 #   Negative means to turn off reaction time and keep all points
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
@@ -138,6 +141,7 @@ curMission['numPiecesPerSample']      = [10]      # The number of pieces to cons
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 4  
 curMission['numNodesEnvelopes']         = 4
