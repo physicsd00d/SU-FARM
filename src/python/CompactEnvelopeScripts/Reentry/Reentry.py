@@ -137,7 +137,7 @@ curMission['deltaTFail']              = 1.     # Seconds, this is how often we e
 curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
-curMission['numPiecesPerSample']      = [10]      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.

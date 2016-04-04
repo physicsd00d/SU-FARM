@@ -1,9 +1,0 @@
-#Conversion from English to SI Unit
-    units SI #ENG or SI ... RSAT only takes SI
-    begin 
-    velocity    54.864 
-    time    10.0 
-    #Number of Pieces	Weight of each piece (kgs)	Total Weight (kgs)	Reference Area (m^2)	Ballistic Coeff (kg/m^2)	Velocity    Increment (m/sec)
-    1.0                 17454.234                   17454.234           75.00                  125.                        0.0         B2    B2
-#    1.0                 17454.234                   17454.234           139.08                  125.                        0.0         B2    B2
-    end

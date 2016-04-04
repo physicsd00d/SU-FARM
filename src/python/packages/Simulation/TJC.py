@@ -1581,7 +1581,7 @@ def MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, numPiecesPe
     # Unpack some of the mission variables
     debrisCatalogFile = curMission['debrisCatPath'] + curMission['debrisCatFile']
     # Need Vmag to find correct debris catalog
-    Vmag    = 1    #No dependence on this within the catalog
+    # Vmag    = 1    #No dependence on this within the catalog
 
     # tfail   = 1     # time is now very important
     # # getting debris catalog information, getting desired debris catalog group
@@ -1775,12 +1775,12 @@ def MonteCarlo_Distributed_Reentry_CAIB(curMission, catalogList, coeffIX, numPie
 
             # If you don't specify a numPiecesPerSample value, then use the exact values from the debris catalog
             nSamplesVec = []
-            if len(numPiecesPerSample) == 0:
+            if numPiecesPerSample < 0:
                 for group in curCatalog:
                     nSamplesVec.append(int(group[0]))
             else:
                 for group in curCatalog:
-                    nSamplesVec.append(numPiecesPerSample[0])
+                    nSamplesVec.append(numPiecesPerSample)
 
             # print 'curTime = {0}, nSamplesVec = {1}'.format(curTime, nSamplesVec)
             # print curCatalog
@@ -2883,16 +2883,28 @@ def getProbImpacts(curMission, tfailSec):
     delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  # TODO round to integer
     debrisPickleFolder      = curMission['debrisPickleFolder']
 
-    inFileName = '{0}/mpc_{1}.pkl'.format(debrisPickleFolder, str(tfailSec))
-    input = open(inFileName, 'rb')
-    cur_mpc = pickle.load(input)
-    input.close()
+    numTrajSamples = curMission['numTrajSamples']
+    numWindSamples = curMission['numWindSamples']
+    for trajIX in range(numTrajSamples):
+        for windIX in range(numWindSamples):
+            inFileName = '{0}/mpc_f{1}_t{2}_w{3}.pkl'.format(debrisPickleFolder,  int(tfailSec), trajIX, windIX)
+            input = open(inFileName, 'rb')
+            cur_mpc = pickle.load(input)
+            input.close()
 
-    # Package them up into a PointCLoud
-    curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
+            # Package them up into a PointCLoud
+            curPointCloud           = PyPointCloud(cur_mpc, tfailSec, curMission)
 
-    # Place the cloud into a Grid
-    curSkyGrid              = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
+            if trajIX == 0 and windIX == 0:
+                # Place the cloud into a new Grid
+                curSkyGrid = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
+                prevMean = cur_mpc['numberOfPiecesMeanList']
+            else:
+                # Place the cloud into an existing Grid
+                if (cur_mpc['numberOfPiecesMeanList'] != prevMean).all():
+                    print 'ERROR: Using different mean lists'
+                    sys.exit()
+                # curSkyGrid.IncorporatePointCloudIntoGrid(curPointCloud)
 
     # ASH them
     h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
@@ -2972,7 +2984,9 @@ def GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec):
         # This calculation doesn't account for the probability of failure, i.e. pFail = 1.
         if numNodesEnvelopes == 1:
             # Calculate this as you need it
-            P_RH, P_H = getProbImpacts(curMission, tfailSec)
+            P_RH, P_H = getProbImpacts(curMission, tfailSec)  # Returns dicts because pp won't return cython objects properly
+            P_RH = PyGrid3D(dict=P_RH)
+            P_H = PyGrid3D(dict=P_H)
         else:
             if ppCount == 0:
                 results = []   # Holds the results of the envelope creation if using pp
@@ -3123,6 +3137,307 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
     return footprintTotal
 
 
+
+
+
+
+
+
+
+### ======== Updated and Harmonized debris routines
+
+def MonteCarloDebris(curMission, profiles, t_lo, t_hi):
+    # def MonteCarlo_Setup
+    # coeffIX = []  # Use all ballistic coeffs
+    debrisCatalogFile = curMission['debrisCatPath'] + curMission['debrisCatFile']
+
+    # # getting debris catalog information, getting desired debris catalog group
+    velcat,timecat,catalogList = DR.readDebris(debrisCatalogFile)
+    catalogList = zip(timecat,catalogList)  #packaging these two together
+
+    numWindSamples = len(profiles['atmStorage'])
+
+    # numPiecesPerSample  = curMission['numPiecesPerSample']
+    deltaTFail          = curMission['deltaTFail']
+    # Won't include very last time step which may well be negative altitude and thus undesireable
+    # timeVec1 = np.arange(t_lo,t_hi,deltaTFail)        #curTime is in seconds
+    # tfail = 300
+
+    # by placing -deltaTFail as the lower limit, we will include time = zero
+    timeVec = np.arange(t_hi*1.0,t_lo-deltaTFail,-deltaTFail)    
+
+    ## ==== def MonteCarlo_SingleWindTraj
+
+    # Unpack the profiles, move these out
+    atmStorage = profiles['atmStorage']
+    thetagStorage = profiles['thetagStorage']
+    stateVecStorage = profiles['stateVecStorage']
+    tfailStorage = profiles['tfailStorage']
+    numTrajSamples = profiles['numTrajSamples']
+
+    # tfailSec = 45.
+
+    # Do the parallel
+    jobs = []   # Holds the results of the envelope creation
+    if curMission['numNodes'] == 1:
+        # This means we're running into memory or malloc issues with pp, so don't use it
+        for trajIX in range(numTrajSamples):
+            for windIX in range(numWindSamples):
+                for tfailSec in timeVec:
+                    print MonteCarlo_SingleWindTraj_WriteFile(curMission, atmStorage[windIX], tfailStorage[windIX][trajIX], 
+                                        thetagStorage[windIX][trajIX], stateVecStorage[windIX][trajIX], 
+                                        catalogList, tfailSec, trajIX, windIX)
+    else:
+        import pp
+        job_server = pp.Server()
+        numPossibleNodes = job_server.get_ncpus()
+        numNodesEnvelopes = np.min((numPossibleNodes, curMission['numNodes'])) # update numNodesEnvelopes to be realistic
+        job_server.set_ncpus(numNodesEnvelopes)
+        print 'number of cpus = ' + str(job_server.get_ncpus())
+
+        ppCount = 0
+
+        # Want similar seconds to be lumped together otherwise different runs will finish at wildly different times.
+        for tfailSec in timeVec:
+            for trajIX in range(numTrajSamples):
+                if ppCount == 0:
+                    # Send off a new batch
+                    jobs = [job_server.submit(MonteCarlo_SingleWindTraj_WriteFile, \
+                                              args=(curMission, atmStorage[windIX], tfailStorage[windIX][trajIX], \
+                                                thetagStorage[windIX][trajIX], stateVecStorage[windIX][trajIX], \
+                                                catalogList, tfailSec, trajIX, windIX), \
+                                              depfuncs=(MonteCarlo_SingleWindTraj,), \
+                                              modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp') \
+                                              ) for windIX in range(numWindSamples)]  
+                                              # callback=finishedDistributedNew) for windIX in range(numWindSamples)]  
+                    job_server.wait()
+                    job_server.print_stats()
+                    for job in jobs:
+                        print job()
+        job_server.destroy()
+
+def finishedDistributedNew(val):
+    print 'done: {0}'.format(val)
+
+def MonteCarlo_SingleWindTraj_WriteFile(curMission, curAtmosphere, curTfailStorage, curThetagStorage, curStateVecStorage, catalogList, tfailSec, trajIX, windIX):
+    cur_mpc = MonteCarlo_SingleWindTraj(curMission, curAtmosphere, curTfailStorage, 
+                                curThetagStorage, curStateVecStorage, 
+                                catalogList, tfailSec)
+    
+    outFileName = '{0}/mpc_f{1}_t{2}_w{3}.pkl'.format(curMission['debrisPickleFolder'],  int(tfailSec), trajIX, windIX)
+    output = open(outFileName, 'wb')
+    pickle.dump(cur_mpc,output,2)
+    output.close()
+
+    return "f{0}_t{1}_w{2}".format(int(tfailSec), trajIX, windIX)
+
+
+def MonteCarlo_SingleWindTraj(curMission, curAtmosphere, curTfailStorage, curThetagStorage, curStateVecStorage, catalogList, tfail):
+
+    # Should we even propagate?
+    if (tfail > curTfailStorage[-1]):
+        # We don't have information out this far.  Kill it
+        mpc = dict(flatPointArray = [])
+        return mpc
+
+    debrisCatalogFilePATH = curMission['debrisCatPath']
+    dt = curMission['deltaT']
+    ndtinterval = curMission['debrisTimeLimitSec']/dt
+
+    cloption = 1
+    if curMission['useLoverD'] == True:
+        cloption = 0
+    loverd = curMission['loverd']    
+
+    omegaE = curMission['omegaE']
+    planetmodel = curMission['planetModel']
+    numPiecesPerSample = curMission['numPiecesPerSample']
+    # print 'planetmodel = ' + str(planetmodel)
+
+    altitudeList, densityList, uList, vList, wList = curAtmosphere
+    if curMission.get('noWind', False):
+        uList = 0.*uList
+        vList = 0.*vList
+        wList = 0.*wList
+
+    # These two arrays will be appended to and returned as the solution of this function
+    debrisNumTimeSteps = []
+    debrisID = []
+    debrisMass = []
+    debrisArea = []
+    testStorage = []
+
+    numberOfPiecesMeanListStorage = []
+
+    # debrisID must now change across times
+    debrisIDcounter = 0
+
+    # Iterate through the timesteps in the catalog and propagate those pieces
+    # This only applies if you're modeling a distributed breakup.
+    # If not distributed, then debris catalog will have a single time that equals 0.0
+    for curTuple in catalogList:
+        curTime     = curTuple[0]   # Time since breakup at tfail
+        curCatalog  = curTuple[1]
+
+        # If you don't specify a numPiecesPerSample value, then use the exact values from the debris catalog
+        nSamplesVec = []
+        if numPiecesPerSample < 0:
+            for group in curCatalog:
+                nSamplesVec.append(int(group[0]))
+        else:
+            for group in curCatalog:
+                nSamplesVec.append(numPiecesPerSample)
+
+        # print 'curTime = {0}, nSamplesVec = {1}'.format(curTime, nSamplesVec)
+        # print curCatalog
+
+        # generating random debris pieces
+        massList,arefList,velList,ncdList,minfcdList,CDList,nclList,\
+        minfclList,CLList,arefMean,numberOfPiecesMeanList,blast\
+            = DR.generateDebris(curCatalog,nSamplesVec,debrisCatalogFilePATH)
+
+        # Banishing coeffIX, it is no longer a good measure of anything
+        for debrisIndex in range(len(nSamplesVec)):
+            ncdval = ncdList[debrisIndex]
+            minfcdval = minfcdList[debrisIndex]
+            nclval = nclList[debrisIndex]
+            minfclval = minfclList[debrisIndex]
+            CDval = CDList[debrisIndex]
+            CLval = CLList[debrisIndex]
+
+            # print '[wind][traj][beta] = ' + '[{0}][{1}][{2}]'.format(windIX, trajIX, debrisIndex)
+
+            for pieceIndex in range(nSamplesVec[debrisIndex]):
+
+                # sampling time during a two minute window
+                # tbreak = np.random.uniform(lowerBreakLimit,upperBreakLimit)
+                catalogTimeInterval = 5 # TODO: I know this is true for now, but should make this an input
+                tbreak = tfail + curTime + np.random.uniform(0,catalogTimeInterval)
+                            #Timing notes:
+                            # * tfail is time of failure
+                            # * curTime is increment from tfail
+                            # * Then adding randomness to time within increment
+
+                # This gets moved into loop for each piece within a generated debris catalog
+                nearestIX = (np.abs(curTfailStorage-tbreak)).argmin() #Assuming first windprofile first trajectory is representative
+
+                thetag = curThetagStorage[nearestIX]
+                x  = curStateVecStorage[0][nearestIX]
+                y  = curStateVecStorage[1][nearestIX]
+                z  = curStateVecStorage[2][nearestIX]
+                Vx = curStateVecStorage[3][nearestIX]
+                Vy = curStateVecStorage[4][nearestIX]
+                Vz = curStateVecStorage[5][nearestIX]
+
+                stateVec = [x,y,z,Vx,Vy,Vz]
+
+                # Vrot = np.cross([0,0,omegaE],[x,y,z])
+                # Vinf = np.array([Vx,Vy,Vz]) - Vrot
+                # Vmag = (Vinf[0]**2 + Vinf[1]**2 + Vinf[2]**2)**.5
+
+                massval = massList[debrisIndex][pieceIndex]
+                arefval = arefList[debrisIndex][pieceIndex]
+                velImpval = velList[debrisIndex][pieceIndex]
+                #velImpval = 100.  # addition...just to check behavior
+                theta1 = np.random.uniform(0.0,2*np.pi)
+                theta2 = np.random.uniform(0.0,2*np.pi) #it is not required this to be 0 to 2pi, domain is covered with 0 to pi since prev angle helps cover the entire sphere
+                Vdeb = np.array([[velImpval,0,0]]).T # velocity impulse calculation
+                Rz = orbitTools.cRnMatrix_Zaxis(theta1)
+                Rx = orbitTools.cRnMatrix_Xaxis(theta2)
+                Vdeb = np.dot(Rz,Vdeb)
+                Vdeb = np.dot(Rx,Vdeb)
+                Vdeb = Vdeb[:,0] # making it a 1 by 3 vector...impulse velocity in cartesin coordinates
+                #print arefval
+                # debris propagation calculation
+
+                # print 'pieceIndex = {0}, Vdeb/Vmag = {1}/{2}'.format(pieceIndex, (Vdeb[0]**2 + Vdeb[1]**2 + Vdeb[2]**2)**.5, Vmag)
+
+                #            print 'pieceIX = ' + str(pieceIndex) + '   mass = ' + str(massval)
+
+                # print 'tbreak = {0}, nearestIX = {1}'.format(tbreak, nearestIX)
+
+                debrisResults, numFinalSteps = dp.debrispropagation(initialstate = stateVec,
+                                                                    debrisvel = Vdeb,
+                                                                    mass=massval,sref=arefval,minfcd=minfcdval,cd=CDval,cloption=cloption,
+                                                                    minfcl=minfclval,cl=CLval,loverd = loverd, atmosoption=2,altitudelist=altitudeList,
+                                                                    densitylist=densityList,ulist=uList,vlist=vList,
+                                                                    wlist=wList,geoptions=0,filename='none',planetmodel=planetmodel,dtinterval = dt,ndtinterval = ndtinterval,thetag0=thetag,
+                                                                    ncd=ncdval,
+                                                                    ncl=nclval,
+                                                                    nlist=len(altitudeList))
+                #                pdb.set_trace()
+
+    #                    print 'QUITTING AFTER ONE ITERATION AND RETURNING TEST VALUE FOR DEBUGGING PURPOSES!!!!'
+    #                    return debrisResults, numFinalSteps
+
+                # Explanation of these manipulations:
+                # debrisResults is returned as a fixed-length one-dimensional array.  Fortran makes it way larger than it
+                #   would ever need to be because it doesn't have the ability to do dynamic memory allocation and it doesn't
+                #   know at the beginning of the propagation how long it will take the debris to hit the ground.  Thus, we need
+                #   to trim all the unused stuff off of the end
+                #   * debrisResults[0:(numFinalSteps)*sizeResults]
+                # Then we want to unflatten the array into a multidimensional array
+                #   * .reshape(numFinalSteps,sizeResults)
+                # But there might be return values that we don't care about, so select only the columns that we want to store.
+                #   In my case, that's the first six values (position and velocity)
+                #   * [:,:6]
+                # Later when we store the values in debrisStorage, we'll flatten them out and make this is a massive 1D array
+                #   * .flatten()
+                sizeResults = 7
+                sizeKeeping = 6
+                debrisResults = debrisResults[0:(numFinalSteps)*sizeResults].reshape(numFinalSteps,sizeResults)[:,:sizeKeeping]
+
+                # altitudeFinal = debrisResults[-1,2]
+                # if altitudeFinal>0:
+                #     print 'Warning...debris is not on the ground. Final altitude is ',altitudeFinal
+
+                # print "numFinalSteps = {0}".format(numFinalSteps)
+                # Saves the stuff I care about
+                # For some reason, those extra parentheses are necessary to avoid errors when concatenating the first (empty) array
+                # debrisStorage = np.concatenate(( debrisStorage,  debrisResults.flatten() ))
+                testStorage.append(debrisResults.flatten() )
+                debrisNumTimeSteps.append(numFinalSteps)
+                debrisID.append(debrisIDcounter)
+                debrisMass.append(massval)
+                debrisArea.append(arefval)
+            debrisIDcounter += 1
+        numberOfPiecesMeanListStorage.extend(numberOfPiecesMeanList)
+
+    # Convert the time steps array to be numpy int32 array
+    # This info exists for each individual piece
+    debrisNumTimeSteps = np.array(debrisNumTimeSteps,dtype=np.int32)
+    debrisID = np.array(debrisID,dtype=np.int32)
+    debrisMass = np.array(debrisMass,dtype=np.double)
+    debrisArea = np.array(debrisArea,dtype=np.double)
+
+    # This is overall information
+    numberOfPiecesMeanList = np.array(numberOfPiecesMeanListStorage,dtype=np.int32)
+
+    # TODO: This is no longer needed, zero out and eventually remove
+    arefMean = np.array(arefMean,dtype=np.double)
+    arefMean = []
+
+    # This flattens the python list testStorage and saves it as the proper numpy array
+    debrisStorage = np.array([item for sublist in testStorage for item in sublist],dtype=np.float64)
+
+
+    ###### Now to read these points into a PointCloud, for input into a footprint and export to GE
+    # UTC = curMission['initialUTC'] + (tLaunchDesired + tfail)/(24*3600.)
+    UTC = curMission['initialUTC']
+    # zBinHeightKm = 5.0
+
+    numRuns = len(debrisNumTimeSteps)
+    maxTime = debrisNumTimeSteps.max()*dt
+
+    # TODO: Not sure why all_points_delta_t is being saved in mpc.  Remove it and see what breaks.
+    # Pack things up in a dictionary (for pickling)
+    mpc = dict(flatPointArray = debrisStorage, numPieces = numRuns, numTimeSteps = debrisNumTimeSteps, maxTime = maxTime, deltaTsec = curMission['deltaT'],
+               UTC = UTC, all_points_delta_t = curMission['all_points_delta_t'],
+               launchLat = curMission['launchLat'], launchLon = curMission['launchLon'], launchAzimuth = curMission['launchAzimuth'],
+               debrisID = debrisID, arefMeanList = arefMean, numberOfPiecesMeanList = numberOfPiecesMeanList,
+               debrisMass = debrisMass, debrisArea = debrisArea, sizeFlatPointArray = sizeKeeping)
+
+    return mpc
 
 
 

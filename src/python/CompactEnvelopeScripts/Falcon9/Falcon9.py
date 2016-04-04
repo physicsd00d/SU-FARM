@@ -139,10 +139,9 @@ curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
-curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 10
+curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
-
 
 if curMission['deltaT'] != 1.0:
     print "ERROR: Required deltaT = 1."
@@ -211,19 +210,20 @@ if debug:
     curMission['numPiecesPerSample']      = 2      # The number of pieces to consider within each debris group
 
 
+curMission['numTrajSamples'] = 1
+curMission['numWindSamples'] = 32   # Best results if this is a multiple of the number of nodes you're running on.
+
 profiles = []
 if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
 
-    numTrajSamples = 1
-    numWindSamples = 2
-
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
 
-    atmStorage, stateVecStorage, thetagStorage, tfailStorage = TJC.GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples)
+    atmStorage, stateVecStorage, thetagStorage, tfailStorage = \
+                            TJC.GenerateWindTrajProfiles(curMission, curMission['numTrajSamples'], curMission['numWindSamples'])
     profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage, tfailStorage = tfailStorage,
-                    numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+                    numTrajSamples = curMission['numTrajSamples'], numWindSamples = curMission['numWindSamples'])
 
     import pickle
     output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')
@@ -239,7 +239,8 @@ if freshDebris:
     t_lo = 0.
     t_hi = 180.
 
-    TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
+    TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)
+
 
 # # ## Find the time until the airspace can become reactive
 # minTime = 120.

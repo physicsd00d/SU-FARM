@@ -207,7 +207,7 @@ public:
     
     void ConvertToEmptyProbability();
     void ConvertToProbability(double weight);
-    void weightedCombine(SkyGrid *newSkyGrid, double weight);
+//    void weightedCombine(SkyGrid *newSkyGrid, double weight);
     bool isTotalProbabilityGood();
 
     
