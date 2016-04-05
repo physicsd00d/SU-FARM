@@ -2904,7 +2904,7 @@ def getProbImpacts(curMission, tfailSec):
                 if (cur_mpc['numberOfPiecesMeanList'] != prevMean).all():
                     print 'ERROR: Using different mean lists'
                     sys.exit()
-                # curSkyGrid.IncorporatePointCloudIntoGrid(curPointCloud)
+                curSkyGrid.IncorporatePointCloudIntoGrid(curPointCloud)
 
     # ASH them
     h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
@@ -3129,7 +3129,6 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
         if ix == 0:
             footprintTotal = curFP
         else:
-            print '\n\nMERGE'
             footprintTotal.MergeFootprintVectors(curFP)
 
         # Check it out
