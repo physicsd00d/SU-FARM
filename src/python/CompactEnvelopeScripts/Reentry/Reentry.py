@@ -20,11 +20,6 @@ doMain                  = True
 import os
 import sys
 
-print "New method of compact envelopes is not yet able to handle the reentry case."
-print "TODO: Split the debris files up by tfail and windIX, like reentry case, for "
-print "all vehicles.  Then more memory efficient and congruous with this use case."
-sys.exit()
-
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
@@ -37,14 +32,14 @@ Import the modules necessary for the script.
 Note: Must Come After sys.path update
 Note: This block is probably the same across all main scripts
 '''
-import CompactEnvelopeBuilder as ceb
-import numpy as np
+# import CompactEnvelopeBuilder as ceb
+# import numpy as np
 from Simulation import TJC
 import datetime as dt
 
-import matplotlib
-matplotlib.use('Agg')  # Allows plot generation on server without X-windows
-import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('Agg')  # Allows plot generation on server without X-windows
+# import matplotlib.pyplot as plt
 
 from Simulation import LaunchSites
 from Simulation import LaunchProviders
@@ -133,7 +128,7 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 # The different time steps within the mission
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 #   Make sure this matches the timestep of the trajectory you have
-curMission['deltaTFail']              = 1.     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 10.     # Seconds, this is how often we explode the rocket
 curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
@@ -144,7 +139,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 4  
-curMission['numNodesEnvelopes']         = 4
+curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
 
@@ -195,7 +190,7 @@ ExportDate = dt.datetime(year=yyyy, month=mm, day=dd, hour=hour, minute=min, sec
 curMission['ExportDate'] = [yyyy, mm, dd, hour, min]
 curMission['ExportDateDT'] = ExportDate
 
-secondsFromMidnightUTC = hour*3600 + min*60 + sec
+# secondsFromMidnightUTC = hour*3600 + min*60 + sec
 
 
 '''Unique to Columbia?'''
@@ -229,49 +224,49 @@ if (freshMain):
     print "You generated a new trajectory.  Now must restart the script..."
     sys.exit()
 
+
+curMission['numTrajSamples'] = 1
+curMission['numWindSamples'] = 4   # Best results if this is a multiple of the number of nodes you're running on.
+
 profiles = []
 if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
-    
-    numTrajSamples = 1      # If you change this to anything other than 1, it might break.  Look at numDebrisPerIXSimulated to start.
-    numWindSamples = 3      # You can increase this, but it will make envelopes smaller.  3 is good enough to replicate paper.
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
 
-    atmStorage, stateVecStorage, thetagStorage, tfailStorage\
-        = TJC.GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSamples, angleLow, angleHi, windMagCoeff)
-
-    profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage,
-                    tfailStorage = tfailStorage, numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+    atmStorage, stateVecStorage, thetagStorage, tfailStorage = \
+                            TJC.GenerateWindTrajProfiles(curMission, curMission['numTrajSamples'], curMission['numWindSamples'])
+    profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage, tfailStorage = tfailStorage,
+                    numTrajSamples = curMission['numTrajSamples'], numWindSamples = curMission['numWindSamples'])
 
     import pickle
     output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')
     pickle.dump(profiles,output)
     output.close()
 
-    # sys.exit()
 else:
     import pickle
     profiles = pickle.load(open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl','rb'))
 
 
 if freshDebris:
-    # Generate the debris
-    coeffIX = []
-    lowerBreakLimit = profiles['tfailStorage'][0][0][0] # By setting these to 0 and 1, we'll explode at just the lower time
-    upperBreakLimit = profiles['tfailStorage'][0][0][-1] # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
-                         # If you set them both to [], then will explode at all times
-    TJC.MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, curMission['numPiecesPerSample'],
-                                                    lowerBreakLimit, upperBreakLimit, profiles)
+    # t_lo = 0.
+    # t_hi = 180.
+    t_lo = profiles['tfailStorage'][0][0][0] # By setting these to 0 and 1, we'll explode at just the lower time
+    t_hi = profiles['tfailStorage'][0][0][-1] # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
+    t_hi = 440.  # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
+#                          # If you set them both to [], then will explode at all times
+    TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)
 
-# ## Find the time until the airspace can become reactive
-#minTime = 0.
-#maxTime = 180.
-#tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
-#print "tProactive = {0}\n".format(tProactive)
-#TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
-#sys.exit()
+
+# # ## Find the time until the airspace can become reactive
+# minTime = 120.
+# maxTime = 180.
+# tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
+# print "tProactive = {0}\n".format(tProactive)
+# TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
+# sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
@@ -280,24 +275,106 @@ mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
 totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
 
 if doMain:
+    # Note: this is my new and improved method
+    curMission['armLength'] = 10000.
 
-    curMission['numWindProfiles'] = len(profiles['atmStorage'])  # Reentry files need this curMission entry
-    # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles)
-    # print "tProactive = {0}\n".format(tProactive)
+    footprintStart = profiles['tfailStorage'][0][0][0] # By setting these to 0 and 1, we'll explode at just the lower time
+    # footprintUntil = profiles['tfailStorage'][0][0][-1] # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
+    footprintUntil = 440.
 
-    footprintStart = profiles['tfailStorage'][0][0][0]
-    footprintUntil = profiles['tfailStorage'][0][0][-1] # Landed at this point.
-    print 'footprintStart = {0}'.format(footprintStart)
-    print 'footprintUntil = {0}'.format(footprintUntil)
-
-    footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
-
-    # footprintTotal = TJC.GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footprintIntervals)
-    # vehicleNotes = vehicleNotes + 'NoHealth' + str(int(footprintIntervals))
-
+    footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
-    # outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# profiles = []
+# if (freshWind):
+#     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
+    
+#     numTrajSamples = 1      # If you change this to anything other than 1, it might break.  Look at numDebrisPerIXSimulated to start.
+#     numWindSamples = 3      # You can increase this, but it will make envelopes smaller.  3 is good enough to replicate paper.
+
+#     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
+#     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
+
+#     atmStorage, stateVecStorage, thetagStorage, tfailStorage\
+#         = TJC.GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSamples, angleLow, angleHi, windMagCoeff)
+
+#     profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage,
+#                     tfailStorage = tfailStorage, numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+
+#     import pickle
+#     output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')
+#     pickle.dump(profiles,output)
+#     output.close()
+
+#     # sys.exit()
+# else:
+#     import pickle
+#     profiles = pickle.load(open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl','rb'))
+
+
+# if freshDebris:
+#     # Generate the debris
+#     coeffIX = []
+#     lowerBreakLimit = profiles['tfailStorage'][0][0][0] # By setting these to 0 and 1, we'll explode at just the lower time
+#     upperBreakLimit = profiles['tfailStorage'][0][0][-1] # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
+#                          # If you set them both to [], then will explode at all times
+#     TJC.MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, curMission['numPiecesPerSample'],
+#                                                     lowerBreakLimit, upperBreakLimit, profiles)
+
+# # ## Find the time until the airspace can become reactive
+# #minTime = 0.
+# #maxTime = 180.
+# #tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
+# #print "tProactive = {0}\n".format(tProactive)
+# #TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
+# #sys.exit()
+
+# footprintIntervals = curMission['all_points_delta_t']
+# vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
+# vehicleFileName = '{0}_{1}_{2}'.format(vehicleName, launchLocation, vehicleNotes)
+# mainFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '.dat'
+# totalFootprintFile = curMission['footprintLibrary'] + vehicleFileName + '_stageDown.dat'
+
+# if doMain:
+
+#     curMission['numWindProfiles'] = len(profiles['atmStorage'])  # Reentry files need this curMission entry
+#     # tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles)
+#     # print "tProactive = {0}\n".format(tProactive)
+
+#     footprintStart = profiles['tfailStorage'][0][0][0]
+#     footprintUntil = profiles['tfailStorage'][0][0][-1] # Landed at this point.
+#     print 'footprintStart = {0}'.format(footprintStart)
+#     print 'footprintUntil = {0}'.format(footprintUntil)
+
+#     footprintTotal = TJC.GenerateEnvelopes_HealthFlash(curMission, footprintStart, footprintUntil, footprintIntervals)
+
+#     # footprintTotal = TJC.GenerateEnvelopes_NoHealth(curMission, footprintStart, footprintUntil, footprintIntervals)
+#     # vehicleNotes = vehicleNotes + 'NoHealth' + str(int(footprintIntervals))
+
+#     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
+#     # outfileStr = curMission['footprintLibrary'] + vehicleFileName + '.dat'
+#     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
 
 
 
