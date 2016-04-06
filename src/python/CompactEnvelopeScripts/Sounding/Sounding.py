@@ -89,7 +89,7 @@ curMission['useLoverD'] = False
 curMission['loverd']    = 0.
 
 # These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatPath']           = debrisPath + 'Lynx/'
 curMission['debrisCatFile']           = 'LynxDebrisCatalog.txt'         # TODO : Custom debris catalog
 curMission['atmospherePickle'] = rootDir + 'data/AtmoProfiles/WSands.pkl'
 
