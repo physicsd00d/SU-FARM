@@ -87,7 +87,7 @@ else:
 curMission['loverd'] = initVec.loverd
 
 # These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatPath']           = debrisPath + 'Columbia/'
 # curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
 curMission['debrisCatFile']           = 'testFileDistributed.txt'
 #curMission['debrisCatFile']           = 'debugDistributed.txt'

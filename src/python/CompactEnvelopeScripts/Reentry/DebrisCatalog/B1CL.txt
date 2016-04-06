@@ -1,5 +1,0 @@
-#Fig B1. Lift Coefficient for Forward ET section
-0.0	0.0
-4.99382	0.0
-5.02371	0.617990
-6.97597	0.610979
