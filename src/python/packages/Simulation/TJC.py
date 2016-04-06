@@ -883,11 +883,13 @@ def FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime
         tfail += deltaTFail
         # mpc = MonteCarlo_at_tfail(curMission, coeffIX, tfail, numPiecesPerSample, profiles)
 
-	if curMission['isReentry'] == True:
-	    # Hack, just looking at first wind profile for now.
-	    inFileName = debrisPickleFolder + '/mpc_0_' + str(int(tfail)) + '.pkl'
-	else:
-	    inFileName = debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl'
+        # if curMission['isReentry'] == True:
+        #     # Hack, just looking at first wind profile for now.
+        #     inFileName = debrisPickleFolder + '/mpc_0_' + str(int(tfail)) + '.pkl'
+        # else:
+        #     inFileName = debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl'
+
+        inFileName = DebrisFileName(debrisPickleFolder, tfail, trajIX=0, windIX=0)
 
 #        input = open(debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl', 'rb')
         input = open(inFileName)
@@ -2887,7 +2889,7 @@ def getProbImpacts(curMission, tfailSec):
     numWindSamples = curMission['numWindSamples']
     for trajIX in range(numTrajSamples):
         for windIX in range(numWindSamples):
-            inFileName = '{0}/mpc_f{1}_t{2}_w{3}.pkl'.format(debrisPickleFolder,  int(tfailSec), trajIX, windIX)
+            inFileName = DebrisFileName(debrisPickleFolder, tfailSec, trajIX, windIX)
             input = open(inFileName, 'rb')
             cur_mpc = pickle.load(input)
             input.close()
@@ -3145,6 +3147,9 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
 
 ### ======== Updated and Harmonized debris routines
 
+def DebrisFileName(debrisPickleFolder, tfailSec, trajIX, windIX):
+    return '{0}/mpc_f{1}_t{2}_w{3}.pkl'.format(debrisPickleFolder,  int(tfailSec), trajIX, windIX)
+
 def MonteCarloDebris(curMission, profiles, t_lo, t_hi):
     # def MonteCarlo_Setup
     # coeffIX = []  # Use all ballistic coeffs
@@ -3223,7 +3228,7 @@ def MonteCarlo_SingleWindTraj_WriteFile(curMission, curAtmosphere, curTfailStora
                                 curThetagStorage, curStateVecStorage, 
                                 catalogList, tfailSec)
     
-    outFileName = '{0}/mpc_f{1}_t{2}_w{3}.pkl'.format(curMission['debrisPickleFolder'],  int(tfailSec), trajIX, windIX)
+    outFileName = DebrisFileName(curMission['debrisPickleFolder'], tfailSec, trajIX, windIX)
     output = open(outFileName, 'wb')
     pickle.dump(cur_mpc,output,2)
     output.close()
