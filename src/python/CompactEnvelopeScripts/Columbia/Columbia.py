@@ -29,6 +29,7 @@ curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
+debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
 '''
@@ -95,7 +96,7 @@ else:
 curMission['loverd'] = initVec.loverd
 
 # These hold files that need to be read in
-curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatPath']     = debrisPath + 'Columbia/'
 # curMission['debrisCatFile']           = 'testFileDistributed.txt'
 # curMission['debrisCatFile']           = 'debugDistributed.txt'
 curMission['debrisCatFile']           = 'debugColumbiaMarch16.txt'
