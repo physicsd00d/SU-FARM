@@ -3,7 +3,7 @@ begin
 # velocity and time don't matter since only one catalog is being used
 # modified columbia ÉSI UNITS!!
 velocity  100 
-time 10
+time 0
 
 #'Num Pieces'	'Weight/piece'	'Total Weight'	'Ref Area'  'ball coif'	'Vel Inc' CD	CL 'Solid Rocket Prop'
 

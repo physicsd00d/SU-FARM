@@ -1,7 +1,7 @@
 units SI
 begin
 velocity  666.0
-time   100.0
+time   0.0
 #numPieces     weightIndividual         weightTotal    aref                     beta                     impulseVel          CD        CL        
 1              3196.5                    3196.5        12.458                   1982.3                   32.614                     1.0       0.1
 9              59.783                    538.05        0.63824                   203.6                    15.85                     1.0       0.1

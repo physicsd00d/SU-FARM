@@ -1,7 +1,7 @@
 units SI
 begin
 velocity  666.0
-time   100.0
+time   0.0
 #numPieces     weightIndividual         weightTotal    aref                     beta                     impulseVel          CD        CL        
 2              0.001063                 0.0021268      [0.0006705,0.03361]      [0.05274,  2.643]        [    0.0,  100.0]          0.6       0.0
 1              0.001251                 0.0012514      [0.0007274,0.03646]      [0.05721,  2.867]        [    0.0,  100.0]          0.6       0.0

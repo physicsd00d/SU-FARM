@@ -471,7 +471,7 @@ def makeOutputFile(finalCatalog, fileName):
     # Print the catalog nicely
     outFile = open(fileName, 'w')
 
-    outFile.write('units SI\nbegin\nvelocity  666.0\ntime   100.0\n')
+    outFile.write('units SI\nbegin\nvelocity  666.0\ntime   0.0\n')
 
     outString = '#{0:14}{1:25}{2:15}{3:25}{4:25}{5:20}{6:10}{7:10}'.\
         format('numPieces', 'weightIndividual', 'weightTotal', 'aref', 'beta', 'impulseVel', 'CD', 'CL')

@@ -4,7 +4,7 @@ begin
 # modified columbia …SI UNITS!!
 # This is the columbia catalog scaled down by mass
 velocity  100 
-time 10
+time 0
 
 #'Num Pieces'  'Weight/piece' 'Total Weight'	'Ref Area'  'ball coif'	  'Vel Inc' CD		CL	'Solid Rocket Prop'
 126		0.0195093333	2.4615384615	0.0132851339	2.441211984	    [0,100]	0.6015489886	0	0
