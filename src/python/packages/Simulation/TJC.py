@@ -761,7 +761,7 @@ def HaversineDistance(originDeg, destinationDeg):
 ### CURRENTLY IN USE (Called by falcon9.py)
 def PlotNominalTrajectories(profiles, curMission, limitSec):    
     # Plot the trajectory in Google Earth
-    import orbitTools as OT         ## needed for ECI2latlonalt
+    from FriscoLegacy import orbitTools as OT         ## needed for ECI2latlonalt
 
     # Pull out the quantities needed to plot
     stateVecStorage = profiles['stateVecStorage']
@@ -827,7 +827,10 @@ def PlotDebrisFromExplodeTime(mission, profiles, tfail, cutoffNAS = True):
     debrisPickleFolder = mission['debrisPickleFolder']
     GeneratedFilesFolder = mission['GeneratedFilesFolder']
     
-    input = open(debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl', 'rb')
+    tfail = int(tfail)
+    # inFileName = debrisPickleFolder + '/mpc_1_' + str(tfail) + '.pkl'
+    inFileName = DebrisFileName(debrisPickleFolder, tfail, trajIX=0, windIX=0)
+    input = open(inFileName, 'rb')
     cur_mpc = pickle.load(input)
     input.close()
 
@@ -879,7 +882,7 @@ def FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime
     tfail = minTime             # THIS IS IN SECONDS!!!
     shortestTime = 0;
     shortestTimeRecord = []
-    while (shortestTime < 5.5) and (tfail < maxTime):
+    while (shortestTime < 6.5) and (tfail < maxTime):
         tfail += deltaTFail
         # mpc = MonteCarlo_at_tfail(curMission, coeffIX, tfail, numPiecesPerSample, profiles)
 
@@ -890,8 +893,9 @@ def FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime
         #     inFileName = debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl'
 
         inFileName = DebrisFileName(debrisPickleFolder, tfail, trajIX=0, windIX=0)
+        # inFileName = debrisPickleFolder + '/mpc_2_' + str(int(tfail)) + '.pkl'
 
-#        input = open(debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl', 'rb')
+        # input = open(debrisPickleFolder + '/mpc_' + str(tfail) + '.pkl', 'rb')
         input = open(inFileName)
         mpc = pickle.load(input)
         input.close()

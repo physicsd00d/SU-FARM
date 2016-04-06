@@ -88,8 +88,8 @@ curMission['loverd'] = initVec.loverd
 
 # These hold files that need to be read in
 curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
-curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
-#curMission['debrisCatFile']           = 'testFileDistributed.txt'
+# curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
+curMission['debrisCatFile']           = 'testFileDistributed.txt'
 #curMission['debrisCatFile']           = 'debugDistributed.txt'
 curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
 
@@ -260,13 +260,14 @@ if freshDebris:
     TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)
 
 
-# # ## Find the time until the airspace can become reactive
-# minTime = 120.
-# maxTime = 180.
-# tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
-# print "tProactive = {0}\n".format(tProactive)
+# ## Find the time until the airspace can become reactive
+minTime = 0.
+maxTime = 180.
+tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
+print "tProactive = {0}\n".format(tProactive)
+# TJC.PlotDebrisFromExplodeTime(curMission, profiles, maxTime, cutoffNAS = False)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
-# sys.exit()
+sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
