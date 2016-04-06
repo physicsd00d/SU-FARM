@@ -2998,7 +2998,7 @@ def GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec):
                 print "tx = {0}, paralleling {1}, maxTime {2}".format(tx, range(tx,min(tx+numNodesEnvelopes, maxTime)), maxTime)
                 jobs = [job_server.submit(getProbImpacts, \
                                           args=(curMission, timeRange[ix]), \
-        #                               depfuncs=(MonteCarlo_at_tfail,), \
+                                          depfuncs=(DebrisFileName,), \
                                           modules=('from CompactEnvelopeBuilder import PySkyGrid','from CompactEnvelopeBuilder import PyPointCloud','from CompactEnvelopeBuilder import PyGrid3D'), \
                                           # callback=finished002 \
                                           ) for ix in range(tx,min(tx+numNodesEnvelopes, maxTime))]
@@ -3210,7 +3210,7 @@ def MonteCarloDebris(curMission, profiles, t_lo, t_hi):
                                               args=(curMission, atmStorage[windIX], tfailStorage[windIX][trajIX], \
                                                 thetagStorage[windIX][trajIX], stateVecStorage[windIX][trajIX], \
                                                 catalogList, tfailSec, trajIX, windIX), \
-                                              depfuncs=(MonteCarlo_SingleWindTraj,), \
+                                              depfuncs=(MonteCarlo_SingleWindTraj,DebrisFileName,), \
                                               modules=('numpy as np','from FriscoLegacy import debrisReader as DR', 'from FriscoLegacy import orbitTools', 'from FriscoLegacy import debrisPropagation as dp') \
                                               ) for windIX in range(numWindSamples)]  
                                               # callback=finishedDistributedNew) for windIX in range(numWindSamples)]  
