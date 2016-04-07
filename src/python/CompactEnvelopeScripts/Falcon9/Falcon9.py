@@ -26,11 +26,11 @@ import os
 import sys
 
 # Want to import some things that are general to all missions
-sys.path.insert(0, os.path.abspath('../')) 
+curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"      # Reference everything from the location of the file
+sys.path.insert(0, os.path.abspath(curFilePath+'../'))              # Back up one so we can import CommonThemes
 import CommonThemes as ct
 
 # Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
-curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + ct.tempFolderName   # temp files here, gitignored
