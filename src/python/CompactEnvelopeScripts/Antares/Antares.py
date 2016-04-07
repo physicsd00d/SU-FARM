@@ -120,7 +120,7 @@ curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
 curMission['reactionTimeSeconds']       = 5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
-curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
+curMission['thresh']                    = 0.    # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
 curMission['cumulative']                = 'FAA' # The definition for 'cumulative' that we wish to use.
