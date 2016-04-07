@@ -273,21 +273,20 @@ if (freshMain):
     print "You generated a new trajectory.  Now must restart the script..."
     sys.exit()
 
+curMission['numTrajSamples'] = 1
+curMission['numWindSamples'] = 3   # Best results if this is a multiple of the number of nodes you're running on.
+
 profiles = []
 if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
-    
-    numTrajSamples = 1      # If you change this to anything other than 1, it might break.  Look at numDebrisPerIXSimulated to start.
-    numWindSamples = 1
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
 
-    atmStorage, stateVecStorage, thetagStorage, tfailStorage\
-        = TJC.GenerateWindTrajProfilesDirectional(curMission, numTrajSamples, numWindSamples, angleLow, angleHi, windMagCoeff)
-
-    profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage,
-                    tfailStorage = tfailStorage, numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+    atmStorage, stateVecStorage, thetagStorage, tfailStorage = \
+                            TJC.GenerateWindTrajProfiles(curMission, curMission['numTrajSamples'], curMission['numWindSamples'])
+    profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage, tfailStorage = tfailStorage,
+                    numTrajSamples = curMission['numTrajSamples'], numWindSamples = curMission['numWindSamples'])
 
     # It doesn't seem like te tfailStorage here would be useful.  Those are the statetimes of the vehicle's trajectory.
     # What I want to do with Columbia is explode it at a single time, possibly the first time, and then have a

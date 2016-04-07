@@ -214,20 +214,20 @@ if debug:
     curMission['reactionTimeMinutes']       = 5     # The number of minutes that the NAS needs to safely handle a sudden debris event.
     curMission['numPiecesPerSample']      = 2      # The number of pieces to consider within each debris group
 
+curMission['numTrajSamples'] = 1
+curMission['numWindSamples'] = 30   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
-    
-    numTrajSamples = 1
-    numWindSamples = 60
-    
+
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
-    
-    atmStorage, stateVecStorage, thetagStorage, tfailStorage = TJC.GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples)
+
+    atmStorage, stateVecStorage, thetagStorage, tfailStorage = \
+                            TJC.GenerateWindTrajProfiles(curMission, curMission['numTrajSamples'], curMission['numWindSamples'])
     profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage, tfailStorage = tfailStorage,
-                    numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+                    numTrajSamples = curMission['numTrajSamples'], numWindSamples = curMission['numWindSamples'])
 
     import pickle
     output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')
