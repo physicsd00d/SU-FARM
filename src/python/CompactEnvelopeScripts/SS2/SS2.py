@@ -25,11 +25,15 @@ doMain      = True
 import os
 import sys
 
+# Want to import some things that are general to all missions
+sys.path.insert(0, os.path.abspath('../')) 
+import CommonThemes as ct
+
 # Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
-tempDir =   rootDir + "temp/"   # temp files here, gitignored
+tempDir =   rootDir + ct.tempFolderName   # temp files here, gitignored
 debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
@@ -51,7 +55,7 @@ from Simulation import LaunchProviders
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.SS2
 launchLocation  = LaunchSites.America
-vehicleNotes    = ''
+vehicleNotes    = ct.vehicleNotes
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.

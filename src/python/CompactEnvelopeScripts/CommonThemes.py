@@ -1,0 +1,2 @@
+tempFolderName = "temp/"
+vehicleNotes = ''

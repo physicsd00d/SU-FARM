@@ -20,10 +20,14 @@ doMain                  = True
 import os
 import sys
 
+# Want to import some things that are general to all missions
+sys.path.insert(0, os.path.abspath('../')) 
+import CommonThemes as ct
+
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
-tempDir =   rootDir + "temp/"   # temp files here, gitignored
+tempDir =   rootDir + ct.tempFolderName   # temp files here, gitignored
 debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
@@ -47,7 +51,7 @@ from Simulation import LaunchProviders
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Reentry
 launchLocation  = LaunchSites.OK    # NOTE: even though it says 'launch', in this context it really means 'landing'
-vehicleNotes    = 'space2015'
+vehicleNotes    = ct.vehicleNotes
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -129,7 +133,7 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 #   Make sure this matches the timestep of the trajectory you have
 curMission['deltaTFail']              = 1.     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 5.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group

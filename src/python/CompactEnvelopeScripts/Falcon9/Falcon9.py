@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = False
-freshDebris = False
+freshWind   = True
+freshDebris = True
 debug       = False
 
 doMain      = True
@@ -25,11 +25,15 @@ addStageReentry = False
 import os
 import sys
 
+# Want to import some things that are general to all missions
+sys.path.insert(0, os.path.abspath('../')) 
+import CommonThemes as ct
+
 # Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
-tempDir =   rootDir + "temp/"   # temp files here, gitignored
+tempDir =   rootDir + ct.tempFolderName   # temp files here, gitignored
 debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
@@ -51,7 +55,7 @@ from copy import deepcopy
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Falcon9
 launchLocation  = LaunchSites.Cape
-vehicleNotes    = ''
+vehicleNotes    = ct.vehicleNotes
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
@@ -114,7 +118,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeSeconds']       = 2.5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -132,7 +136,7 @@ curMission['deltaTFail']              = 1.0     # Seconds, this is how often we 
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
 #  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
-curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?

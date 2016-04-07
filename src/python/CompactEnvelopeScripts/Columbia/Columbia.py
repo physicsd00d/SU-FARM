@@ -25,10 +25,14 @@ makeAnimation           = True     # Turn this off if using a small all_pts_delt
 import os
 import sys
 
+# Want to import some things that are general to all missions
+sys.path.insert(0, os.path.abspath('../')) 
+import CommonThemes as ct
+
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
-tempDir =   rootDir + "temp/"   # temp files here, gitignored
+tempDir =   rootDir + ct.tempFolderName   # temp files here, gitignored
 debrisPath = rootDir + "src/python/packages/DebrisCatalogs/"
 
 
@@ -56,7 +60,7 @@ from Simulation import LaunchProviders
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Reentry
 launchLocation  = LaunchSites.OK    # NOTE: even though it says 'launch', in this context it really means 'landing'
-vehicleNotes    = 'Columbia'
+vehicleNotes    = ct.vehicleNotes + '_Columbia'
 
 # I want to specify the launch location in this way, as opposed to pulling the location from the first state vector,
 #   because vehicles that aren't vertical-takeoff may not begin firing until some distance away from the 'launch pad'.
