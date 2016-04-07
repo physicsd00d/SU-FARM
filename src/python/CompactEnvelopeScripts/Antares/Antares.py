@@ -235,7 +235,7 @@ if freshDebris:
     t_lo = .0
     t_hi = 180.
 
-    TJC.MonteCarlo_until_tfail(curMission, profiles, t_lo, t_hi)
+    TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)
 
 # # ## Find the time until the airspace can become reactive
 # minTime = 120.
