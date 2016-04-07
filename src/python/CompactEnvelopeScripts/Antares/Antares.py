@@ -97,7 +97,7 @@ curMission['loverd']    = 0.
 # curMission['debrisCatFile']           = 'testAntaresCatalog.txt'
 # curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
 curMission['debrisCatPath']           = debrisPath + 'Falcon9/'
-curMission['debrisCatFile']           = 'Falcon9_FTS.txt'
+curMission['debrisCatFile']           = 'Halcon9_1stNEW.txt'
 curMission['atmospherePickle'] = rootDir + "data/AtmoProfiles/WallopsOverOcean.pkl"
 
 
