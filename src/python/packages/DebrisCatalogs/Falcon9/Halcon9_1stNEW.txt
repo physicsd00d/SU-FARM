@@ -2,7 +2,7 @@ units SI
     begin 
     velocity  10. 
     time   0.0 
-#Number of Pieces	Weight of each piece kg)	Total Weight (lbs)	Reference Area (m^2)		Ballistic Coeff (kg/m^2)		Velocity Increment (m/sec)	CD	CL		
+#Number of Pieces	Weight of each piece kg)	Total Weight (kg)	Reference Area (m^2)		Ballistic Coeff (kg/m^2)		Velocity Increment (m/sec)	CD	CL		
 1		220.80874	220.80874	[0.467350983,2.17877009]	[101.3455899,472.4687617]	[0,100]	1	0.1		
 2		124.1698795	248.3397589	[0.318323103,1.483666889]	[83.69121155,390.0749841]	[0,100]	1	0.1		
 9		69.82585457	628.4326911	[0.216816915,1.01032571]	[69.11222183,322.0498487]	[0,100]	1	0.1		
