@@ -143,8 +143,8 @@ curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
-curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 8
+curMission['numNodes']                  = 10 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 10
 curMission['NASkm']                     = NASkm
 
 if curMission['deltaT'] != 1.0:
@@ -215,7 +215,7 @@ if debug:
 
 
 curMission['numTrajSamples'] = 1
-curMission['numWindSamples'] = 32   # Best results if this is a multiple of the number of nodes you're running on.
+curMission['numWindSamples'] = 30   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):

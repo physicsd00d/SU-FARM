@@ -137,15 +137,15 @@ curMission['deltaTFail']              = 1.0     # Seconds, this is how often we 
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
 #  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
-curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
-curMission['numPiecesPerSample']      = 1      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
-curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 4
+curMission['numNodes']                  = 10 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 10
 curMission['NASkm']                     = NASkm
 
 if curMission['deltaT'] != 1.0:
@@ -212,7 +212,7 @@ if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
 
     numTrajSamples = 1
-    numWindSamples = 6
+    numWindSamples = 30
 
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
