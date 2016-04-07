@@ -301,6 +301,8 @@ else:
 
 
 if freshDebris:
+    print "Make sure this works with     TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)"
+    sys.exit()  
     # Generate the debris
     coeffIX = []
     lowerBreakLimit = 0 # By setting these to 0 and 1, we'll explode at just the lower time
