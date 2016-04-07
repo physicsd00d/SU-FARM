@@ -3109,6 +3109,16 @@ def mergeFootprintBetweenTimes(curMission, timeRange, timelo, timehi):
     totalFootPrint.SmoothedOut(newDeltaT=curMission['all_points_delta_t'], armLength=armLength)
     return totalFootPrint
 
+def checkIsTrivial(low, hi, delta, r):
+    t = low
+    # isTrivial = True
+    while t <= hi:
+        if t in r:          # Check if this time is in range r
+            return False    # There exists at least one time in r, so not trivial
+        t += delta          # Increment and repeat
+    # If you made it out of the loop, then there were no times that were in range r.  This is a trivial time condition
+    return True
+
 
 def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
     # Unpack a little
@@ -3121,6 +3131,7 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
     # Make all of the individual hazard areas that we'll later merge together to make the final envelope
     GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec)
 
+    isFirst = True
     # Now merge the failTime hazard areas (previous line) according to the outgoing timestep
     for ix in range(int(np.ceil((footprintUntil-footprintStart)/footprintIntervals))):
         timelo = footprintStart + ix*footprintIntervals
@@ -3128,14 +3139,18 @@ def GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil):
         tString = "{0}-{1}".format(timelo, timehi)
         print tString
 
-        # Make a footprint with the final timing, assembled from all the subfootprints between timelo and timehi
-        curFP = mergeFootprintBetweenTimes(curMission, timeRange, timelo, timehi)
+        # Don't try to make a footprint if there are no valid times.  Will barf.
+        isTrivial = checkIsTrivial(timelo, timehi, deltaTFail, timeRange)
+        if not isTrivial:
+            # Make a footprint with the final timing, assembled from all the subfootprints between timelo and timehi            
+            curFP = mergeFootprintBetweenTimes(curMission, timeRange, timelo, timehi)
 
-        # Merge them all together
-        if ix == 0:
-            footprintTotal = curFP
-        else:
-            footprintTotal.MergeFootprintVectors(curFP)
+            # Merge them all together
+            if isFirst:
+                footprintTotal = curFP
+                isFirst = False
+            else:
+                footprintTotal.MergeFootprintVectors(curFP)
 
         # Check it out
         # curFP.ExportGoogleEarth(curMission['footprintVectorFolder'] + '/fp_' + tString + '.kml', yyyy, mm, dd, hour, min)
