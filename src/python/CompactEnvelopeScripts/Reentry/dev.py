@@ -13,8 +13,8 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = True
+freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = False
 doMain                  = True
 
 import os
@@ -87,9 +87,9 @@ else:
 curMission['loverd'] = initVec.loverd
 
 # These hold files that need to be read in
-curMission['debrisCatPath']           = debrisPath + 'Columbia/'
-# curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
-curMission['debrisCatFile']           = 'testFileDistributed.txt'
+curMission['debrisCatPath']           = curMission['pathToMissionFiles'] + 'DebrisCatalog/'
+curMission['debrisCatFile']           = 'columbiaWithBlast.txt'
+#curMission['debrisCatFile']           = 'testFileDistributed.txt'
 #curMission['debrisCatFile']           = 'debugDistributed.txt'
 curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
 
@@ -112,7 +112,7 @@ curMission['h1']                        = 6.    # Smoothing parameters for the A
 curMission['h2']                        = 6.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeSeconds']       = 5*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 4*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
                                                 #   Negative means to turn off reaction time and keep all points
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
@@ -260,14 +260,106 @@ if freshDebris:
     TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)
 
 
-# ## Find the time until the airspace can become reactive
-#minTime = 0.
-#maxTime = 180.
-#tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
-#print "tProactive = {0}\n".format(tProactive)
-# TJC.PlotDebrisFromExplodeTime(curMission, profiles, maxTime, cutoffNAS = False)
+debugSingleTime = True
+if debugSingleTime:
+     ### ===== DEBUG =========
+    tfailSec = 100.
+
+    from CompactEnvelopeBuilder import PySkyGrid, PyPointCloud#, PyFootprint
+    import pickle
+    import numpy as np
+
+    deltaXY                 = curMission['deltaXY']
+    deltaZ                  = curMission['deltaZ']
+    h1                      = curMission['h1']
+    h2                      = curMission['h2']
+    debrisPickleFolder      = curMission['debrisPickleFolder']
+    footprintVectorFolder   = curMission['footprintVectorFolder']
+    thresh                  = curMission['thresh']
+    cumulative              = curMission['cumulative']
+    whichProbability        = curMission['whichProbability']
+
+    inFileName = '{0}/mpc_f{1}_t0_w0.pkl'.format(debrisPickleFolder, str(int(tfailSec)))
+    input = open(inFileName, 'rb')
+    cur_mpc = pickle.load(input)
+    input.close()
+
+    arefMeanList = cur_mpc['arefMeanList']
+    numberOfPiecesMeanList = cur_mpc['numberOfPiecesMeanList']
+
+    # Package them up into a PointCLoud
+    # NOTE!!!  Inside the PointCloud constructor we apply the reactionTime which is NO LONGER HARDCODED!!!
+    curPointCloud = PyPointCloud(cur_mpc, tfailSec, curMission)
+
+    # Place the cloud into a Grid
+    curSkyGrid    = PySkyGrid(curMission=curMission, pointCloud=curPointCloud)
+
+    # # Now if I ASH without ASHing, that should just give me the unspread probabilities
+    print 'ASHING'
+    h1                        = curMission['deltaXY']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    h2                        = curMission['deltaXY'] 
+    # h1                        = curMission['h1']     # Smoothing parameters for the ASH.  Should be >= deltaXY
+    # h2                        = curMission['h2'] 
+    curSkyGrid.generateASH(h1, h2)
+
+    def checkNorm(ash):
+        curNorm = 0.
+        for curZ in ash:
+            for curX in ash[curZ]:
+                for curY in ash[curZ][curX]:
+                    curNorm += ash[curZ][curX][curY]
+        return curNorm
+
+    # Okay, now I can look through the histograms any way I want
+    # curID = 10  # highest beta
+    curID = 2   # most pieces.  This must SURELY generate a hazard area.  Very light, mostly hangs in air.
+    hist = dict()
+    ash = dict()
+    whichProb = 0   # Impact
+    for tx in range(300):
+        hist[tx] = curSkyGrid.SendHistogramToPython(curID,tx)
+        ash[tx] = curSkyGrid.SendProbabilitiesToPython(curID,tx, 0)
+
+        # if len(hist[tx]) > 0:
+        # print "{0}: {1} --> {2}".format(tx, hist[tx], ash[tx])
+        print "{0}: {1} --> {2}".format(tx, hist[tx], 1-checkNorm(ash[tx]))
+
+#curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
+#curSkyGrid.GenerateSpatialProbability(PROB_IMPACT, 10000000, -10000000)
+#curSkyGrid.GetSpatialProbabilty()
+
+curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)  # remove pFail in TJC when this works
+PROB_IMPACT      = 1001
+PROB_CASUALTY    = 1002
+PROB_CATASTROPHE = 1003
+#curSkyGrid.GenerateSpatialProbability(PROB_IMPACT, 100000000, int(tfailSec))
+curSkyGrid.GenerateSpatialProbability(PROB_IMPACT, 100000000, -1000000)
+
+curSkyGrid.GetSpatialProbabilty()
+
+curPFail = curMission['pFail'] * failProfile[int(tfailSec)]
+EV_strike = curSkyGrid.generateAllPoints_CumulativeFAA(thresh, whichProbability, curPFail)
+
+sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
+# # ## Find the time until the airspace can become reactive
+# minTime = 10.
+# maxTime = 120.
+# tProactive = TJC.FindStateTimeForProactiveArchitecture(curMission, profiles, minTime, maxTime)
+# print "tProactive = {0}\n".format(tProactive)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
-#sys.exit()
+# sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))

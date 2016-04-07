@@ -114,7 +114,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeSeconds']       = 5*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 2.5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 1e-7  # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -127,7 +127,7 @@ curMission['deltaT']                  = 1.      # Seconds, this is the time reso
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-curMission['deltaTFail']              = 10.0     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
@@ -139,8 +139,8 @@ curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
-curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 1
+curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 8
 curMission['NASkm']                     = NASkm
 
 if curMission['deltaT'] != 1.0:
