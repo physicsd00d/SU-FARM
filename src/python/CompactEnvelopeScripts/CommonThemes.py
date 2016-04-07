@@ -1,2 +1,2 @@
-tempFolderName = "temp/"
-vehicleNotes = ''
+tempFolderName = "temp_space/"
+vehicleNotes = 'space'

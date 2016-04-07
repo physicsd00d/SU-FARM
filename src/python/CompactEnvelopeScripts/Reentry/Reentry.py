@@ -13,8 +13,8 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = False
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = True
 doMain                  = True
 
 import os
@@ -231,7 +231,7 @@ if (freshMain):
 
 
 curMission['numTrajSamples'] = 1
-curMission['numWindSamples'] = 30   # Best results if this is a multiple of the number of nodes you're running on.
+curMission['numWindSamples'] = 3   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):

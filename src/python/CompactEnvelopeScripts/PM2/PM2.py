@@ -143,8 +143,8 @@ curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
-curMission['numNodes']                  = 4 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 4
+curMission['numNodes']                  = 10 # Will need to install pp to use more nodes
+curMission['numNodesEnvelopes']         = 10
 curMission['NASkm']                     = NASkm
 
 
@@ -165,7 +165,7 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-curMission['pFail'] = 0.02     # Probability that vehicle will fail somewhere
+curMission['pFail'] = 1e-4     # Probability that vehicle will fail somewhere
 
 
 '''
