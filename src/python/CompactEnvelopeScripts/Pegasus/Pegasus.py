@@ -143,6 +143,7 @@ curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time 
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 10 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 10
@@ -207,20 +208,20 @@ curMission['ExportDateDT'] = ExportDate
 # #
 #
 '''
+curMission['numTrajSamples'] = 1
+curMission['numWindSamples'] = 30   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):
     # Should really move all the important mission stuff into this if-statement and wrap it up into the montecarlo dictionary
-    
-    numTrajSamples = 1
-    numWindSamples = 30
-    
+
     # I only need to generate wind profiles here, since i'm not going to worry about multiple nominal trajectories yet
     # Could / should probably anticipate doing it though andjust replicate the single trajectory here to conform with the existing infrastrcture
-    
-    atmStorage, stateVecStorage, thetagStorage, tfailStorage = TJC.GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples)
+
+    atmStorage, stateVecStorage, thetagStorage, tfailStorage = \
+                            TJC.GenerateWindTrajProfiles(curMission, curMission['numTrajSamples'], curMission['numWindSamples'])
     profiles = dict(atmStorage = atmStorage, stateVecStorage = stateVecStorage, thetagStorage = thetagStorage, tfailStorage = tfailStorage,
-                    numTrajSamples = numTrajSamples, numWindSamples = numWindSamples)
+                    numTrajSamples = curMission['numTrajSamples'], numWindSamples = curMission['numWindSamples'])
 
     import pickle
     output = open(curMission['GeneratedFilesFolder'] + 'localProfiles.pkl', 'wb')

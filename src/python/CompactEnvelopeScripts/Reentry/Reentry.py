@@ -13,8 +13,8 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = True
+freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = False
 doMain                  = True
 
 import os
@@ -134,7 +134,7 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 #   Make sure this matches the timestep of the trajectory you have
 curMission['deltaTFail']              = 1.     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 5.0     # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
