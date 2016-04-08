@@ -145,7 +145,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 10 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 10
+curMission['numNodesEnvelopes']         = 5  # Grinds to a halt at 10, trying five
 curMission['NASkm']                     = NASkm
 
 if curMission['deltaT'] != 1.0:
