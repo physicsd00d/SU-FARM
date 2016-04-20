@@ -1,6 +1,6 @@
 # Read in a scenario file and pump out the FACET folders and KML files
 import os
-# import sys
+import sys
 
 # Find the path of the current file, then Point to the root of the package so I can run this script from anywhere
 curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
@@ -8,9 +8,10 @@ rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
-footprintLibrary    = outputDir + "footprintLibrary/"
-KMLFolder           = outputDir + "KMLs/"
-FacetFolder         = outputDir + "FacetFiles/"
+footprintLibrary    = outputDir + "spaceAssumeLibrary/"
+KMLFolder           = outputDir + "spaceAssumeKMLs/"
+FacetFolder         = outputDir + "spaceAssumeFacetFiles/"
+BrokenOutFolder     = outputDir + "spaceAssumeBrokenOut/"
 offsetSeconds = 0.     # Use this if you want to tweak the timing just a little bit.  
 
 # from Simulation import LaunchSites
@@ -20,6 +21,7 @@ from Simulation import LaunchSiteLocations as Generator
 from CompactEnvelopeBuilder import PyFootprint  #Error expected here for some reason, disregard for now
 
 from datetime import datetime
+from shutil import copyfile
 
 # scenarioFileFolder = "ScenarioFiles/Sandbox/"
 scenarioFileFolder = "ScenarioFiles/SingleDaysUTC/"
@@ -29,7 +31,8 @@ scenarioFileFolder = "ScenarioFiles/SingleDaysUTC/"
 # scenarioNameList = ['2025Low_SingleDay.txt']
 # scenarioNameList = ['2025Med_SingleDay.txt']
 # scenarioNameList = ['2025High_SingleDay.txt']
-scenarioNameList = ['2018Low_SingleDay.txt','2018Med_SingleDay.txt','2018High_SingleDay.txt','2025Low_SingleDay.txt','2025Med_SingleDay.txt','2025High_SingleDay.txt']
+# scenarioNameList = ['2018Low_SingleDay.txt','2018Med_SingleDay.txt','2018High_SingleDay.txt','2025Low_SingleDay.txt','2025Med_SingleDay.txt','2025High_SingleDay.txt']
+scenarioNameList = ['2018Low_SingleDay.txt','2018Med_SingleDay.txt','2018High_SingleDay.txt']
 
 
 # scenarioNameList = ['falcon9Real.txt']
@@ -59,6 +62,14 @@ for line in availableFootprints:
 '''
 Run through all the scenario files and create the facet / GE results
 '''
+# Make sure that the directory for holding the BrokenOutFolder files exists
+folderPath = os.path.abspath(BrokenOutFolder)
+if not os.path.exists(folderPath):
+    os.makedirs(folderPath)
+
+# Make sure we never use the same name for two different files
+fileNameRecord = []
+
 for elem in scenarioNameList:
     [scenarioName, ext] = elem.split('.')
     if ext.upper() == 'TXT':
@@ -195,6 +206,20 @@ for elem in scenarioNameList:
             curFootprint.MakeFacetFiles(facetFolderName,secondsFromMidnight,offsetSeconds,obsolete)
 
             curFootprint.ExportGoogleEarth(GEFileName, now.year , now.month, now.day, now.hour, now.minute)
+
+            # At this point, will also want to aggregate just the SUAs in a central location "broken out"
+            fileToCopy = facetFolderName + 'SUA_GeneratedSUA'
+            fileNewName = 'SUA_{0}_{1}_{2}'.format(scenarioName[:5],curMission.vehicle,curMission.launchSite)
+
+            # Error checking
+            if fileNewName in fileNameRecord:
+                print "ERROR!!! {0} was already used".format(fileNewName)
+                sys.exit()
+            fileNameRecord.append(fileNewName)
+
+            # Copy the file
+            copyfile(fileToCopy, BrokenOutFolder + fileNewName)
+            # sys.exit()
 
 print "Done"
 
