@@ -70,6 +70,29 @@ if not os.path.exists(folderPath):
 # Make sure we never use the same name for two different files
 fileNameRecord = []
 
+# Need a correspondence between the filter names and the launch sites
+siteToFilterDict = {'PacLA':'PacificReentryLA', 'Vanden':'VafbToOrbit225', 'MARS':'WallopsToOrbit120',
+                    'PegMARS2':'WallopsToOrbit120', 'WSandsN':'America'}
+
+### The possible filters
+# America
+# CapeToOrbit50
+# Cecil
+# CornNew
+# FrntRnge
+# GeorgiaOrbit90
+# Hawaii
+# Houston
+# KodiakOrbit120
+# Midland
+# Mojave
+# OK
+# PacificReentryLA
+# Poker
+# Titus
+# VafbToOrbit225
+# WallopsToOrbit120
+
 for elem in scenarioNameList:
     [scenarioName, ext] = elem.split('.')
     if ext.upper() == 'TXT':
@@ -208,8 +231,11 @@ for elem in scenarioNameList:
             curFootprint.ExportGoogleEarth(GEFileName, now.year , now.month, now.day, now.hour, now.minute)
 
             # At this point, will also want to aggregate just the SUAs in a central location "broken out"
+            launchSite = curMission.launchSite
+            filterName = siteToFilterDict.get(launchSite,launchSite)  # If launch site isn't in dict, then use name of site
+            
             fileToCopy = facetFolderName + 'SUA_GeneratedSUA'
-            fileNewName = 'SUA_{0}_{1}_{2}'.format(scenarioName[:5],curMission.vehicle,curMission.launchSite)
+            fileNewName = 'SUA_{0}_{1}_{2}'.format(scenarioName[:5],curMission.vehicle,filterName)
 
             # Error checking
             if fileNewName in fileNameRecord:
