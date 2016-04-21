@@ -71,8 +71,8 @@ if not os.path.exists(folderPath):
 fileNameRecord = []
 
 # Need a correspondence between the filter names and the launch sites
-siteToFilterDict = {'PacLA':'PacificReentryLA', 'Vanden':'VafbToOrbit225', 'Mars':'WallopsToOrbit120',
-                    'PegMars2':'WallopsToOrbit120', 'WSandsN':'America'}
+siteToFilterDict = {'PacLA':'PacificReentryLA', 'Vanden':'VafbToOrbit225', 'MARS':'WallopsToOrbit120',
+                    'PegMARS2':'WallopsToOrbit120', 'WSandsN':'America'}
 
 ### The possible filters
 # America
