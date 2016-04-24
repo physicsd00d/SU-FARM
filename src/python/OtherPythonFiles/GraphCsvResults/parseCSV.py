@@ -6,8 +6,9 @@ curFilePath = os.path.dirname(os.path.abspath(__file__)) + "/"
 rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 # tempDir =   rootDir + "temp/"   # temp files here, gitignored
-csvFolder = outputDir + "space2015CsvFiles/"
-outputPath = outputDir + "space2015Figures/"
+csvTradFolder = outputDir + "space2015CsvFiles/"
+csvEnvFolder = outputDir + "spaceAssumeCsvFiles/"
+outputPath = outputDir + "spaceAssumeFigures/"
 
 import glob
 import numpy as np
@@ -20,13 +21,15 @@ useMean = 1
 useMax = 2
 
 
-csvFolderTrad   = [csvFolder + "01_Jan/Traditional/",
-                   csvFolder + "02_Feb/Traditional/",
-                   csvFolder + "03_Mar/Traditional/"]
-                   
-csvFolderEnv    = [csvFolder + "01_Jan/Envelopes/",
-                   csvFolder + "02_Feb/Envelopes/",
-                   csvFolder + "03_Mar/Envelopes/"]
+csvFolderTrad   = [csvTradFolder + "01_Jan/Traditional/",
+                   csvTradFolder + "02_Feb/Traditional/",
+                   csvTradFolder + "03_Mar/Traditional/"]
+  
+csvFolderEnv    = [csvEnvFolder]
+
+# csvFolderEnv    = [csvEnvFolder + "01_Jan/Envelopes/",
+#                    csvEnvFolder + "02_Feb/Envelopes/",
+#                    csvEnvFolder + "03_Mar/Envelopes/"]
 
 # outputPath="/Users/marian/Desktop/Research Papers/AIAA Space2015/Figures/"
 # outputPath="/Users/marian/Desktop/Research Papers/AIAA Space2015/Figures/"
