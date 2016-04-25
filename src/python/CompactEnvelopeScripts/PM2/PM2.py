@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
 doMain      = True
@@ -113,7 +113,7 @@ Set parameters related to:
 NASkm = 18.289
 
 curMission['deltaXY']                   = 0.5    #km
-curMission['deltaZ']                    = NASkm/4.   #km
+curMission['deltaZ']                    = NASkm/1.   #km
 curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
 curMission['h2']                        = 3.
 

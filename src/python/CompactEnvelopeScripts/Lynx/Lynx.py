@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
 doMain      = True
@@ -118,7 +118,7 @@ curMission['h1']                        = 3.    # Smoothing parameters for the A
 curMission['h2']                        = 3.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeSeconds']       = 5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 3*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
 curMission['thresh']                    = 0.    # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
@@ -165,7 +165,7 @@ Import / set parameters related to probabilities of FAILURE for the vehicle
 from failProfile import failProfile, failProfileSeconds   # This should go in the readInput file
 curMission['failProfile'] = failProfile
 curMission['failProfileSeconds'] = failProfileSeconds
-curMission['pFail'] = 0.02     # Probability that vehicle will fail somewhere
+curMission['pFail'] = 1e-4     # Probability that vehicle will fail somewhere
 
 
 '''

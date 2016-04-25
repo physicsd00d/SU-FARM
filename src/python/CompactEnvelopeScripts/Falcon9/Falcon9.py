@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
 doMain      = True
@@ -113,7 +113,7 @@ Set parameters related to:
 NASkm = 18.289
 
 curMission['deltaXY']                   = 0.5    #km
-curMission['deltaZ']                    = NASkm/4.   #km
+curMission['deltaZ']                    = NASkm/1.   #km
 curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
 curMission['h2']                        = 3.
 
@@ -144,7 +144,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 10 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 10
+curMission['numNodesEnvelopes']         = 5
 curMission['NASkm']                     = NASkm
 
 if curMission['deltaT'] != 1.0:

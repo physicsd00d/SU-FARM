@@ -117,7 +117,7 @@ curMission['h1']                        = 6.    # Smoothing parameters for the A
 curMission['h2']                        = 6.
 
 # Parameters for the safety architecture of the NAS
-curMission['reactionTimeSeconds']       = 5*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
+curMission['reactionTimeSeconds']       = 3*60. # The number of seconds that the NAS needs to safely handle a sudden debris event.
                                                 #   Negative means to turn off reaction time and keep all points
 curMission['thresh']                    = 0.    # This is the probability threshold that the cumulative risk must fall below.  Keep in mind
                                                 #   there are different definitions of "cumulative" AND there are multiple types of probability.
@@ -134,7 +134,7 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 #   Make sure this matches the timestep of the trajectory you have
 curMission['deltaTFail']              = 1.     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 5.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
@@ -144,7 +144,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 10  
-curMission['numNodesEnvelopes']         = 10
+curMission['numNodesEnvelopes']         = 5
 curMission['NASkm']                     = NASkm
 
 
@@ -231,7 +231,7 @@ if (freshMain):
 
 
 curMission['numTrajSamples'] = 1
-curMission['numWindSamples'] = 30   # Best results if this is a multiple of the number of nodes you're running on.
+curMission['numWindSamples'] = 6   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):
