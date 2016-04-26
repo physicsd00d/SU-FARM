@@ -113,7 +113,7 @@ Set parameters related to:
 NASkm = 18.289
 
 curMission['deltaXY']                   = .5    #km
-curMission['deltaZ']                    = NASkm/4.   #km
+curMission['deltaZ']                    = NASkm/1.   #km
 curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
 curMission['h2']                        = 3.
 
