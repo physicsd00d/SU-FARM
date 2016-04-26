@@ -8,10 +8,10 @@ rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
-footprintLibrary    = outputDir + "spaceAssumeLibrary/"
-KMLFolder           = outputDir + "spaceAssumeKMLs/"
-FacetFolder         = outputDir + "spaceAssumeFacetFiles/"
-BrokenOutFolder     = outputDir + "spaceAssumeBrokenOut/"
+footprintLibrary    = outputDir + "fullsafeLibrary/"
+KMLFolder           = outputDir + "fullsafeKMLs/"
+FacetFolder         = outputDir + "fullsafeFacetFiles/"
+BrokenOutFolder     = outputDir + "fullsafeBrokenOut/"
 offsetSeconds = 0.     # Use this if you want to tweak the timing just a little bit.  
 
 # from Simulation import LaunchSites
