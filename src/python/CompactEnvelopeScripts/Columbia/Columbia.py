@@ -13,11 +13,11 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain   			= False  # State Vector
-freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = True
+freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = False
 debug                   = False
 
-plotColumbiaGround      = False
+plotColumbiaGround      = True
 calcIndividualHazard    = False
 makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
                                     # ASH grid must be pretty coarse for this to work, but why?
@@ -59,7 +59,7 @@ from Simulation import LaunchProviders
 
 # TODO: Add a columbia reentry thing
 # These parameters get injected into the final footprint name
-vehicleName     = LaunchProviders.Reentry
+vehicleName     = LaunchProviders.Columbia
 launchLocation  = LaunchSites.OK    # NOTE: even though it says 'launch', in this context it really means 'landing'
 vehicleNotes    = ct.vehicleNotes + '_Columbia'
 
@@ -147,7 +147,7 @@ curMission['deltaTFail']              = 1.0     # Seconds, this is how often we 
 curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
-curMission['numPiecesPerSample']      = [10]      # The number of pieces to consider within each debris group
+curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
@@ -274,7 +274,7 @@ if (freshMain):
     sys.exit()
 
 curMission['numTrajSamples'] = 1
-curMission['numWindSamples'] = 3   # Best results if this is a multiple of the number of nodes you're running on.
+curMission['numWindSamples'] = 2   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):
@@ -301,14 +301,17 @@ else:
 
 
 if freshDebris:
-    print "Make sure this works with     TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)"
-    sys.exit()  
+    # print "Make sure this works with     TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)"
+    # sys.exit()  
     # Generate the debris
-    coeffIX = []
-    lowerBreakLimit = 0 # By setting these to 0 and 1, we'll explode at just the lower time
-    upperBreakLimit = 1 # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
-    TJC.MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, curMission['numPiecesPerSample'],
-                                                    lowerBreakLimit, upperBreakLimit, profiles)
+    # coeffIX = []
+    # lowerBreakLimit = 0 # By setting these to 0 and 1, we'll explode at just the lower time
+    # upperBreakLimit = 1 # IF YOU CHANGE THIS!!!  Then you'll need to fix the risk calculations later that assume zero
+    # TJC.MonteCarlo_Distributed_Reentry_Wrapper_CAIB(curMission, coeffIX, curMission['numPiecesPerSample'],
+                                                    # lowerBreakLimit, upperBreakLimit, profiles)
+    t_lo = 0
+    t_hi = 0
+    TJC.MonteCarloDebris(curMission, profiles, t_lo, t_hi)
 
 
 
@@ -325,7 +328,10 @@ if plotColumbiaGround:
     for windIX in range(numWindIX):
 
         '''This makes the assumption that we're ONLY using the zeroth timestep'''
-        inputFile = '{0}/mpc_{1}_{2}.pkl'.format(curMission['debrisPickleFolder'], windIX, int(0))
+        # inputFile = '{0}/mpc_{1}_{2}.pkl'.format(curMission['debrisPickleFolder'], windIX, int(0))
+        tfailSec = 0.
+        trajIX = 0
+        inputFile = TJC.DebrisFileName(curMission['debrisPickleFolder'], tfailSec, trajIX, windIX)
         input = open(inputFile, 'rb')
         # input = open(curMission['debrisPickleFolder'] + '/mpc_' + str(windIX) + '.pkl', 'rb')
         cur_mpc = pickle.load(input)

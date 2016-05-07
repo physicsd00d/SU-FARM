@@ -15,6 +15,7 @@ LynxMII     = "LynxMII"
 Sound       = "Sound"
 PM2         = "PM2"
 Reentry     = "Reentry"
+Columbia    = "Columbia"
 
 
 # Things that are important to know are:

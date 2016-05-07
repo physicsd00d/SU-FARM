@@ -13,9 +13,9 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = False
-doMain                  = True
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = True
+doMain                  = False
 
 import os
 import sys
