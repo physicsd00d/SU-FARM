@@ -17,8 +17,8 @@ freshWind               = False  # Why uncertain wind for this case? B/c uncerta
 freshDebris             = False
 debug                   = False
 
-plotColumbiaGround      = True
-calcIndividualHazard    = False
+plotColumbiaGround      = False
+calcIndividualHazard    = True
 makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
                                     # ASH grid must be pretty coarse for this to work, but why?
 
@@ -121,10 +121,10 @@ Set parameters related to:
 # # Parameters for the ASH
 NASkm = 18.289
 
-curMission['deltaXY']                   = 10.    #km
+curMission['deltaXY']                   = 1.    #km
 curMission['deltaZ']                    = NASkm/1.   #km
-curMission['h1']                        = 20.    # Smoothing parameters for the ASH.  Should be >= deltaXY
-curMission['h2']                        = 20.
+curMission['h1']                        = 30.    # Smoothing parameters for the ASH.  Should be >= deltaXY
+curMission['h2']                        = 30.
 
 # Parameters for the safety architecture of the NAS
 curMission['reactionTimeSeconds']       = -5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
@@ -144,13 +144,14 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 #   Make sure this matches the timestep of the trajectory you have
 curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 1.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
                                                 #       IF EMPTY, that means use the actual number for each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 2
 curMission['numNodesEnvelopes']         = -1 	# This should not get used.
@@ -374,6 +375,7 @@ if calcIndividualHazard:
     acid2typeMap = dict()
     curTrackTime = 0
 
+    print "Making aircraftRecord"
     ft2km       = 0.0003048
     knots2km_s  = 0.000514444444
     # Going to leave the top layer as a dict / map because acids are not necessarily going to start at zero or appear in order
@@ -407,6 +409,8 @@ if calcIndividualHazard:
                 aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
     input.close()
 
+    print "   ...done"
+
     # Want to know the latest time that AC are in the air
     maxAircraftTrackTime = 0
     for (curTrack, acName) in aircraftRecord.itervalues():
@@ -430,16 +434,21 @@ if calcIndividualHazard:
     # Load each of the pickle files into one large skygrid
     for windIX in range(numDebrisPickles):
     # for windIX in range(2):
+        print "opening for windIX = {0}".format(windIX)
         '''This makes the assumption that we're ONLY using the zeroth timestep'''
-        inputFile = '{0}/mpc_{1}_{2}.pkl'.format(curMission['debrisPickleFolder'], windIX, int(0))
+        tfailSec = 0
+        trajIX = 0
+        inputFile = TJC.DebrisFileName(curMission['debrisPickleFolder'], tfailSec, trajIX, windIX)
         input = open(inputFile, 'rb')
         # input = open(curMission['debrisPickleFolder'] + '/mpc_' + str(windIX) + '.pkl', 'rb')
         cur_mpc = pickle.load(input)
         input.close()
 
+        print "   ...opened"
         # Package them up into a PointCLoud
         timeOfInitialFailure = 0
         curPointCloud = ceb.PyPointCloud(cur_mpc, timeOfInitialFailure, curMission)     # Applies all_points_delta_t
+        print "   ...made pointCloud"
 
         # Loading the pointcloud throws out points past the reaction time, still need to chop???
         # newNumSteps = curPointCloud.ChopAfterSeconds(int(tfailSec + 60*reactionTimeMinutes))
@@ -447,9 +456,13 @@ if calcIndividualHazard:
 
         # Place the cloud into a Grid
         if windIX == 0:
-            curSkyGrid    = ceb.PySkyGrid(curPointCloud, curMission['deltaXY'], curMission['deltaXY'], curMission['deltaZ'])
+            # curSkyGrid    = ceb.PySkyGrid(curPointCloud, curMission['deltaXY'], curMission['deltaXY'], curMission['deltaZ'])
+            curSkyGrid    = ceb.PySkyGrid(curMission = curMission, pointCloud = curPointCloud)
+
         else:
             curSkyGrid.IncorporatePointCloudIntoGrid(curPointCloud)
+        print "   ...done"
+
 
     # Making the assumption that all profiles use the exactly same debris catalog
     arefMeanList            = cur_mpc['arefMeanList']
@@ -485,9 +498,10 @@ if calcIndividualHazard:
     #
     # # Do risk calculation
 
+    print "CalculateRiskToIndividualAircraft_OnTheFly"
     riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
                                                    curMission['h1'], curMission['h2'])
-
+    print "   ...done"
 
     for acid in riskToAC:
         print '{0} = {1}'.format(aircraftRecord[acid][1], riskToAC[acid])
