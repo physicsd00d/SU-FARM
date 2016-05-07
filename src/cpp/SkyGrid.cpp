@@ -1570,7 +1570,7 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
                 for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
                     int yindex = it_y->first;
 
-                    double curProb = 0.;
+                    double noProb = 1.;
                     for (it_ID = ProbabilityMapDebIX[tx][zindex][xindex][yindex].begin(); it_ID != ProbabilityMapDebIX[tx][zindex][xindex][yindex].end(); ++it_ID){
                         int curID = it_ID->first;
 
@@ -1585,12 +1585,15 @@ map<double, map<double, map<double,double> > >SkyGrid::SendGridToPython(int tx_d
 
                         //printf("[%d][%d][%d][%d] = %e\n", zindex, xindex, yindex, curID, probDebrisHere);
 
-                        curProb += probDebrisHere;
+                        // curProb += probDebrisHere;
+                        noProb *= (1-probDebrisHere);
 
 //                        CollapsedMap[tx][zindex][xindex][yindex] += probDebrisHere/numDebrisCategories;
 
                     }
                     
+                    double curProb = 1-noProb;
+
                     // If curProb less than zero, then the only reason you got here was the STORE_IX, so skip adding this pt.
                     if (curProb > 0.){
                         double lowerleftX = XREF + xindex*xBinLength;   // Note that xindex is most likely negative
