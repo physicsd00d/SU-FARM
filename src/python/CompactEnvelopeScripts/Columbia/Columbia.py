@@ -13,13 +13,13 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain   			= False  # State Vector
-freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
-freshDebris             = False
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshDebris             = True
 debug                   = False
 
 plotColumbiaGround      = False
-calcIndividualHazard    = True
-makeAnimation           = True     # Turn this off if using a small all_pts_delta_t
+calcIndividualHazard    = False
+makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
                                     # ASH grid must be pretty coarse for this to work, but why?
 
 import os
