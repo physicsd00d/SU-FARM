@@ -126,6 +126,12 @@ curMission['cumulative']                = 'FAA' # The definition for 'cumulative
                                                 # Options are: FAA, TJC
 curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
 
+# These are new inputs
+curMission['safetyMetric']              = 'Cumulative'  # or "Instantaneous"
+curMission['cumThresh']                 = 1e-7  # Cumulative probability of impact
+curMission['casThresh']                 = 1e-6  # Instantaneous probability of casualty
+curMission['catThresh']                 = 1e-8  # Instantaneous probability of catastophe, for B747 with 450 passengers
+
 # The different time steps within the mission
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
