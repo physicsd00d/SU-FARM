@@ -18,8 +18,8 @@ freshDebris             = False
 debug                   = False
 
 plotColumbiaGround      = False
-calcIndividualHazard    = False
-makeAnimation           = True     # Turn this off if using a small all_pts_delta_t
+calcIndividualHazard    = True
+makeAnimation           = False     # Turn this off if using a small all_pts_delta_t
                                     # ASH grid must be pretty coarse for this to work, but why?
 
 import os
@@ -105,6 +105,7 @@ curMission['debrisCatPath']     = debrisPath + 'Columbia/'
 # curMission['debrisCatFile']           = 'testFileDistributed.txt'
 # curMission['debrisCatFile']           = 'debugDistributed.txt'
 curMission['debrisCatFile']           = 'debugColumbiaMarch16.txt'
+# curMission['debrisCatFile']           = 'debugColumbiaMarch16_noTiny.txt'
 curMission['atmospherePickle']        = rootDir + "data/AtmoProfiles/WestTexas.pkl"
 
 
@@ -121,10 +122,10 @@ Set parameters related to:
 # # Parameters for the ASH
 NASkm = 18.289
 
-curMission['deltaXY']                   = 10.    #km
-curMission['deltaZ']                    = NASkm/1.   #km
-curMission['h1']                        = 20.    # Smoothing parameters for the ASH.  Should be >= deltaXY
-curMission['h2']                        = 20.
+curMission['deltaXY']                   = 1.    #km
+curMission['deltaZ']                    = NASkm/10.   #km
+curMission['h1']                        = 5.    # Smoothing parameters for the ASH.  Should be >= deltaXY
+curMission['h2']                        = 5.
 
 # Parameters for the safety architecture of the NAS
 curMission['reactionTimeSeconds']       = -5*60.     # The number of seconds that the NAS needs to safely handle a sudden debris event.
@@ -144,7 +145,7 @@ curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CAS
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 #   Make sure this matches the timestep of the trajectory you have
 curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
-curMission['all_points_delta_t']      = 60.0     # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 1.0     # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
                                                 #       For reentry, appears to control the deltaT of the movies made
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
@@ -409,6 +410,17 @@ if calcIndividualHazard:
                 aircraftRecord[acid][0].append([float(curTrackTime), curLat, curLon, curLevel, curSpeed])
     input.close()
 
+    input = open('HighRiskETMSInterp_CallsignKeys.txt', 'r')
+    aircraftCallSignKeys = dict()
+    for line in input:
+        key = line.split()
+
+        if len(key) == 3:
+            aircraftCallSignKeys[int(key[0])] = [key[1], key[2]]
+        else:
+            continue
+
+    input.close()
     print "   ...done"
 
     # Want to know the latest time that AC are in the air
@@ -432,8 +444,8 @@ if calcIndividualHazard:
 
     curSkyGrid = []
     # Load each of the pickle files into one large skygrid
-    # for windIX in range(numDebrisPickles):
-    for windIX in range(1):
+    for windIX in range(numDebrisPickles):
+    # for windIX in range(1):
     # for windIX in range(2):
         print "opening for windIX = {0}".format(windIX)
         '''This makes the assumption that we're ONLY using the zeroth timestep'''
@@ -509,7 +521,8 @@ if calcIndividualHazard:
 
     print '\nCorrecting for difference in timesteps'
     for acid in riskToAC:
-        print '{0} = {1}'.format(aircraftRecord[acid][1], riskToAC[acid]/curMission['all_points_delta_t'])
+        # print '{0} = {1}'.format(aircraftRecord[acid][1], riskToAC[acid]/curMission['all_points_delta_t'])
+        print '{0}-{1} = {2}'.format(aircraftCallSignKeys[acid][0], aircraftCallSignKeys[acid][1], riskToAC[acid]/curMission['all_points_delta_t'])
 
     print 'Number of Pieces     = {0}'.format(np.sum(numberOfPiecesMeanList))
     print 'Total Mass of Pieces = {0}'.format(np.sum(debrisMass))
