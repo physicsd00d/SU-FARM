@@ -57,6 +57,7 @@ class SafetyMetrics:
     # def __init__(self):  
     Cumulative = 'Cumulative'
     Instantaneous = 'Instantaneous'
+    InstantaneousFast = 'InstantaneousFast'
 
 # Currently defined in SkyGrid.cpp.  Make sure these match!
 class AircraftVulnerabilityModels:
@@ -2949,7 +2950,7 @@ def getProbImpacts(curMission, tfailSec):
         # TODO: I'm enforcing deltaTFail = 1 already, so make delta_R and delta_H just be in seconds.
     
     #TODO: The GenerateSpatialProbability functions take integers, not doubles.  Fix that.
-    elif safetyMetric == SafetyMetrics.Instantaneous:
+    elif safetyMetric == SafetyMetrics.InstantaneousFast:
         print "  time range {0}-{1}".format(tfailSec, tfailSec + delta_R + delta_H)
         P_Cas = curSkyGrid.GenerateSpatialProbability_InstantaneousMax(ProbabilityCodes.CASUALTY    , tfailSec + delta_R + delta_H, tfailSec)
         P_Cat = curSkyGrid.GenerateSpatialProbability_InstantaneousMax(ProbabilityCodes.CATASTROPHE , tfailSec + delta_R + delta_H, tfailSec)
@@ -2957,6 +2958,11 @@ def getProbImpacts(curMission, tfailSec):
         
         # P_Imp = curSkyGrid.GenerateSpatialProbability_InstantaneousMax(ProbabilityCodes.IMPACT    , tfailSec + delta_R + delta_H, tfailSec)
         # ans = P_Cas.getGrid(), P_Cat.getGrid(), P_Imp.getGrid()
+
+    elif safetyMetric == SafetyMetrics.Instantaneous:
+        # P_Cas = curSkyGrid.GenerateSpatialProbability_InstantaneousMax(ProbabilityCodes.CASUALTY    , tfailSec + delta_R + delta_H, tfailSec)
+        # P_Cat = curSkyGrid.GenerateSpatialProbability_InstantaneousMax(ProbabilityCodes.CATASTROPHE , tfailSec + delta_R + delta_H, tfailSec)
+        ans = P_Cas.getGrid(), P_Cat.getGrid()
 
     return ans
 
@@ -2988,13 +2994,119 @@ def GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec):
     # curMission['safetyMetric']              = 'Cumulative'  # or "Instantaneous"
     if curMission['safetyMetric'] == SafetyMetrics.Cumulative:
         GenerateHazardVectorFiles_Cumulative(curMission, timeRange, pFailThisTimestepVec)
+    elif curMission['safetyMetric'] == SafetyMetrics.InstantaneousFast:
+        GenerateHazardVectorFiles_InstantaneousFast(curMission, timeRange, pFailThisTimestepVec)
     elif curMission['safetyMetric'] == SafetyMetrics.Instantaneous:
         GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTimestepVec)
     else:
         print "ERROR: safetyMetric not recognized! {0}".format(curMission['safetyMetric'])
 
-
 def GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTimestepVec):
+    print "In progress"
+    armLength                   = curMission['armLength']
+    footprintUntil              = timeRange[-1]
+
+    # Round all the times to integers to make the dictionary lookups safer
+    delta_H = int(curMission['healthMonitoringLatency']/curMission['deltaT'])    
+    #delta_R = int(curMission['reactionTimeSeconds']/curMission['deltaT'])  
+    deltaTFail = int(curMission['deltaTFail'])
+    casThresh = curMission['casThresh']
+    catThresh = curMission['catThresh']
+
+    casualtyAtTime = dict()
+    catastropeAtTime = dict()
+
+    print "timeRange = {0}".format(timeRange)
+    for tx in range(len(timeRange)):
+        print "tx = {0}".format(tx)
+
+        tfailSec = timeRange[tx]
+        curPFail = pFailThisTimestepVec[tx]
+        P_Cas, P_Cat = getProbImpacts(curMission, tfailSec)  # Returns dicts because pp won't return cython objects properly
+        P_Cas = PyGrid3D(dict=P_Cas) * curPFail
+        P_Cat = PyGrid3D(dict=P_Cat) * curPFail
+
+        # This P_RH will get used for timesteps up to curTime + delta_H
+        # Need these to be their own separate objects, so use copy constructor to make them different
+        curTime = int(tfailSec)
+        tempTime = curTime
+        while (tempTime <= curTime + delta_H):
+            if tempTime <= footprintUntil:
+                if tempTime in casualtyAtTime:
+                    casualtyAtTime[tempTime] += P_Cas
+                    catastropeAtTime[tempTime] += P_Cat
+                else:
+                    casualtyAtTime[tempTime] = PyGrid3D(grid=P_Cas)  # Creating a new object so I'm not just pointing to the name
+                    catastropeAtTime[tempTime] = PyGrid3D(grid=P_Cat)  # Creating a new object so I'm not just pointing to the name
+            tempTime += deltaTFail
+
+        # print "  casualtyAtTime times {0}".format(sorted(casualtyAtTime.keys()))
+
+        # Put this into a SkyGrid object so we can apply the threshold and make a footprint
+        # print "   txVec = {0}".format(np.array([int(tfailSec/deltaTFail)]))
+        #TODO: Despite the name, there's nothign cumullative about it.  Fix the name to applyThreshold.
+
+        skyCas = PySkyGrid(curMission=curMission)
+        maxCas = skyCas.applyCumulativeThreshold(casualtyAtTime[curTime], casThresh, np.array([int(tfailSec/deltaTFail)]))
+        skyCat = PySkyGrid(curMission=curMission)
+        maxCat = skyCat.applyCumulativeThreshold(catastropeAtTime[curTime], catThresh, np.array([int(tfailSec/deltaTFail)]))
+
+        myFootprintCas = PyFootprint(skygrid=skyCas, armLength=armLength)
+        myFootprintCat = PyFootprint(skygrid=skyCat, armLength=armLength)
+
+        outfileStrCas = curMission['footprintVectorFolder'] + '/fpVec_Cas_' + str(tfailSec) + '.dat'
+        outfileStrCat = curMission['footprintVectorFolder'] + '/fpVec_Cat_' + str(tfailSec) + '.dat'
+        myFootprintCas.StoreFootprintAsVector(outfileStrCas)
+        myFootprintCat.StoreFootprintAsVector(outfileStrCat)
+
+        # # ==== Debugging, print out the separate footprints ======
+        # folderPath = os.path.abspath(curMission['GeneratedFilesFolder'] + 'fpVecPlots') + '/'
+        # if not os.path.exists(folderPath):
+        #     os.makedirs(folderPath)
+
+        # # print "folderPath = {0}".format(folderPath)
+
+        # # Then store it.
+        # [yyyy, mm, dd, hour, min]   = curMission['ExportDate']
+        # outfileStrCas = folderPath + 'fpVec_Cas_' + str(tfailSec) + '.kml'
+        # myFootprintCas.ExportGoogleEarth(outfileStrCas, yyyy, mm, dd, hour, min)
+        # outfileStrCat = folderPath + 'fpVec_Cat_' + str(tfailSec) + '.kml'
+        # myFootprintCat.ExportGoogleEarth(outfileStrCat, yyyy, mm, dd, hour, min)
+        # # ===== Done with the debugging ========
+
+        # At this point, can merge both footprints and save the result.  Merge casualty into catastrophe.
+        outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
+        myFootprintCat.MergeFootprintVectors(myFootprintCas)    # Do the merge
+        myFootprintCat.StoreFootprintAsVector(outfileStr)
+
+        # # === Debugging, let's plot the result too to make sure the merge went properly
+        # outfileStr = folderPath + 'fpVec_' + str(tfailSec) + '.kml'
+        # myFootprintCat.ExportGoogleEarth(outfileStr, yyyy, mm, dd, hour, min)
+        # # === End of debugging
+
+        print "  maxCas = {0}, maxCat = {1}".format(maxCas, maxCat)
+
+        del casualtyAtTime[curTime]
+        del catastropeAtTime[curTime]
+
+        # print "  curPFail = {0}".format(curPFail)
+        # print "  maxCas = {0}".format(maxCas)
+        # print "  maxCat = {0}".format(maxCat)
+        # if tx == 10:
+        #     print casualtyAtTime[curTime].getGrid()
+        #     print "\n\n\n"
+        #     print catastropeAtTime[curTime].getGrid()
+        #     # print "\n\n\n"
+        #     # print P_Imp
+        #     sys.exit()
+
+
+
+
+
+
+
+def GenerateHazardVectorFiles_InstantaneousFast(curMission, timeRange, pFailThisTimestepVec):
     print "In progress"
     armLength                   = curMission['armLength']
     footprintUntil              = timeRange[-1]
