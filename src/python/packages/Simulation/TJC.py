@@ -3052,30 +3052,30 @@ def GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTime
         myFootprintCas.StoreFootprintAsVector(outfileStrCas)
         myFootprintCat.StoreFootprintAsVector(outfileStrCat)
 
-        # ==== Debugging, print out the separate footprints ======
-        folderPath = os.path.abspath(curMission['GeneratedFilesFolder'] + 'fpVecPlots') + '/'
-        if not os.path.exists(folderPath):
-            os.makedirs(folderPath)
+        # # ==== Debugging, print out the separate footprints ======
+        # folderPath = os.path.abspath(curMission['GeneratedFilesFolder'] + 'fpVecPlots') + '/'
+        # if not os.path.exists(folderPath):
+        #     os.makedirs(folderPath)
 
-        # print "folderPath = {0}".format(folderPath)
+        # # print "folderPath = {0}".format(folderPath)
 
-        # Then store it.
-        [yyyy, mm, dd, hour, min]   = curMission['ExportDate']
-        outfileStrCas = folderPath + 'fpVec_Cas_' + str(tfailSec) + '.kml'
-        myFootprintCas.ExportGoogleEarth(outfileStrCas, yyyy, mm, dd, hour, min)
-        outfileStrCat = folderPath + 'fpVec_Cat_' + str(tfailSec) + '.kml'
-        myFootprintCat.ExportGoogleEarth(outfileStrCat, yyyy, mm, dd, hour, min)
-        # ===== Done with the debugging ========
+        # # Then store it.
+        # [yyyy, mm, dd, hour, min]   = curMission['ExportDate']
+        # outfileStrCas = folderPath + 'fpVec_Cas_' + str(tfailSec) + '.kml'
+        # myFootprintCas.ExportGoogleEarth(outfileStrCas, yyyy, mm, dd, hour, min)
+        # outfileStrCat = folderPath + 'fpVec_Cat_' + str(tfailSec) + '.kml'
+        # myFootprintCat.ExportGoogleEarth(outfileStrCat, yyyy, mm, dd, hour, min)
+        # # ===== Done with the debugging ========
 
         # At this point, can merge both footprints and save the result.  Merge casualty into catastrophe.
         outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
         myFootprintCat.MergeFootprintVectors(myFootprintCas)    # Do the merge
         myFootprintCat.StoreFootprintAsVector(outfileStr)
 
-        # === Debugging, let's plot the result too to make sure the merge went properly
-        outfileStr = folderPath + 'fpVec_' + str(tfailSec) + '.kml'
-        myFootprintCat.ExportGoogleEarth(outfileStr, yyyy, mm, dd, hour, min)
-        # === End of debugging
+        # # === Debugging, let's plot the result too to make sure the merge went properly
+        # outfileStr = folderPath + 'fpVec_' + str(tfailSec) + '.kml'
+        # myFootprintCat.ExportGoogleEarth(outfileStr, yyyy, mm, dd, hour, min)
+        # # === End of debugging
 
         print "  maxCas = {0}, maxCat = {1}".format(maxCas, maxCat)
 
