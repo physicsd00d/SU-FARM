@@ -344,8 +344,7 @@ bool compareXYZ (vector<double> i, vector<double> j) { return (i[3] > j[3]); }
  *
  * Removing pFail, this calculates \prod_d^D (1 - \phi_{ij}  \Xi^d_{i \mid jf})
  */
-void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
-    
+void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean, int whichAVM_in){
     // Check to make sure that this hasn't already been done
     if (not hazardProbabilitiesGenerated){
         // Proceed, but flip the flag so we know we've been here
@@ -353,6 +352,9 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
     else{
         cout << "ERROR!!!!  You cannot call generateHazardProbabilities twice!" << endl;
         exit(-100); }
+    
+    // Save the desired AVM for all of these calculations
+    whichAVM = whichAVM_in;
     
     // ============== Estimation of 787 cruising through airspace, this is an OVERESTIMATE!!!  See RCC ===========
     // For a 787
@@ -423,8 +425,15 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
                         exit(-2);
                     }
                     
-                    vector<double> probNos = ProbNoConsequence(ProbabilityMapDebIX[tx][zindex][xindex][yindex], numberOfPiecesMean, cellVolume, d_Airplane_top,
+                    vector<double> probNos(3, 0.);
+                    if (zindex >= 0) {
+                        probNos = ProbNoConsequence(ProbabilityMapDebIX[tx][zindex][xindex][yindex], numberOfPiecesMean, cellVolume, d_Airplane_top,
                                                                d_Airplane_front, speed787, delta_t);
+                    } else {
+                        probNos[0] = 1.;
+                        probNos[1] = 1.;
+                        probNos[2] = 1.;
+                    }
 
                     double probNoStrike         = probNos[0];
                     double probNoCasualty       = probNos[1];
@@ -435,6 +444,11 @@ void SkyGrid::generateHazardProbabilities(vector<int> numberOfPiecesMean){
                     // be zero.  Thus probOfNoStrikeFromCurID = (1.-0.)^numPieces should be basically exactly 1.  This is kind
                     // of a fragile condition, checking for equality with a double, but it really should be exactly 1.0.  If
                     // it's not, then something is wrong.  Maybe should just set it to 1.0 for safety?
+                    //
+                    // Actually the above is wrong.  Even with mass and velocity zero, the airplane still has velocity and its
+                    //  own areas, so there will still be a projected area.  My confusion is why this error wasn't tripped sooner???
+                    //  I'm setting the probs to 1 if z<0 just above.
+                    
                     if ((zindex < 0) && (probNoStrike != 1.)){
                         printf("ERROR generateHazardProbabilities: zindex = %d  vs probNoStrike = %E \n", zindex, probNoStrike);
                         exit(-12);
@@ -1660,12 +1674,13 @@ void SkyGrid::UploadAircraftPropertiesMap(map<string,map<string,double> > Aircra
 
 
 
-map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMean, vector<double> arefMean, int secondsFromMidnightUTC,
+map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMean, vector<double> arefMean, int whichAVM_in, int secondsFromMidnightUTC,
                                                                      double h1_in, double h2_in){
     // NOTE: I'm going to require that the aircraft data come at a fixed timestep so if you ever wind up
     //   having an irregular timestep then this will break.  Don't break it.
     
     double delta_t = getDeltaT();
+    whichAVM = whichAVM_in;
     
     // The iterator needed for traversing through the aircraft track map
     map<int, pair< vector< vector<double> >, string> >::iterator it_ACID;
@@ -1838,17 +1853,13 @@ map<int, double> SkyGrid::CalculateRiskToIndividualAircraft_OnTheFly(vector<int>
     return probabilityOfImpactRecord;
 }
 
-#define LARSON 1
-#define RCC321 2
-#define WILDE  3
-
 // Take the probability data for a given x,y,z,t cell and calculate the probabilities of no conequences
 //  for an aircraft in that cell over all ballistic coefficient categories (curID)
 vector<double> SkyGrid::ProbNoConsequence(map<int, binData> &probBeta, vector<int> numberOfPiecesMean,
                                           double cellVolume, double d_Airplane_top,
                                           double d_Airplane_front, double aircraftSpeed, double delta_t){
     // THIS SHOULD BECOME AN INPUT
-    int whichAVM = RCC321;
+//    int whichAVM = RCC321;
     
     // The three consquences.
     double probNoStrike         = 1.;

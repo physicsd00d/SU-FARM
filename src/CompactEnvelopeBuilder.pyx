@@ -170,7 +170,7 @@ cdef extern from "SkyGrid.h":
         void UploadAircraftTrackMap(map[int,pair[vector[vector[double]], string]] AircraftTrackMap, int aircraftTrackDeltaTSec)
         void UploadAircraftPropertiesMap(map[string,map[string,double]] AircraftPropertiesMap)
 
-        map[int, double] CalculateRiskToIndividualAircraft_OnTheFly(vector[int] numberOfPiecesMean, vector[double] arefMean, int secondsFromMidnightUTC,
+        map[int, double] CalculateRiskToIndividualAircraft_OnTheFly(vector[int] numberOfPiecesMean, vector[double] arefMean, int whichAVM, int secondsFromMidnightUTC,
                                                                      double h1_in, double h2_in)
         
 #        vector[vector[double]] SendGridToPython(int tx_desired)
@@ -185,7 +185,7 @@ cdef extern from "SkyGrid.h":
         Grid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
         # PyGrid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
  
-        void generateHazardProbabilities(vector[int] numberOfPiecesMean)
+        void generateHazardProbabilities(vector[int] numberOfPiecesMean, int whichAVM)
         # double generateAllPoints_CumulativeTJC(double thresh, int whichProb)
         double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail)
 
@@ -386,9 +386,9 @@ cdef class PySkyGrid:
         self.thisptr.UploadAircraftPropertiesMap(incomingMap)
         
         
-    def CalculateRiskToIndividualAircraft_OnTheFly(self, numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
+    def CalculateRiskToIndividualAircraft_OnTheFly(self, numberOfPiecesMeanList, arefMeanList, whichAVM, secondsFromMidnightUTC,
                                                    h1_in, h2_in):
-        return self.thisptr.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
+        return self.thisptr.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, whichAVM, secondsFromMidnightUTC,
                                                                        h1_in, h2_in)
 
     # def GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
@@ -416,8 +416,8 @@ cdef class PySkyGrid:
     def GetSpatialProbabilty(self):
         return self.thisptr.getSpatialProbabilty()
 
-    def generateHazardProbabilities(self, numberOfPiecesMean):
-        self.thisptr.generateHazardProbabilities(numberOfPiecesMean)
+    def generateHazardProbabilities(self, numberOfPiecesMean, whichAVM):
+        self.thisptr.generateHazardProbabilities(numberOfPiecesMean, whichAVM)
             
     def generateAllPoints_CumulativeFAA(self, double thresh, int whichProb, double pFail):
         return self.thisptr.generateAllPoints_CumulativeFAA(thresh, whichProb, pFail)

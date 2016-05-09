@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
 doMain      = True
@@ -50,7 +50,6 @@ from Simulation import LaunchSites
 from Simulation import LaunchProviders
 
 from copy import deepcopy
-
 
 # These parameters get injected into the final footprint name
 vehicleName     = LaunchProviders.Falcon9
@@ -127,22 +126,23 @@ curMission['cumulative']                = 'FAA' # The definition for 'cumulative
 curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
 
 # These are new inputs
-curMission['safetyMetric']              = 'Cumulative'  # or "Instantaneous"
+curMission['safetyMetric']              = TJC.SafetyMetrics.Cumulative  # or "Instantaneous"
 curMission['cumThresh']                 = 1e-7  # Cumulative probability of impact
 curMission['casThresh']                 = 1e-6  # Instantaneous probability of casualty
 curMission['catThresh']                 = 1e-8  # Instantaneous probability of catastophe, for B747 with 450 passengers
+curMission['whichAVM']                  = TJC.AircraftVulnerabilityModels.RCC321
 
 # The different time steps within the mission
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 10.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
 #  failure times into the failures we did calculate, which makes each explosion about a factor of deltaTFail more risky.
-curMission['all_points_delta_t']      = 5.0    # Seconds, this will be the time resolution of a compact envelope
+curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time resolution of a compact envelope
                                                 #       should be GREATER THAN OR EQUAL to deltaT
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
@@ -150,7 +150,7 @@ curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate 
 curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
-curMission['numNodesEnvelopes']         = 8
+curMission['numNodesEnvelopes']         = 1
 curMission['NASkm']                     = NASkm
 
 if curMission['deltaT'] != 1.0:
@@ -221,7 +221,7 @@ if debug:
 
 
 curMission['numTrajSamples'] = 1
-curMission['numWindSamples'] = 32   # Best results if this is a multiple of the number of nodes you're running on.
+curMission['numWindSamples'] = 3   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):
@@ -271,7 +271,8 @@ if doMain:
     curMission['armLength'] = 10000.
 
     footprintStart = 0.
-    footprintUntil = 180.
+    # footprintUntil = 180.
+    footprintUntil = 120.
     footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)

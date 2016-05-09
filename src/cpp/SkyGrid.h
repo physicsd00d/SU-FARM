@@ -38,6 +38,10 @@ using std::max;
 #define PROB_CASUALTY    1002
 #define PROB_CATASTROPHE 1003
 
+#define LARSON 1
+#define RCC321 2
+#define WILDE  3
+
 #define STORE_IX -666       // This is the curID index that gets used to store hazard probabilities after they're generated
 #define ABOVE_NAS_IX -2
 #define LANDED_IX -1
@@ -158,6 +162,9 @@ private:
     bool doneASH;
     bool hazardProbabilitiesGenerated;
     bool fromEmpty;
+    
+    int whichAVM;
+
 
     
 public:
@@ -186,7 +193,7 @@ public:
     void UploadAircraftPropertiesMap(map<string,map<string,double> > AircraftPropertiesMap_in);
     // map<int, double> CalculateRiskToIndividualAircraft(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC);
 
-    map<int, double> CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int secondsFromMidnightUTC,
+    map<int, double> CalculateRiskToIndividualAircraft_OnTheFly(vector<int> numberOfPiecesMeanList, vector<double> arefMeanList, int whichAVM_in, int secondsFromMidnightUTC,
                                                                 double h1_in, double h2_in);
     vector<map<int,binData> > ASHDesiredPoint(double h1_in, double h2_in, vector<vector<double> > desiredPt);
 
@@ -218,7 +225,7 @@ public:
 //    double generateAllPointsFromASH(vector<int> numberOfPiecesMeanArray_in, vector<double> arefMeanList_in, int numDebIX, double thresh, double pFail);
     
 
-    void generateHazardProbabilities(vector<int> numberOfPiecesMean);
+    void generateHazardProbabilities(vector<int> numberOfPiecesMean, int whichAVM_in);
     double generateAllPoints_CumulativeFAA(double thresh, int whichProb, double pFail);
     
     double applyCumulativeThreshold(const Grid3D &grid, double thresh, vector<int> txVec);

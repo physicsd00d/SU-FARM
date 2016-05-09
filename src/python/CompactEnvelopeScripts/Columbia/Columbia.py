@@ -137,8 +137,14 @@ curMission['cumulative']                = 'FAA' # The definition for 'cumulative
                                                 # Note that if FAA is chosen, the grid will be coarsened to reflect how the FAA calculates
                                                 #   hazard areas.  The values of deltaXY and deltaZ will be updated at the appropriate time
                                                 #   but they WILL change.
-
 curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
+
+# These are new inputs
+# curMission['safetyMetric']              = TJC.SafetyMetrics.Cumulative  # or "Instantaneous"
+# curMission['cumThresh']                 = 1e-7  # Cumulative probability of impact
+# curMission['casThresh']                 = 1e-6  # Instantaneous probability of casualty
+# curMission['catThresh']                 = 1e-8  # Instantaneous probability of catastophe, for B747 with 450 passengers
+curMission['whichAVM']                  = TJC.AircraftVulnerabilityModels.RCC321
 
 # The different time steps within the mission
 curMission['deltaT']                  = 1.      # Seconds, this is the time resolution of a propagated trajectory
@@ -479,7 +485,7 @@ if calcIndividualHazard:
     #
     # # Do risk calculation
 
-    riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, secondsFromMidnightUTC,
+    riskToAC = curSkyGrid.CalculateRiskToIndividualAircraft_OnTheFly(numberOfPiecesMeanList, arefMeanList, curMission['whichAVM'], secondsFromMidnightUTC,
                                                    curMission['h1'], curMission['h2'])
 
 

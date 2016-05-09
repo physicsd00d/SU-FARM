@@ -52,7 +52,17 @@ import math
 # TODO: If using a reactionTime, then no need to propagate debris beyond that time.  Could save TONS of time and keep
 #   me from hitting those weird memory errors on Zion.
 
+#### Safety Metrics
+class SafetyMetrics:
+    # def __init__(self):  
+    Cumulative = 'Cumulative'
+    Instantaneous = 'Instantaneous'
 
+# Currently defined in SkyGrid.cpp.  Make sure these match!
+class AircraftVulnerabilityModels:
+    LARSON = 1
+    RCC321 = 2
+    WILDE  = 3
 
 
 '''
@@ -700,7 +710,7 @@ def genFootprint(curMission, tfailSec, curPFail):
 
     # After uploading the density map, we have to generate the hazard probabilities
     print 'generateHazardProbabilities'
-    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList)
+    curSkyGrid.generateHazardProbabilities(numberOfPiecesMeanList, curMission['whichAVM'])
 
 
     # Now apply the current definition of 'cumulative' for the chosen type of probability
@@ -2918,7 +2928,7 @@ def getProbImpacts(curMission, tfailSec):
     curSkyGrid.generateASH(h1, h2)
 
     # Calculate all of the hazard probabilities
-    curSkyGrid.generateHazardProbabilities(cur_mpc['numberOfPiecesMeanList'])
+    curSkyGrid.generateHazardProbabilities(cur_mpc['numberOfPiecesMeanList'], curMission['whichAVM'])
 
     # Finally get the probabilities for the times we want
     whichProb = curSkyGrid.getProbImpactCode()
@@ -2953,6 +2963,20 @@ def getEnvelopeTimesAndFailProbs(curMission, timelo, timehi):
 
 
 def GenerateHazardVectorFiles(curMission, timeRange, pFailThisTimestepVec):
+    # curMission['safetyMetric']              = 'Cumulative'  # or "Instantaneous"
+    if curMission['safetyMetric'] == SafetyMetrics.Cumulative:
+        GenerateHazardVectorFiles_Cumulative(curMission, timeRange, pFailThisTimestepVec)
+    elif curMission['safetyMetric'] == SafetyMetrics.Instantaneous:
+        GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTimestepVec)
+    else:
+        print "ERROR: safetyMetric not recognized! {0}".format(curMission['safetyMetric'])
+
+
+def GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTimestepVec):
+    print "In progress"
+
+
+def GenerateHazardVectorFiles_Cumulative(curMission, timeRange, pFailThisTimestepVec):
     armLength                   = curMission['armLength']
     footprintUntil              = timeRange[-1]
 
