@@ -111,7 +111,7 @@ Set parameters related to:
 # # Parameters for the ASH
 NASkm = 18.289
 
-curMission['deltaXY']                   = 0.5    #km
+curMission['deltaXY']                   = .5    #km
 curMission['deltaZ']                    = NASkm/4.   #km
 curMission['h1']                        = 3.    # Smoothing parameters for the ASH.  Should be >= deltaXY
 curMission['h2']                        = 3.
@@ -123,10 +123,11 @@ curMission['thresh']                    = 1e-7  # This is the probability thresh
                                                 #   These differences are currently hardcoded and must be changed / recompiled.
 curMission['cumulative']                = 'FAA' # The definition for 'cumulative' that we wish to use.
                                                 # Options are: FAA, TJC
-curMission['whichProbability']          = PROB_IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
+curMission['whichProbability']          = TJC.ProbabilityCodes.IMPACT  # Options are IMPACT, CASUALTY, CATASTROPHE
 
 # These are new inputs
-curMission['safetyMetric']              = TJC.SafetyMetrics.Cumulative  # or "Instantaneous"
+# curMission['safetyMetric']              = TJC.SafetyMetrics.Cumulative  # or "Instantaneous"
+curMission['safetyMetric']              = TJC.SafetyMetrics.Instantaneous  # or "Instantaneous"
 curMission['cumThresh']                 = 1e-7  # Cumulative probability of impact
 curMission['casThresh']                 = 1e-6  # Instantaneous probability of casualty
 curMission['catThresh']                 = 1e-8  # Instantaneous probability of catastophe, for B747 with 450 passengers

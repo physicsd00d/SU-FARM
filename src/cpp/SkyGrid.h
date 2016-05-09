@@ -209,6 +209,7 @@ public:
     // Debugging Functions (Used for being interactive with Python)
     map<int, map<int, map<int,double> > > getSpatialProbabilty();
     Grid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
+    Grid3D generateSpatialProbability_InstantaneousMax(int whichProb, int J_maxTimeStep, int f_startTimeStep);
 
     
     

@@ -183,6 +183,8 @@ cdef extern from "SkyGrid.h":
         # For debugging
         map[int, map[int, map[int,double]]] getSpatialProbabilty()
         Grid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
+        Grid3D generateSpatialProbability_InstantaneousMax(int whichProb, int J_maxTimeStep, int f_startTimeStep)
+
         # PyGrid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep)
  
         void generateHazardProbabilities(vector[int] numberOfPiecesMean, int whichAVM)
@@ -405,6 +407,16 @@ cdef class PySkyGrid:
         obj = PyGrid3D()
         obj.thisptr[0] = self.thisptr.generateSpatialProbability(whichProb, J_maxTimeStep, f_startTimeStep)
         return obj
+
+    def GenerateSpatialProbability_InstantaneousMax(self, whichProb, J_maxTimeStep, f_startTimeStep):
+        #define PROB_IMPACT      1001
+        #define PROB_CASUALTY    1002
+        #define PROB_CATASTROPHE 1003
+        obj = PyGrid3D()
+        obj.thisptr[0] = self.thisptr.generateSpatialProbability_InstantaneousMax(whichProb, J_maxTimeStep, f_startTimeStep)
+        return obj
+
+        
 
     # What it used to be before i started returning a Grid3D object
     # cdef Grid3D GenerateSpatialProbability(self, whichProb, J_maxTimeStep, f_startTimeStep):
