@@ -210,6 +210,7 @@ public:
     map<int, map<int, map<int,double> > > getSpatialProbabilty();
     Grid3D generateSpatialProbability(int whichProb, int J_maxTimeStep, int f_startTimeStep);
     Grid3D generateSpatialProbability_InstantaneousMax(int whichProb, int J_maxTimeStep, int f_startTimeStep);
+    Grid3D generateSpatialProbability_Instantaneous(int whichProb, int j_timeStep, int f_startTimeStep);
 
     
     

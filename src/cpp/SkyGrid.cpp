@@ -639,7 +639,7 @@ double SkyGrid::applyCumulativeThreshold(const Grid3D &grid_in, double thresh, v
                     temp3Vec[1] = yindex;
                     temp3Vec[2] = zindex;
                     
-                    //printf("made temp3Vec...\n");
+//                    printf("made temp3Vec...\n");
                     IndicesHere.push_back(temp3Vec);
                     //printf("                 ...and pushed it\n");
 
@@ -890,73 +890,74 @@ Grid3D SkyGrid::generateSpatialProbability_InstantaneousMax(int whichProb, int J
 
 
 
-///*
-// * Currently this function calculates and returns P_{I}(i \mid t \leq J, f) where I corresponds to whichProb
-// * TODO: Generalize this function to P_{I}(i \mid t \leq j, f), i.e. calculate only up to time j
-// *          Probably a good idea to make f an input when you do that, so you can get f=t case easily
-// *
-// */
-//Grid3D SkyGrid::generateSpatialProbability_Instantaneous(int whichProb, int j_timeStep, int f_startTimeStep){
-//    // whichProb selects between impact, casualty, and catastrophe
-//    // J is the INDEX of the maximum time to consider
-//    // f is the INDEX of the fail time that this probability corresponds to
-//    
-//    map<int, map<int, map<int,double> > > SpatialProbabilty;  // TODO: Eventually make this start as a Grid3D
-//    
-//    // Iterators for the probability grid
-//    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
-//    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
-//    map<int, map<int, map<int,binData> > >::iterator it_x;
-//    map<int, map<int, binData> >::iterator it_y;
-//    map<int, binData>::iterator it_ID;
-//    
-////    double maxVal = 0;
-//    double thisProb = 0;
-//    // Have to run through all of the timesteps first to figure out the total probabilities at each timestep
-//    
-//    // Look for iterator to desired timestep
-//    it_time=ProbabilityMapDebIX.find(j_timeStep);
-//    
-//    bool timeIsGood = true;
-//    if ((j_timeStep < f_startTimeStep) || (it_time == ProbabilityMapDebIX.end())) {
-//        // There is no probability of debris before the current failure time.
-//        // OR the time does not exist in ProbabilityMapDebIX
-//        timeIsGood = false;
-//    }
-//    
-//    if (timeIsGood) {
-//        int tx = it_time->first;
-//            
-//        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
-//            int zindex = it_z->first;
-//            
-//            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
-//                int xindex = it_x->first;
-//                
-//                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
-//                    int yindex = it_y->first;
-//                    
-//                    // Options are PROB_IMPACT, PROB_CASUALTY, PROB_CATASTROPHE
-//                    if (whichProb == PROB_IMPACT){
-//                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoImpact;}
-//                    else if (whichProb == PROB_CASUALTY){
-//                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCasualty;}
-//                    else if (whichProb == PROB_CATASTROPHE){
-//                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCatastrophe;}
-//                    else {
-//                        cout << "You chose a bad probability option.  Exiting\n";
-//                        exit(-99);
-//                    }
-//                    
-//                    SpatialProbabilty[zindex][xindex][yindex] = thisProb;
-//                    
-////                    maxVal = std::max(maxVal, SpatialProbabilty[zindex][xindex][yindex]);
-//                    
-//                } } }   // Ends loop back to it_z
-//    }
-//    
-//    return Grid3D(SpatialProbabilty);
-//}
+/*
+ * Currently this function calculates and returns P_{I}(i \mid t \leq J, f) where I corresponds to whichProb
+ * TODO: Generalize this function to P_{I}(i \mid t \leq j, f), i.e. calculate only up to time j
+ *          Probably a good idea to make f an input when you do that, so you can get f=t case easily
+ *
+ */
+Grid3D SkyGrid::generateSpatialProbability_Instantaneous(int whichProb, int j_timeStep, int f_startTimeStep){
+    // whichProb selects between impact, casualty, and catastrophe
+    // J is the INDEX of the maximum time to consider
+    // f is the INDEX of the fail time that this probability corresponds to
+    
+    map<int, map<int, map<int,double> > > SpatialProbabilty;  // TODO: Eventually make this start as a Grid3D
+    
+    // Iterators for the probability grid
+    map<int, map<int, map<int, map<int, map<int,binData> > > > >::iterator it_time;
+    map<int, map<int, map<int, map<int,binData> > > >::iterator it_z;
+    map<int, map<int, map<int,binData> > >::iterator it_x;
+    map<int, map<int, binData> >::iterator it_y;
+    map<int, binData>::iterator it_ID;
+    
+//    double maxVal = 0;
+    double thisProb = 0;
+    // Have to run through all of the timesteps first to figure out the total probabilities at each timestep
+    
+    // Look for iterator to desired timestep
+    it_time=ProbabilityMapDebIX.find(j_timeStep);
+    
+    bool timeIsGood = true;
+    if ((j_timeStep < f_startTimeStep) || (it_time == ProbabilityMapDebIX.end())) {
+        // There is no probability of debris before the current failure time.
+        // OR the time does not exist in ProbabilityMapDebIX
+        timeIsGood = false;
+        printf("WARNING: Time is no good %d\n", j_timeStep);
+    }
+    
+    if (timeIsGood) {
+        int tx = it_time->first;
+            
+        for (it_z = ProbabilityMapDebIX[tx].begin(); it_z != ProbabilityMapDebIX[tx].end(); ++it_z){
+            int zindex = it_z->first;
+            
+            for (it_x = ProbabilityMapDebIX[tx][zindex].begin(); it_x != ProbabilityMapDebIX[tx][zindex].end(); ++it_x){
+                int xindex = it_x->first;
+                
+                for (it_y = ProbabilityMapDebIX[tx][zindex][xindex].begin(); it_y != ProbabilityMapDebIX[tx][zindex][xindex].end(); ++it_y){
+                    int yindex = it_y->first;
+                    
+                    // Options are PROB_IMPACT, PROB_CASUALTY, PROB_CATASTROPHE
+                    if (whichProb == PROB_IMPACT){
+                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoImpact;}
+                    else if (whichProb == PROB_CASUALTY){
+                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCasualty;}
+                    else if (whichProb == PROB_CATASTROPHE){
+                        thisProb = ProbabilityMapDebIX[tx][zindex][xindex][yindex][STORE_IX].probNoCatastrophe;}
+                    else {
+                        cout << "You chose a bad probability option.  Exiting\n";
+                        exit(-99);
+                    }
+                    
+                    SpatialProbabilty[zindex][xindex][yindex] = 1.-thisProb;
+                    
+//                    maxVal = std::max(maxVal, SpatialProbabilty[zindex][xindex][yindex]);
+                    
+                } } }   // Ends loop back to it_z
+    }
+    
+    return Grid3D(SpatialProbabilty);
+}
 
 
 
