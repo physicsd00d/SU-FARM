@@ -1,2 +1,2 @@
-tempFolderName = "temp/"
-vehicleNotes = ''
+tempFolderName = "temp_instant/"
+vehicleNotes = 'instant'
