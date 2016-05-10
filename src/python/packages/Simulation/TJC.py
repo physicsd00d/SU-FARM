@@ -3054,14 +3054,19 @@ def GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTime
         # The latter sounds more efficient here.
 
         casualtyAtTime[tx] = dict() # Making each timestep its own dictionary
+        catastropeAtTime[tx] = dict() # Making each timestep its own dictionary
 
-        timeKeys = sorted(P_Cas_Dict.keys())
+        timeKeys = sorted(P_Cas_Dict.keys())  # These should be the same keys for catastrophe as well.
         for curTimeKey in timeKeys:
             # Make the probability grid, multiply by the prob of failure, and save the object
             P_Cas = PyGrid3D(dict=P_Cas_Dict[curTimeKey]) * curPFail
             casualtyAtTime[tx][curTimeKey] = P_Cas
 
+            P_Cat = PyGrid3D(dict=P_Cat_Dict[curTimeKey]) * curPFail
+            catastropeAtTime[tx][curTimeKey] = P_Cat
+
         del P_Cas_Dict # Get rid of this
+        del P_Cat_Dict # Get rid of this
 
         # timeKeys = sorted(P_Cas_Dict.keys())
         # hasCasualtyFP = False
@@ -3077,40 +3082,50 @@ def GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTime
             
             # print "    tx = {0}".format(tx)
             P_Cas = casualtyAtTime[tx][curTimeKey]
+            P_Cat = catastropeAtTime[tx][curTimeKey]
             # print "    delta_H = {0}".format(delta_H)
             # print "    range = {0}".format(range(max(tx-delta_H,0), tx, int(deltaT)))
             for prev_tx in range(max(tx-delta_H,0), tx, int(deltaT)):  # This won't include tx, which is find because we just initialized with it.
                 if casualtyAtTime[prev_tx].has_key(curTimeKey):
                     P_Cas += casualtyAtTime[prev_tx][curTimeKey]
+                    P_Cat += catastropeAtTime[prev_tx][curTimeKey]
                     # print "    tx = {0}".format(prev_tx)
 
             # Now with the fully-formed P_Cas for a single relevent time, we can apply the threshold and merge
             skyCas = PySkyGrid(curMission=curMission)
-            skyCas.applyCumulativeThreshold(P_Cas, casThresh, np.array([int(tfailSec/deltaTFail)]))     
+            maxCas = skyCas.applyCumulativeThreshold(P_Cas, casThresh, np.array([int(tfailSec/deltaTFail)]))     
             curCasualtyFP = PyFootprint(skygrid=skyCas, armLength=armLength)
+
+            skyCat = PySkyGrid(curMission=curMission)
+            maxCat = skyCat.applyCumulativeThreshold(P_Cat, catThresh, np.array([int(tfailSec/deltaTFail)]))
+            curCatastropheFP = PyFootprint(skygrid=skyCat, armLength=armLength)
 
             # If not empty, then make a footprint out of it and merge it into the final footprint
             if not hasCasualtyFP:
                 # Use the current FP to start the final FP
                 totalCasualtyFP = PyFootprint(skygrid=skyCas, armLength=armLength)
+                totalCatastropheFP = PyFootprint(skygrid=skyCat, armLength=armLength)
                 hasCasualtyFP = True
             else:
                 totalCasualtyFP.MergeFootprintVectors(curCasualtyFP)
+                totalCatastropheFP.MergeFootprintVectors(curCatastropheFP)
 
         # We're now done with this fail timestep.  Let the garbage collector know to come take it away.
         if casualtyAtTime.has_key(tx-delta_H):
             del casualtyAtTime[tx-delta_H]
+            del catastropeAtTime[tx-delta_H]
 
         # All those merges together can mean a lot of repeated points.  Smooth it out.
         totalCasualtyFP.SmoothedOut(newDeltaT=curMission['deltaTFail'], armLength=armLength)
+        totalCatastropheFP.SmoothedOut(newDeltaT=curMission['deltaTFail'], armLength=armLength)
         print "WARNING: The timestep here should be deltaT!  Using a different value now for debugging purposes."
 
 
         # Now write the vector files
         outfileStrCas = curMission['footprintVectorFolder'] + '/fpVec_Cas_' + str(tfailSec) + '.dat'
-        # outfileStrCat = curMission['footprintVectorFolder'] + '/fpVec_Cat_' + str(tfailSec) + '.dat'
+        outfileStrCat = curMission['footprintVectorFolder'] + '/fpVec_Cat_' + str(tfailSec) + '.dat'
         totalCasualtyFP.StoreFootprintAsVector(outfileStrCas)
-        # myFootprintCat.StoreFootprintAsVector(outfileStrCat)
+        totalCatastropheFP.StoreFootprintAsVector(outfileStrCat)
 
         # ==== Debugging, print out the separate footprints ======
         folderPath = os.path.abspath(curMission['GeneratedFilesFolder'] + 'fpVecPlots') + '/'
@@ -3123,15 +3138,15 @@ def GenerateHazardVectorFiles_Instantaneous(curMission, timeRange, pFailThisTime
         [yyyy, mm, dd, hour, min]   = curMission['ExportDate']
         outfileStrCas = folderPath + 'fpVec_Cas_' + str(tfailSec) + '.kml'
         totalCasualtyFP.ExportGoogleEarth(outfileStrCas, yyyy, mm, dd, hour, min)
-        # outfileStrCat = folderPath + 'fpVec_Cat_' + str(tfailSec) + '.kml'
-        # myFootprintCat.ExportGoogleEarth(outfileStrCat, yyyy, mm, dd, hour, min)
+        outfileStrCat = folderPath + 'fpVec_Cat_' + str(tfailSec) + '.kml'
+        totalCatastropheFP.ExportGoogleEarth(outfileStrCat, yyyy, mm, dd, hour, min)
         # ===== Done with the debugging ========
 
 
         # At this point, can merge both footprints and save the result.  Merge casualty into catastrophe.
         outfileStr = curMission['footprintVectorFolder'] + '/fpVec_' + str(tfailSec) + '.dat'
-        # myFootprintCat.MergeFootprintVectors(myFootprintCas)    # Do the merge
-        totalCasualtyFP.StoreFootprintAsVector(outfileStr)
+        totalCatastropheFP.MergeFootprintVectors(totalCasualtyFP)    # Do the merge
+        totalCatastropheFP.StoreFootprintAsVector(outfileStr)
 
 
 
