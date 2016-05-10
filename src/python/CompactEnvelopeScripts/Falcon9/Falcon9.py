@@ -138,7 +138,7 @@ curMission['deltaT']                  = 1.      # Seconds, this is the time reso
                                                 # NOTE: This might be REQUIRED to be 1, otherwise holes in PointCloud
                                                 # Envelope is half the size if =1 vs =5
                                                 # Alternatively, might be required to be deltaTFail because must nest.
-curMission['deltaTFail']              = 10.0     # Seconds, this is how often we explode the rocket
+curMission['deltaTFail']              = 1.0     # Seconds, this is how often we explode the rocket
 # IMPORTANT NOTE: When doing instantaneous health monitoring, if you increase deltaTFail you increase the length of latency
 #  with the VHM.  Delta_H = 0 means you always know about all previous timesteps, but if your previous timestep is many
 #  seconds away, that could be very noticeable uncertainty.  Further, it loads all the probabilty of failure  of the uncalculated
@@ -148,7 +148,7 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 20.      # Seconds
+curMission['healthMonitoringLatency'] = 1.      # Seconds
 
 curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 1
