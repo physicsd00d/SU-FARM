@@ -7,8 +7,8 @@ rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 # tempDir =   rootDir + "temp/"   # temp files here, gitignored
 csvTradFolder = outputDir + "space2015CsvFiles/"
-csvEnvFolder = outputDir + "spaceAssumeCsvFiles/"
-outputPath = outputDir + "spaceAssumeFigures/"
+csvEnvFolder = outputDir + "fullsafeCsvFiles/"
+outputPath = outputDir + "fullsafeFigures/"
 
 import glob
 import numpy as np
