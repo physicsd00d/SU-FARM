@@ -267,47 +267,64 @@ def CollapseIntoScenaros(missionDict, missionsInGroup):
 #    return ax1, ax2, f
 
 
+useAll = False
+
+if useAll:
+    # Make a dictionary that maps the scenario name into the tick label name I want
+    sc2tl = dict()
+    sc2tl[ 'SS2_America_2018L'] = "SS2 America \n9:00"
+    sc2tl[ 'Pegasus_Wallops_2018L'] = "Pegasus Wallops \n11:20"
+    sc2tl[ 'Lynx_Midland_2018L'] = "Lynx Midland \n14:15"
+
+    sc2tl[ 'Atlas5_Vafb_2018M'] = "AtlasV VAFB \n5:30"
+    sc2tl[ 'Antares_Wallops_2018M'] = "Antares Wallops \n10:00"
+    sc2tl[ 'SS2_America_2018M'] = "SS2 America \n11:45"
+    sc2tl[ 'Reentry_PacificReentryLA_2018M'] = "Dragon Pacific \n15:23"
+
+    sc2tl[ 'SS2_Titus_2018H'] = "SS2 Titus \n6:30"
+    sc2tl[ 'PM_CornNew_2018H'] = "PM2 Corn \n8:20"
+    sc2tl['Lynx_Cecil_2018H'] = "Lynx Cecil \n11:10"
+    sc2tl[ 'SS2_America_2018H'] = "SS2 Amerca \n11:45"  
+    sc2tl[ 'Sound_America_2018H'] = "Sound America \n12:00"
+    sc2tl[ 'Lynx_Midland_2018H'] = "Lynx Midland \n13:50"
+    sc2tl[ 'Lynx_FrntRnge_2018H'] = "Lynx FrontRange \n16:45"
+
+    topToBottom2018L = ["SS2_America_2018L",
+                         "Pegasus_Wallops_2018L",
+                         "Lynx_Midland_2018L"]
+
+    topToBottom2018M = ["Atlas5_Vafb_2018M",
+                         "Antares_Wallops_2018M",
+                         "SS2_America_2018M",
+                         "Reentry_PacificReentryLA_2018M"]
+
+    topToBottom2018H = ["SS2_Titus_2018H",
+                         "PM_CornNew_2018H",
+                         "Lynx_Cecil_2018H",
+    #                     "SS2_America_2018H",
+                         "Sound_America_2018H",
+                         "Lynx_Midland_2018H",
+                         "Lynx_FrntRnge_2018H"]                     
+                         
+else:
+
+    # For presentations
+    sc2tl = dict()
+    sc2tl[ 'SS2_America_2018L'] = "SS2 America \n9:00"
+    sc2tl[ 'Atlas5_Vafb_2018M'] = "AtlasV VAFB \n5:30"
+    sc2tl[ 'Antares_Wallops_2018M'] = "Antares Wallops \n10:00"
+    sc2tl[ 'Lynx_FrntRnge_2018H'] = "Lynx FrontRange \n16:45"
+
+    topToBottom2018L = ["SS2_America_2018L",
+                         "Lynx_FrntRnge_2018H",
+                         "Atlas5_Vafb_2018M",
+                         "Antares_Wallops_2018M"]
+    topToBottom2018M = []
+    topToBottom2018H = []   
 
 
 
 
-
-# Make a dictionary that maps the scenario name into the tick label name I want
-sc2tl = dict()
-sc2tl[ 'SS2_America_2018L'] = "SS2 America \n9:00"
-sc2tl[ 'Pegasus_Wallops_2018L'] = "Pegasus Wallops \n11:20"
-sc2tl[ 'Lynx_Midland_2018L'] = "Lynx Midland \n14:15"
-
-sc2tl[ 'Atlas5_Vafb_2018M'] = "AtlasV VAFB \n5:30"
-sc2tl[ 'Antares_Wallops_2018M'] = "Antares Wallops \n10:00"
-sc2tl[ 'SS2_America_2018M'] = "SS2 America \n11:45"
-sc2tl[ 'Reentry_PacificReentryLA_2018M'] = "Dragon Pacific \n15:23"
-
-sc2tl[ 'SS2_Titus_2018H'] = "SS2 Titus \n6:30"
-sc2tl[ 'PM_CornNew_2018H'] = "PM2 Corn \n8:20"
-sc2tl['Lynx_Cecil_2018H'] = "Lynx Cecil \n11:10"
-sc2tl[ 'SS2_America_2018H'] = "SS2 Amerca \n11:45"  
-sc2tl[ 'Sound_America_2018H'] = "Sound America \n12:00"
-sc2tl[ 'Lynx_Midland_2018H'] = "Lynx Midland \n13:50"
-sc2tl[ 'Lynx_FrntRnge_2018H'] = "Lynx FrontRange \n16:45"
-
-topToBottom2018L = ["SS2_America_2018L",
-                     "Pegasus_Wallops_2018L",
-                     "Lynx_Midland_2018L"]
-
-topToBottom2018M = ["Atlas5_Vafb_2018M",
-                     "Antares_Wallops_2018M",
-                     "SS2_America_2018M",
-                     "Reentry_PacificReentryLA_2018M"]
-
-topToBottom2018H = ["SS2_Titus_2018H",
-                     "PM_CornNew_2018H",
-                     "Lynx_Cecil_2018H",
-#                     "SS2_America_2018H",
-                     "Sound_America_2018H",
-                     "Lynx_Midland_2018H",
-                     "Lynx_FrntRnge_2018H"]                     
-                     
 # Make a dictionary that maps the mission name into one of the three groups.
 missionsInGroup = dict()
 missionsInGroup["2018L"] = ["Lynx_Midland_2018L",
@@ -621,16 +638,30 @@ ax1, ax2, ax3, ax4, f = PlotTest(tradMissions, sc2tl, topToBottomIndividual, plo
 #%%
 outputFile = "allEnv.pdf"
 
-plotDict = dict(figsize             = (20, 13), 
-                xlimNumAffected     = (1e-1,1e4), 
-                xlimTime            = (1e-1,1e4), 
-                xlimFuel            = (1e-1,1e4),
-                xlimDist            = (1e-1,1e4),
-                legendAnchor        = (0.95, 1.), # bbox(x,y) as percent from origin (lowerleft)
-                useLog              = True, 
-                titlePrefix         = "Max", 
-                plotOption          = useMax)
-                
+if useAll:
+    # Use this if doing all of the mission
+    plotDict = dict(figsize             = (20, 13), 
+                    xlimNumAffected     = (1e-1,1e4), 
+                    xlimTime            = (1e-1,1e4), 
+                    xlimFuel            = (1e-1,1e4),
+                    xlimDist            = (1e-1,1e4),
+                    legendAnchor        = (0.95, 1.), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Max", 
+                    plotOption          = useMax)
+else:
+    # Use this if only showing 4 missions
+    plotDict = dict(figsize             = (20, 4.5), 
+                    xlimNumAffected     = (1e-1,1e4), 
+                    xlimTime            = (1e-1,1e4), 
+                    xlimFuel            = (1e-1,1e4),
+                    xlimDist            = (1e-1,1e4),
+                    legendAnchor        = (1.05, 1.), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Max", 
+                    plotOption          = useMax)
+
+
 #plotDict = dict(figsize             = (20, 15), 
 #                xlimNumAffected     = (0.1,5), 
 #                xlimTime            = (0.1,100), 
