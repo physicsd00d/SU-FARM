@@ -561,10 +561,10 @@ def PlotTest(curDict, keyToTickMap, topToBottomList, plotDict, outputPath, outpu
     ax4.set_xbound(xlimDist)
     
     # plt.gca().xaxis.grid(True)
-    ax1.xaxis.grid(True)
-    ax2.xaxis.grid(True)
-    ax3.xaxis.grid(True)
-    ax4.xaxis.grid(True)
+    ax1.xaxis.grid(True, linewidth=2)
+    ax2.xaxis.grid(True, linewidth=2)
+    ax3.xaxis.grid(True, linewidth=2)
+    ax4.xaxis.grid(True, linewidth=2)
     
     #ax1.set_ybound(([0,40]))
     #ax2.ticklabel_format(size=400)
