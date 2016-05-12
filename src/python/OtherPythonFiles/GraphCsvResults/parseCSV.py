@@ -560,6 +560,11 @@ def PlotTest(curDict, keyToTickMap, topToBottomList, plotDict, outputPath, outpu
     ax3.set_xbound(xlimFuel)
     ax4.set_xbound(xlimDist)
     
+    # plt.gca().xaxis.grid(True)
+    ax1.xaxis.grid(True)
+    ax2.xaxis.grid(True)
+    ax3.xaxis.grid(True)
+    ax4.xaxis.grid(True)
     
     #ax1.set_ybound(([0,40]))
     #ax2.ticklabel_format(size=400)
@@ -619,15 +624,31 @@ outputFile = "allTrad.pdf"
 #                xlimTime=xlimTime, xlimFuel=xlimFuel,
 #                useLog=True, titlePrefix="Mean", plotOption=useMean)
 
-plotDict = dict(figsize             = (20, 13), 
-                xlimNumAffected     = (1e0,1e4), 
-                xlimTime            = (1e0,1e4), 
-                xlimFuel            = (1e1,1e5),
-                xlimDist            = (1e1,1e5),
-                legendAnchor        = (0.95, 0.95), # bbox(x,y) as percent from origin (lowerleft)
-                useLog              = True, 
-                titlePrefix         = "Mean", 
-                plotOption          = useMean)
+if useAll:
+    # Use this if doing all of the mission
+    plotDict = dict(figsize             = (20, 13), 
+                    xlimNumAffected     = (1e0,1e4), 
+                    xlimTime            = (1e0,1e4), 
+                    xlimFuel            = (1e1,1e5),
+                    xlimDist            = (1e1,1e5),
+                    legendAnchor        = (0.95, 0.95), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Mean", 
+                    plotOption          = useMean)
+else:
+    # Use this if only showing 4 missions
+    plotDict = dict(figsize             = (20, 4.5), 
+                    xlimNumAffected     = (1e-1,1e5), 
+                    xlimTime            = (1e-1,1e5), 
+                    xlimFuel            = (1e-1,1e5),
+                    xlimDist            = (1e-1,1e5),
+                    legendAnchor        = (1.05, 1.), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Mean", 
+                    plotOption          = useMean)
+
+
+
                 
 topToBottomIndividual = []
 topToBottomIndividual.extend(topToBottom2018L)
@@ -652,10 +673,10 @@ if useAll:
 else:
     # Use this if only showing 4 missions
     plotDict = dict(figsize             = (20, 4.5), 
-                    xlimNumAffected     = (1e-1,1e4), 
-                    xlimTime            = (1e-1,1e4), 
-                    xlimFuel            = (1e-1,1e4),
-                    xlimDist            = (1e-1,1e4),
+                    xlimNumAffected     = (1e-1,1e5), 
+                    xlimTime            = (1e-1,1e5), 
+                    xlimFuel            = (1e-1,1e5),
+                    xlimDist            = (1e-1,1e5),
                     legendAnchor        = (1.05, 1.), # bbox(x,y) as percent from origin (lowerleft)
                     useLog              = True, 
                     titlePrefix         = "Max", 
@@ -806,7 +827,18 @@ envScenarios[curVehicle]["average"]["rerouted"] + envScenarios[curVehicle]["aver
 
 
 
+# topToBottom2018L = ["SS2_America_2018L",
+#                      "Lynx_FrntRnge_2018H",
+#                      "Atlas5_Vafb_2018M",
+#                      "Antares_Wallops_2018M"]
+# tradMissions['Lynx_FrntRnge_2018H']
+envMissions['SS2_America_2018L']
+envMissions['Lynx_FrntRnge_2018H']
+envMissions['Atlas5_Vafb_2018M']
+envMissions['Antares_Wallops_2018M']
 
+for curMission in envMissions:
+    print "{0}  avg rerouted = {1}".format(curMission, envMissions[curMission]['average']['rerouted'])
 
 
 
