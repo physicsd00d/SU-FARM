@@ -5,6 +5,8 @@ from FriscoLegacy import orbitTools
 # 8:59:37 -- TJC: the time when the shuttle lost hydraulic pressure and would have spun out of control
 
 # === CAIB says ====
+# CAIB V2 D16
+# 2.5 DEVELOPMENT OF BREAKUP STATE VECTORS AND ASSOCIATED DEBRIS GROUPS
 # The breakup state vectors are based on a progressive
 # breakup model that initiated at 13:59:30 GMT and spans
 # 120 seconds. 24 debris lists are created for each five-second
