@@ -14,8 +14,8 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = False
-freshDebris = False
+freshWind   = True
+freshDebris = True
 debug       = False
 
 doMain      = True
@@ -148,7 +148,7 @@ curMission['all_points_delta_t']      = 60.0    # Seconds, this will be the time
 curMission['numPiecesPerSample']      = 10      # The number of pieces to consider within each debris group
 curMission['useAircraftDensityMap']   = False   # Do we use a uniform or the MIT density map?
 curMission['debrisTimeLimitSec']      = 1*3600  # This is how long to propagate a trajectory for.  If it hasn't landed yet, then give up.
-curMission['healthMonitoringLatency'] = 1.      # Seconds
+curMission['healthMonitoringLatency'] = 0.      # Seconds
 
 curMission['numNodes']                  = 8 # Will need to install pp to use more nodes
 curMission['numNodesEnvelopes']         = 1
@@ -222,7 +222,7 @@ if debug:
 
 
 curMission['numTrajSamples'] = 1
-curMission['numWindSamples'] = 3   # Best results if this is a multiple of the number of nodes you're running on.
+curMission['numWindSamples'] = 32   # Best results if this is a multiple of the number of nodes you're running on.
 
 profiles = []
 if (freshWind):
@@ -272,8 +272,8 @@ if doMain:
     curMission['armLength'] = 10000.
 
     footprintStart = 0.
-    # footprintUntil = 180.
-    footprintUntil = 120.
+    footprintUntil = 180.
+    #footprintUntil = 120.
     footprintTotal = TJC.GenerateCompactEnvelopes(curMission, footprintStart, footprintUntil)
     footprintTotal.ExportGoogleEarth(curMission['footprintLibrary'] + vehicleFileName + '.kml', yyyy, mm, dd, hour, min)
     footprintTotal.StoreFootprintAsVector(mainFootprintFile)
