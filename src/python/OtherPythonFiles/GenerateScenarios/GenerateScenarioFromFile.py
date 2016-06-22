@@ -8,10 +8,10 @@ rootDir =   os.path.abspath(curFilePath + "../../../../") + "/"
 outputDir = rootDir + "outputs/" # Where to store results, gitignored
 tempDir =   rootDir + "temp/"   # temp files here, gitignored
 
-footprintLibrary    = outputDir + "spaceAssumeLibrary/"
-KMLFolder           = outputDir + "spaceAssumeKMLs/"
-FacetFolder         = outputDir + "spaceAssumeFacetFiles/"
-BrokenOutFolder     = outputDir + "spaceAssumeBrokenOut/"
+footprintLibrary    = outputDir + "defenseLibrary/"
+KMLFolder           = outputDir + "defenseKMLs/"
+FacetFolder         = outputDir + "defenseFacetFiles/"
+BrokenOutFolder     = outputDir + "defenseBrokenOut/"
 offsetSeconds = 0.     # Use this if you want to tweak the timing just a little bit.  
 
 # from Simulation import LaunchSites
@@ -24,7 +24,7 @@ from datetime import datetime
 from shutil import copyfile
 
 # scenarioFileFolder = "ScenarioFiles/Sandbox/"
-scenarioFileFolder = "ScenarioFiles/SingleDaysUTC/"
+scenarioFileFolder = "ScenarioFiles/defense/"
 # scenarioNameList =   ['2018Low_SingleDay.txt']
 # scenarioNameList = ['2018Med_SingleDay.txt']
 # scenarioNameList = ['2018High_SingleDay.txt']
@@ -32,7 +32,8 @@ scenarioFileFolder = "ScenarioFiles/SingleDaysUTC/"
 # scenarioNameList = ['2025Med_SingleDay.txt']
 # scenarioNameList = ['2025High_SingleDay.txt']
 # scenarioNameList = ['2018Low_SingleDay.txt','2018Med_SingleDay.txt','2018High_SingleDay.txt','2025Low_SingleDay.txt','2025Med_SingleDay.txt','2025High_SingleDay.txt']
-scenarioNameList = ['2018Low_SingleDay.txt','2018Med_SingleDay.txt','2018High_SingleDay.txt']
+# scenarioNameList = ['2018Low_SingleDay.txt','2018Med_SingleDay.txt','2018High_SingleDay.txt']
+scenarioNameList = ['defenseScenario.txt']
 
 
 # scenarioNameList = ['falcon9Real.txt']
@@ -45,6 +46,8 @@ footprintDict = dict()
 # list all the files in the folder
 availableFootprints = os.listdir(footprintLibrary)
 for line in availableFootprints:
+
+    print line
     # First separate out the kmls from the dats
     [baseName, extension] = line.split('.')
     if (extension.upper() == 'DAT'):
