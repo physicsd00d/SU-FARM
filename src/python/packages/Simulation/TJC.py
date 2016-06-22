@@ -1003,8 +1003,11 @@ def GenerateWindTrajProfiles(curMission, numTrajSamples, numWindSamples):
         # tfailStorage_TEMP = []
         # For every wind profile, generate a trajectory
 
-        stateVecStorage_TEMP, thetagStorage_TEMP, tfailStorage_TEMP = \
-            GenerateStateVectorProfilesForWindIX(curMission, numTrajSamples, atmStorage[windIX])
+        if numTrajSamples > 0:
+            stateVecStorage_TEMP, thetagStorage_TEMP, tfailStorage_TEMP = \
+                GenerateStateVectorProfilesForWindIX(curMission, numTrajSamples, atmStorage[windIX])
+        else:
+            stateVecStorage_TEMP, thetagStorage_TEMP, tfailStorage_TEMP = [], [], []
 
     #     if (doPropagation):
     #         for trajIX in range(numTrajSamples):
