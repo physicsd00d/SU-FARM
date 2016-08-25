@@ -72,8 +72,12 @@ diffCdf = np.hstack((0, fullCdf[1:] - fullCdf[0:-1]))
 # x = np.linspace(beta.ppf(0.01, a, b), beta.ppf(0.99, a, b), 100)
 ax.plot(x, diffCdf, 'r-', lw=5, alpha=0.6, label='beta pdf')
 
-plt.show()
-
+plt.ylabel('Probability', fontsize=17)
+plt.xlabel('Time [s]', fontsize=17)
+plt.title('Conditional Probability of Failure for Pegasus', fontsize=20)
+# plt.show()
+saveFolder = "/Users/marian/Downloads/ProbFail"
+plt.savefig(saveFolder+'Pegasus.pdf', bbox_inches='tight')
 
 
 

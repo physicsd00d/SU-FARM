@@ -72,8 +72,13 @@ diffCdf = np.hstack((0, fullCdf[1:] - fullCdf[0:-1]))
 ax.plot(time, diffCdf, 'r-', lw=5, alpha=0.6, label='beta pdf')
 
 plt.axis([0, time[-1], 0, max(diffCdf)])
-plt.show()
 
+plt.ylabel('Probability', fontsize=17)
+plt.xlabel('Time [s]', fontsize=17)
+plt.title('Conditional Probability of Failure for SpaceShipTwo', fontsize=20)
+# plt.show()
+saveFolder = "/Users/marian/Downloads/ProbFail"
+plt.savefig(saveFolder+'SpaceShipTwo.pdf', bbox_inches='tight')
 
 # sys.exit()
 #

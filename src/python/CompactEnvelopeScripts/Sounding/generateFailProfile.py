@@ -157,8 +157,12 @@ diffCdf = totalDiffCdf
 
 
 
-plt.show()
-
+plt.ylabel('Probability', fontsize=17)
+plt.xlabel('Time [s]', fontsize=17)
+plt.title('Conditional Probability of Failure for Sounding Rocket', fontsize=20)
+# plt.show()
+saveFolder = "/Users/marian/Downloads/ProbFail"
+plt.savefig(saveFolder+'Sound.pdf', bbox_inches='tight')
 
 
 

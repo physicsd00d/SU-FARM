@@ -17,6 +17,23 @@ uniformFail = np.ones_like(time) / time[-1]
 uniformFail[0] = 0.;    # We'll assume it doesn't fail at t=0, this also makes it sum to 1
 # sum(uniformFail)
 
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 1)
+
+# ax.plot(totalTimeVec, totalDiffCdf, 'r-', lw=5, alpha=0.6, label='beta pdf')
+ax.plot(time, uniformFail, 'r-', lw=5, alpha=0.6, label='beta pdf')
+
+
+plt.axis([0, time[-1], 0, 2.*max(uniformFail)])
+
+plt.ylabel('Probability', fontsize=17)
+plt.xlabel('Time [s]', fontsize=17)
+plt.title('Conditional Probability of Failure for Reentry', fontsize=20)
+# plt.show()
+saveFolder = "/Users/marian/Downloads/ProbFail"
+plt.savefig(saveFolder+'Reentry.pdf', bbox_inches='tight')
+
+
 
 
 output = open('failProfile.py', 'w')
