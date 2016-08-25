@@ -818,6 +818,156 @@ def PlotNominalTrajectories(profiles, curMission, limitSec):
 
 
 
+### This is a quick hack job.  If you wanna keep it, modularize from the above plot routine.
+def PlotNominalTrajectory2D(profiles, curMission, limitSec, vehicleName):
+    # Plot the trajectory in Google Earth
+    from FriscoLegacy import orbitTools as OT         ## needed for ECI2latlonalt
+
+    # Pull out the quantities needed to plot
+    stateVecStorage = profiles['stateVecStorage']
+    thetagStorage = profiles['thetagStorage']
+
+    # # first index is over wind samples, second index is over actual trajectories
+    # numWindSamples = len(stateVecStorage)
+    # numTrajSamples = len(stateVecStorage[0])
+
+    # These are storage for building up the arrays to plot
+    latlonaltNumTimeSteps = []
+    # latlonaltStorage = np.array([],dtype=np.float64)
+    latlonaltStorage = []
+
+    # Grab some of the needed mission params
+    PlanetModel = curMission['planetModel']
+    deltaTsec = curMission['deltaT']
+    
+
+    # Just looking at windSample 0 for now, and also only the first trajectory
+    # for trajIX in range(numTrajSamples):
+    for trajIX in range(1):        
+        # Figure out how many timesteps to plot
+        numTimeSteps = 0
+        numTimeStepsMax = len(thetagStorage[0][trajIX])
+        
+        if (limitSec < 0):
+            numTimeSteps = numTimeStepsMax
+        else:
+            numTimeSteps = int(np.round(limitSec/deltaTsec))
+            
+            if (numTimeSteps > numTimeStepsMax):
+                print 'ERROR!!! Youre trying to print more timesteps than there are.  Printing MAX instead'
+                numTimeSteps = numTimeStepsMax
+    
+        latlonaltNumTimeSteps.append(numTimeSteps)
+        
+        yvec = np.transpose(stateVecStorage[0][trajIX][0:3])
+        
+        isReentry = curMission.has_key('isReentry') and curMission['isReentry']  # False then first element is launch pad.  True then last element is pad.
+        if isReentry:
+            listIterator = reversed(range(numTimeSteps))
+        else:
+            listIterator = range(numTimeSteps)
+
+        print "numTimeSteps = {0}".format(numTimeSteps)
+        # firstTime = True
+        timeVec = []
+        for timeIX in listIterator:
+            y = yvec[timeIX]
+            thetag = thetagStorage[0][trajIX][timeIX]
+            latlonalt = OT.ECI2latlonalt(y,thetag,PlanetModel)
+            # latlonalt = np.array(OT.ECI2latlonalt(y,thetag,PlanetModel))
+            # print type(latlonalt)
+            latlonaltStorage.append(latlonalt)
+            timeVec.append(timeIX)
+            # latlonaltStorage = np.concatenate((latlonaltStorage, latlonalt))
+            # latlonaltStorage = np.concatenate((latlonaltStorage, [0,0,0,])) # convertTJC expects six elements per line
+    latlonaltStorage = np.array(latlonaltStorage,dtype=np.float64) # Convert to matrix
+
+
+    from Simulation import LaunchProviders
+
+    plotTitle = "{0} Trajectory".format(vehicleName)
+    coeff = 1
+    if vehicleName == "Falcon9":
+        plotTitle = "Falcon 9 Trajectory"
+    elif vehicleName == LaunchProviders.LynxMII:
+        plotTitle = "Lynx Trajectory"
+    elif vehicleName == LaunchProviders.Pegasus:
+        coeff = 0.  # Captive carry, do not subtract out altitude of launch
+    elif vehicleName == LaunchProviders.Reentry:
+        plotTitle = "Reentry Trajectory"
+    elif vehicleName == LaunchProviders.Sound:
+        plotTitle = "Sounding Rocket Trajectory"
+    elif vehicleName == LaunchProviders.SS2:
+        plotTitle = "SpaceShipTwo Trajectory"
+
+
+
+    x0 = latlonaltStorage[0]
+
+    downrangeVec = []
+    altVec = latlonaltStorage[:,2] - x0[2]*coeff
+    # timeVec = list(listIterator)
+
+    for x1 in latlonaltStorage:
+        print x1[:2]
+        d = HaversineDistance(x0[:2], x1[:2])
+        print "  {0}".format(d)
+        downrangeVec.append(d)
+
+
+    # print latlonaltStorage
+    print downrangeVec
+
+    from bokeh.plotting import figure, output_notebook, output_file, show
+    from bokeh.palettes import Spectral11
+    from bokeh.models import LinearAxis, Range1d
+    # mypalette=Spectral11*10
+
+
+    # output to static HTML file
+    output_file("TrajAltVsRange.html", title="Altitude vs Range")
+
+    print listIterator
+    maxDist = max(downrangeVec)
+    maxTime = max(timeVec)
+    maxAxVal = max(maxDist, maxTime)
+
+    # p = figure(plot_width=1000, plot_height=1000, y_range=(0,60), x_range=(0,40))
+    p = figure(plot_width=1000, plot_height=1000, x_range=(-10,maxAxVal+40))
+    p.title = plotTitle
+    p.title_text_font_size = "40pt"
+    p.line(downrangeVec, altVec/1000., line_width=3, legend="vs distance")
+
+    p.xaxis.axis_label="Downrange Distance [km]"
+    p.yaxis.axis_label="Altitude [km]"
+
+    # p.extra_x_ranges = {"foo": Range1d()}
+    p.extra_x_ranges = {"foo": Range1d(start=-10, end=maxAxVal+40)}
+    # p.line(timeVec, line_width=3, x_range_name="foo", line_color="green", legend="fake Salinity")
+    # p.line(timeVec, altVec/1000., line_width=3, x_range_name="foo", line_color="green", legend="vs time", line_dash="dashed")
+    # p.add_layout(LinearAxis(x_range_name="foo", axis_line_color="green",major_label_text_color="green", axis_label="Time Since Operation Beginning [s]"), "above")
+    p.line(timeVec, altVec/1000., line_width=3, x_range_name="foo", legend="vs time", line_dash="dashed")
+    p.add_layout(LinearAxis(x_range_name="foo", axis_label="Time Since Operation Began [s]"), "above")
+
+    p.xaxis.axis_label_text_font_size = "30pt"
+    p.yaxis.axis_label_text_font_size = "30pt"
+    p.xaxis.major_label_text_font_size = "30pt"
+    p.yaxis.major_label_text_font_size = "30pt"
+
+    p.legend.label_text_font_size = "20pt"
+
+    show(p)
+
+        # output to static HTML file
+    # output_file("TrajAltVsRange.html", title="Altitude vs Range")
+
+    print vehicleName
+
+
+    
+
+
+
 ### CURRENTLY IN USE (Called by falcon9.py)
 def PlotDebrisFromExplodeTime(mission, profiles, tfail, cutoffNAS = True):
     # Plot some debris trajectories that have already been generated

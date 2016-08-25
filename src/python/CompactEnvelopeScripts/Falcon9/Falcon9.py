@@ -14,11 +14,11 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 
 '''These are the most-likely-to-be-changed parameters'''
-freshWind   = True
-freshDebris = True
+freshWind   = False
+freshDebris = False
 debug       = False
 
-doMain      = True
+doMain      = False
 addStageReentry = False
 
 
@@ -253,6 +253,12 @@ if freshDebris:
 # print "tProactive = {0}\n".format(tProactive)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
 # sys.exit()
+
+maxTime = 600.
+print "Wuttup"
+TJC.PlotNominalTrajectory2D(profiles, curMission, maxTime, vehicleName)
+sys.exit()
+
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))

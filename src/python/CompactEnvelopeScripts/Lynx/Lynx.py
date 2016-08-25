@@ -15,10 +15,10 @@ Be sure to remove -g from compilation when done otherwise code will be slooooow
 
 '''These are the most-likely-to-be-changed parameters'''
 freshWind   = True
-freshDebris = True
+freshDebris = False
 debug       = False
 
-doMain      = True
+doMain      = False
 # addStageReentry = False
 
 
@@ -75,7 +75,8 @@ This section is rather convoluted and should be cleaned up.
 '''
 # If you do a propagation, then you need to worry about dtval!
 propagationParamFile = []                   # Points to thrust profile for doing propagations
-precomputedParamFile = 'HTHL_Abridged.txt'  # Points to file with precomputed profile for nominal trajectory
+# precomputedParamFile = 'HTHL_Abridged.txt'  # Points to file with precomputed profile for nominal trajectory
+precomputedParamFile = 'HTHL.txt'  # Points to file with precomputed profile for nominal trajectory
 pathToMissionFiles = curFilePath            # Kind of a holdover from a previous file structure
 
 # Planet info
@@ -252,6 +253,11 @@ if freshDebris:
 # print "tProactive = {0}\n".format(tProactive)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
 # sys.exit()
+
+maxTime = 1300.
+print "Wuttup"
+TJC.PlotNominalTrajectory2D(profiles, curMission, maxTime, vehicleName)
+sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))

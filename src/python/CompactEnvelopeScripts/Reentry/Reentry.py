@@ -13,9 +13,9 @@ valgrind --tool=memcheck --suppressions=valgrind-python.py python -E -tt falcon9
 Be sure to remove -g from compilation when done otherwise code will be slooooow
 '''
 freshMain               = False  # State Vector
-freshWind               = False  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
+freshWind               = True  # Why uncertain wind for this case? B/c uncertainty in direction is manually tweaked.
 freshDebris             = False
-doMain                  = True
+doMain                  = False
 
 import os
 import sys
@@ -273,6 +273,11 @@ if freshDebris:
 # TJC.PlotDebrisFromExplodeTime(curMission, profiles, maxTime, cutoffNAS = False)
 # TJC.PlotNominalTrajectories(profiles, curMission, maxTime)
 #sys.exit()
+
+maxTime = 2300.
+print "Wuttup"
+TJC.PlotNominalTrajectory2D(profiles, curMission, maxTime, vehicleName)
+sys.exit()
 
 footprintIntervals = curMission['all_points_delta_t']
 vehicleNotes = vehicleNotes + 'HealthFlash' + str(int(footprintIntervals))
