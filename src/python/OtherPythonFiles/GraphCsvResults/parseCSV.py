@@ -267,7 +267,7 @@ def CollapseIntoScenaros(missionDict, missionsInGroup):
 #    return ax1, ax2, f
 
 
-useAll = False
+useAll = True
 
 if useAll:
     # Make a dictionary that maps the scenario name into the tick label name I want
@@ -843,6 +843,25 @@ for curMission in envMissions:
 
 
 
+curKey = 'Lynx_FrntRnge_2018H'
+mu = envMissions[curKey]['average']
+conf = envMissions[curKey]['confidence']
+maxVal = envMissions[curKey]['maximum']
+minVal = envMissions[curKey]['minimum']
+
+
+for obj in zip(mu.keys(), mu.values(), conf.values(), minVal.values(), maxVal.values()):
+    print "{0:17}: {1:5.3} ± {2:5.3} [{3:5.3}, {4:5.3}]".format(*obj)
+
+
+# 'dataKeys': ['rerouted',
+#   'DeltaTime',
+#   'DeltaDist',
+#   'DeltaFuel',
+#   'numFilter',
+#   'sumFilterMinutes']
+# Find how many AC are rerouted 0, 1, 2 times
+sum(np.array(envMissions[curKey]['dataVals'],dtype=int)[:,0] == 0)
 
 
 
