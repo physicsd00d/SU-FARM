@@ -53,7 +53,7 @@ diffCdf = np.hstack((0, fullCdf[1:] - fullCdf[0:-1]))
 # diffCdf = diffCdf * 0. + 1.
 
 # x = np.linspace(beta.ppf(0.01, a, b), beta.ppf(0.99, a, b), 100)
-ax.plot(x, diffCdf, 'r-', lw=5, alpha=0.6, label='beta pdf')
+ax.plot(time, diffCdf, 'r-', lw=5, alpha=0.6, label='beta pdf')
 
 plt.ylabel('Probability', fontsize=17)
 plt.xlabel('Time [s]', fontsize=17)
