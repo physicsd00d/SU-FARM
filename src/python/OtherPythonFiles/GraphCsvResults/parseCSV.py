@@ -8,7 +8,7 @@ outputDir = rootDir + "outputs/" # Where to store results, gitignored
 # tempDir =   rootDir + "temp/"   # temp files here, gitignored
 csvTradFolder = outputDir + "space2015CsvFiles/"
 csvEnvFolder = outputDir + "spaceAssumeCsvFiles/"
-outputPath = outputDir + "spaceAssumeFigures/"
+outputPath = outputDir + "abuDhabiFigures/"
 
 import glob
 import numpy as np
@@ -123,6 +123,10 @@ def ProcessAndUpdate(missionDict):
         missionDict[curMission]["sampleVar"] = dict()
         missionDict[curMission]["confidence"] = dict()
         for curKey, curValVec in curValDict.items():
+            ###
+#            print curValVec
+            curValVec[curValVec < 0.] = 0.  # Don't let anything be negative
+            ###
             print "   {0} ==> {1}".format(curKey, np.mean(curValVec))
             mu = np.mean(curValVec)
             s2 = sum((mu -curValVec)**2)/(sampleSize-1.)
@@ -267,47 +271,64 @@ def CollapseIntoScenaros(missionDict, missionsInGroup):
 #    return ax1, ax2, f
 
 
+useAll = False
+
+if useAll:
+    # Make a dictionary that maps the scenario name into the tick label name I want
+    sc2tl = dict()
+    sc2tl[ 'SS2_America_2018L'] = "SS2 America \n9:00"
+    sc2tl[ 'Pegasus_Wallops_2018L'] = "Pegasus Wallops \n11:20"
+    sc2tl[ 'Lynx_Midland_2018L'] = "Lynx Midland \n14:15"
+
+    sc2tl[ 'Atlas5_Vafb_2018M'] = "AtlasV VAFB \n5:30"
+    sc2tl[ 'Antares_Wallops_2018M'] = "Antares Wallops \n10:00"
+    sc2tl[ 'SS2_America_2018M'] = "SS2 America \n11:45"
+    sc2tl[ 'Reentry_PacificReentryLA_2018M'] = "Dragon Pacific \n15:23"
+
+    sc2tl[ 'SS2_Titus_2018H'] = "SS2 Titus \n6:30"
+    sc2tl[ 'PM_CornNew_2018H'] = "PM2 Corn \n8:20"
+    sc2tl['Lynx_Cecil_2018H'] = "Lynx Cecil \n11:10"
+    sc2tl[ 'SS2_America_2018H'] = "SS2 Amerca \n11:45"  
+    sc2tl[ 'Sound_America_2018H'] = "Sound America \n12:00"
+    sc2tl[ 'Lynx_Midland_2018H'] = "Lynx Midland \n13:50"
+    sc2tl[ 'Lynx_FrntRnge_2018H'] = "Lynx FrontRange \n16:45"
+
+    topToBottom2018L = ["SS2_America_2018L",
+                         "Pegasus_Wallops_2018L",
+                         "Lynx_Midland_2018L"]
+
+    topToBottom2018M = ["Atlas5_Vafb_2018M",
+                         "Antares_Wallops_2018M",
+                         "SS2_America_2018M",
+                         "Reentry_PacificReentryLA_2018M"]
+
+    topToBottom2018H = ["SS2_Titus_2018H",
+                         "PM_CornNew_2018H",
+                         "Lynx_Cecil_2018H",
+    #                     "SS2_America_2018H",
+                         "Sound_America_2018H",
+                         "Lynx_Midland_2018H",
+                         "Lynx_FrntRnge_2018H"]                     
+                         
+else:
+
+    # For presentations
+    sc2tl = dict()
+    sc2tl[ 'SS2_America_2018L'] = "SS2 America \n9:00"
+    sc2tl[ 'Atlas5_Vafb_2018M'] = "AtlasV VAFB \n5:30"
+    sc2tl[ 'Antares_Wallops_2018M'] = "Antares Wallops \n10:00"
+    sc2tl[ 'Lynx_FrntRnge_2018H'] = "Lynx FrontRange \n16:45"
+
+    topToBottom2018L = ["SS2_America_2018L",
+                         "Lynx_FrntRnge_2018H",
+                         "Atlas5_Vafb_2018M",
+                         "Antares_Wallops_2018M"]
+    topToBottom2018M = []
+    topToBottom2018H = []   
 
 
 
 
-
-# Make a dictionary that maps the scenario name into the tick label name I want
-sc2tl = dict()
-sc2tl[ 'SS2_America_2018L'] = "SS2 America \n9:00"
-sc2tl[ 'Pegasus_Wallops_2018L'] = "Pegasus Wallops \n11:20"
-sc2tl[ 'Lynx_Midland_2018L'] = "Lynx Midland \n14:15"
-
-sc2tl[ 'Atlas5_Vafb_2018M'] = "AtlasV VAFB \n5:30"
-sc2tl[ 'Antares_Wallops_2018M'] = "Antares Wallops \n10:00"
-sc2tl[ 'SS2_America_2018M'] = "SS2 America \n11:45"
-sc2tl[ 'Reentry_PacificReentryLA_2018M'] = "Dragon Pacific \n15:23"
-
-sc2tl[ 'SS2_Titus_2018H'] = "SS2 Titus \n6:30"
-sc2tl[ 'PM_CornNew_2018H'] = "PM2 Corn \n8:20"
-sc2tl['Lynx_Cecil_2018H'] = "Lynx Cecil \n11:10"
-sc2tl[ 'SS2_America_2018H'] = "SS2 Amerca \n11:45"  
-sc2tl[ 'Sound_America_2018H'] = "Sound America \n12:00"
-sc2tl[ 'Lynx_Midland_2018H'] = "Lynx Midland \n13:50"
-sc2tl[ 'Lynx_FrntRnge_2018H'] = "Lynx FrontRange \n16:45"
-
-topToBottom2018L = ["SS2_America_2018L",
-                     "Pegasus_Wallops_2018L",
-                     "Lynx_Midland_2018L"]
-
-topToBottom2018M = ["Atlas5_Vafb_2018M",
-                     "Antares_Wallops_2018M",
-                     "SS2_America_2018M",
-                     "Reentry_PacificReentryLA_2018M"]
-
-topToBottom2018H = ["SS2_Titus_2018H",
-                     "PM_CornNew_2018H",
-                     "Lynx_Cecil_2018H",
-#                     "SS2_America_2018H",
-                     "Sound_America_2018H",
-                     "Lynx_Midland_2018H",
-                     "Lynx_FrntRnge_2018H"]                     
-                     
 # Make a dictionary that maps the mission name into one of the three groups.
 missionsInGroup = dict()
 missionsInGroup["2018L"] = ["Lynx_Midland_2018L",
@@ -543,6 +564,11 @@ def PlotTest(curDict, keyToTickMap, topToBottomList, plotDict, outputPath, outpu
     ax3.set_xbound(xlimFuel)
     ax4.set_xbound(xlimDist)
     
+    # plt.gca().xaxis.grid(True)
+    ax1.xaxis.grid(True, linewidth=2)
+    ax2.xaxis.grid(True, linewidth=2)
+    ax3.xaxis.grid(True, linewidth=2)
+    ax4.xaxis.grid(True, linewidth=2)
     
     #ax1.set_ybound(([0,40]))
     #ax2.ticklabel_format(size=400)
@@ -602,15 +628,31 @@ outputFile = "allTrad.pdf"
 #                xlimTime=xlimTime, xlimFuel=xlimFuel,
 #                useLog=True, titlePrefix="Mean", plotOption=useMean)
 
-plotDict = dict(figsize             = (20, 13), 
-                xlimNumAffected     = (1e0,1e4), 
-                xlimTime            = (1e0,1e4), 
-                xlimFuel            = (1e1,1e5),
-                xlimDist            = (1e1,1e5),
-                legendAnchor        = (0.95, 0.95), # bbox(x,y) as percent from origin (lowerleft)
-                useLog              = True, 
-                titlePrefix         = "Mean", 
-                plotOption          = useMean)
+if useAll:
+    # Use this if doing all of the mission
+    plotDict = dict(figsize             = (20, 13), 
+                    xlimNumAffected     = (1e0,1e4), 
+                    xlimTime            = (1e0,1e4), 
+                    xlimFuel            = (1e1,1e5),
+                    xlimDist            = (1e1,1e5),
+                    legendAnchor        = (0.95, 0.95), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Mean", 
+                    plotOption          = useMean)
+else:
+    # Use this if only showing 4 missions
+    plotDict = dict(figsize             = (20, 4.5), 
+                    xlimNumAffected     = (1e-1,1e5), 
+                    xlimTime            = (1e-1,1e5), 
+                    xlimFuel            = (1e-1,1e5),
+                    xlimDist            = (1e-1,1e5),
+                    legendAnchor        = (1.05, 1.), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Mean", 
+                    plotOption          = useMean)
+
+
+
                 
 topToBottomIndividual = []
 topToBottomIndividual.extend(topToBottom2018L)
@@ -621,16 +663,30 @@ ax1, ax2, ax3, ax4, f = PlotTest(tradMissions, sc2tl, topToBottomIndividual, plo
 #%%
 outputFile = "allEnv.pdf"
 
-plotDict = dict(figsize             = (20, 13), 
-                xlimNumAffected     = (1e-1,1e4), 
-                xlimTime            = (1e-1,1e4), 
-                xlimFuel            = (1e-1,1e4),
-                xlimDist            = (1e-1,1e4),
-                legendAnchor        = (0.95, 1.), # bbox(x,y) as percent from origin (lowerleft)
-                useLog              = True, 
-                titlePrefix         = "Max", 
-                plotOption          = useMax)
-                
+if useAll:
+    # Use this if doing all of the mission
+    plotDict = dict(figsize             = (20, 13), 
+                    xlimNumAffected     = (1e-1,1e4), 
+                    xlimTime            = (1e-1,1e4), 
+                    xlimFuel            = (1e-1,1e4),
+                    xlimDist            = (1e-1,1e4),
+                    legendAnchor        = (0.95, 1.), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Max", 
+                    plotOption          = useMax)
+else:
+    # Use this if only showing 4 missions
+    plotDict = dict(figsize             = (20, 4.5), 
+                    xlimNumAffected     = (1e-1,1e5), 
+                    xlimTime            = (1e-1,1e5), 
+                    xlimFuel            = (1e-1,1e5),
+                    xlimDist            = (1e-1,1e5),
+                    legendAnchor        = (1.05, 1.), # bbox(x,y) as percent from origin (lowerleft)
+                    useLog              = True, 
+                    titlePrefix         = "Mean", 
+                    plotOption          = useMean)
+
+
 #plotDict = dict(figsize             = (20, 15), 
 #                xlimNumAffected     = (0.1,5), 
 #                xlimTime            = (0.1,100), 
@@ -775,11 +831,41 @@ envScenarios[curVehicle]["average"]["rerouted"] + envScenarios[curVehicle]["aver
 
 
 
+# topToBottom2018L = ["SS2_America_2018L",
+#                      "Lynx_FrntRnge_2018H",
+#                      "Atlas5_Vafb_2018M",
+#                      "Antares_Wallops_2018M"]
+# tradMissions['Lynx_FrntRnge_2018H']
+envMissions['SS2_America_2018L']
+envMissions['Lynx_FrntRnge_2018H']
+envMissions['Atlas5_Vafb_2018M']
+envMissions['Antares_Wallops_2018M']
+
+for curMission in envMissions:
+    print "{0}  avg rerouted = {1}".format(curMission, envMissions[curMission]['average']['rerouted'])
 
 
 
 
+curKey = 'Lynx_FrntRnge_2018H'
+mu = envMissions[curKey]['average']
+conf = envMissions[curKey]['confidence']
+maxVal = envMissions[curKey]['maximum']
+minVal = envMissions[curKey]['minimum']
 
+
+for obj in zip(mu.keys(), mu.values(), conf.values(), minVal.values(), maxVal.values()):
+    print "{0:17}: {1:5.3} +/- {2:5.3} [{3:5.3}, {4:5.3}]".format(*obj)
+
+
+# 'dataKeys': ['rerouted',
+#   'DeltaTime',
+#   'DeltaDist',
+#   'DeltaFuel',
+#   'numFilter',
+#   'sumFilterMinutes']
+# Find how many AC are rerouted 0, 1, 2 times
+sum(np.array(envMissions[curKey]['dataVals'],dtype=int)[:,0] == 0)
 
 
 
