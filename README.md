@@ -3,6 +3,9 @@ SU_FARM
 
 Coming Eventually...Stanford University Framework for Aircraft Risk Management
 
+## Update Oct 2021
+I transferred the entire repo from my private repository into this public one. Beware about going through the code. It's messy, it's been years since i did this stuff, and I cannot support any changes or detailed questions about it...so don't bother asking or submitting pull requests hahaha. At the highest level, i can tell you that i wrote the number-crunching portions of the code in C++, then wrapped that code with Cython so that I could drive the calculations with Python scripts. There are also some fortran routines that i took from a colleague, which are essential for doing the debris propagations, and some Julia routines that I wrote for a little few things. Basically, this is a rats nest. Good luck!
+
 ## To 'install' SU-FARM
 * Somehow take care of all the compile instructions
 * Source the DebrisProp files to get build/DebrisProp/[libfrisco.a, debrisPropagation.so]
